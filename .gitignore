@@ -1,0 +1,4 @@
+.idea
+tps-calc-backend/venv
+node_modules
+__pycache__
