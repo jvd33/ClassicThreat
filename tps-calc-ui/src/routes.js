@@ -1,7 +1,4 @@
-import Vue from 'vue';
-import VueRouter from 'vue-router'
-import App from './App.vue';
-import './quasar';
+import VueRouter from 'vue';
 import CalculateForm from './components/CalculateForm.vue';
 import About from './components/About.vue';
 
@@ -19,11 +16,4 @@ const router = new VueRouter({
   routes
 });
 
-Vue.config.productionTip = false;
-Vue.use(VueRouter);
-
-new Vue({
-  router,
-  render: h => h(App),
-
-}).$mount('#app');
+export default router

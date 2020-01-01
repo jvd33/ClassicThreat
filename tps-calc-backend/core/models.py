@@ -7,7 +7,21 @@ class ClassDPS(BaseModel):
     dps: float = 0.0
 
 
-class ThreatCalculationRequest(BaseModel):
+class WCLDataRequest(BaseModel):
+    url: str
+    player_name: str
+    bosses: List[str] = None
+
+
+class BossActivityRequest(BaseModel):
+    player_id: int
+    start_time: int
+    end_time: int
+    encounter: int
+    report_id: str
+
+
+class WarriorThreatCalculationRequest(BaseModel):
     shield_slam_count: int = 0
     revenge_count: int = 0
     hs_count: int = 0
@@ -23,8 +37,11 @@ class ThreatCalculationRequest(BaseModel):
     demo_casts: int = 0
     thunderclap_casts: int = 0
     hp_gains: float = 0
-    bs_buffed_players: int = 1
-    bs_enemies_in_combat: int = 1
+    friendlies_in_combat: int = 1
+    enemies_in_combat: int = 1  # for healing and shout threat
+    player_name: str
+    player_class: str
+    realm: str
 
     __modifiers = {
         'd_stance': 1.3,
@@ -48,9 +65,9 @@ class ThreatCalculationRequest(BaseModel):
         'bs_casts': lambda x, n, c: (x * 56)/(n/c),
     }
 
-    def calculate_threat(self):
-        exclude = {'time', 't1_set', 'total_damage', 'execute_dmg',
-                   'defiance_points', 'bs_buffed_players', 'bs_enemies_in_combat', 'thunderclap_casts'}
+    def calculate_warrior_threat(self):
+        exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm',
+                   'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts'}
         unmodified_threat = self.total_damage
         for name, val in self.copy(exclude=exclude):
             if name == 'sunder_count':
@@ -58,7 +75,7 @@ class ThreatCalculationRequest(BaseModel):
             elif name == 'bs_casts':
                 if val <= 0:
                     continue
-                unmodified_threat += self.__modifiers.get(name)(val, self.bs_buffed_players, self.bs_enemies_in_combat)
+                unmodified_threat += self.__modifiers.get(name)(val, self.friendlies_in_combat, self.enemies_in_combat)
             else:
                 unmodified_threat += self.__modifiers.get(name)(val)
         tc_threat = self.__modifiers.get('thunderclap_casts')(self.thunderclap_casts)
@@ -69,7 +86,8 @@ class ThreatCalculationRequest(BaseModel):
 
         unmodified_tps = unmodified_threat/self.time
         tps = (modified_threat + self.execute_dmg)/self.time
-        return ThreatResult(
+        return WarriorThreatResult(
+            **dict(self),
             total_threat=unmodified_threat,
             total_threat_defiance=modified_threat,
             unmodified_tps=unmodified_tps,
@@ -77,7 +95,7 @@ class ThreatCalculationRequest(BaseModel):
         )
 
 
-class ThreatResult(BaseModel):
+class WarriorThreatResult(WarriorThreatCalculationRequest):
     total_threat: float = 0
     total_threat_defiance: float = 0
     unmodified_tps: float = 0.0
@@ -85,5 +103,18 @@ class ThreatResult(BaseModel):
     dps_caps: List[ClassDPS] = None
 
 
-class FetchLogRequest(BaseModel):
-    pass
+class WarriorCastResponse(BaseModel):
+    shield_slam_count: int = 0
+    revenge_count: int = 0
+    hs_count: int = 0
+    goa_procs: int = 0
+    bs_casts: int = 0
+    demo_casts: int = 0
+    thunderclap_casts: int = 0
+
+
+class WarriorDamageResponse(BaseModel):
+    total_damage: int = 0
+    execute_dmg: int = 0
+    sunder_count: int = 0
+    time: int = 0
