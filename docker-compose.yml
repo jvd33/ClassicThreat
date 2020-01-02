@@ -1,0 +1,25 @@
+version: "3.7"
+services:
+  app:
+    build: backend/.
+    command: uvicorn app:main
+    ports:
+      - 8000:8000
+    depends_on:
+      - cache
+  frontend:
+    build: tps-calc-ui/.
+    command: npm run serve
+    environment:
+      - NODE_ENV=production
+    ports:
+      - 8080:8080
+    depends_on:
+      - cache
+      - app
+  cache:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    volumes:
+      - ../data/results:/data

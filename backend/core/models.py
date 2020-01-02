@@ -10,6 +10,7 @@ class ClassDPS(BaseModel):
 class WCLDataRequest(BaseModel):
     url: str
     player_name: str
+    defiance_points: int = 5
     bosses: List[str] = None
 
 
@@ -19,6 +20,7 @@ class BossActivityRequest(BaseModel):
     end_time: int
     encounter: int
     report_id: str
+    boss_name: str
 
 
 class WarriorThreatCalculationRequest(BaseModel):
@@ -41,6 +43,7 @@ class WarriorThreatCalculationRequest(BaseModel):
     enemies_in_combat: int = 1  # for healing and shout threat
     player_name: str
     player_class: str
+    boss_name: str
     realm: str
 
     __modifiers = {
@@ -67,7 +70,7 @@ class WarriorThreatCalculationRequest(BaseModel):
 
     def calculate_warrior_threat(self):
         exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm',
-                   'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts'}
+                   'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts', 'boss_name'}
         unmodified_threat = self.total_damage
         for name, val in self.copy(exclude=exclude):
             if name == 'sunder_count':
@@ -81,11 +84,11 @@ class WarriorThreatCalculationRequest(BaseModel):
         tc_threat = self.__modifiers.get('thunderclap_casts')(self.thunderclap_casts)
 
         unmodified_threat = unmodified_threat + tc_threat
-        modified_threat = (unmodified_threat - self.execute_dmg) \
+        modified_threat = (unmodified_threat - self.execute_dmg - tc_threat) \
             * self.__modifiers.get('d_stance') * self.__modifiers.get('defiance').get(self.defiance_points)
 
         unmodified_tps = unmodified_threat/self.time
-        tps = (modified_threat + self.execute_dmg)/self.time
+        tps = (modified_threat + self.execute_dmg + tc_threat)/self.time
         return WarriorThreatResult(
             **dict(self),
             total_threat=unmodified_threat,

@@ -62,7 +62,7 @@ class WCLService:
                 'hostility': 1,
                 'targetid': req.player_id
             })
-        resp = await self._send_scoped_request('GET', url, stream=True, params=params)
+        resp = await self._send_scoped_request('GET', url, params=params)
         ret = resp.json()
-        ret.update({'event': event})
+        ret.update({'event': event, 'boss_name': req.boss_name})
         return ret
