@@ -29,6 +29,7 @@ const router = new VueRouter({
 
 Vue.config.productionTip = false;
 Vue.use(VueRouter);
+
 Vue.component('threat-result', ThreatResult);
 new Vue({
   router,

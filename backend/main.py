@@ -7,9 +7,11 @@ from core import routes
 
 origins = [
     "http://localhost",
+    "https://localhost",
     "http://localhost:8080",
     "https://localhost:8080",
-    "localhost:8080"
+    "http://frontend:8080",
+    "https://frontend:8080"
 ]
 
 

@@ -74,7 +74,7 @@ export default {
     return {
         drawer: false,
         menuList,
-        base: '/'
+        base: '/',
     };
   },
   created() {

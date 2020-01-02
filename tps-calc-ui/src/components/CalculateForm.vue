@@ -140,6 +140,7 @@ export default {
           errorMsg: null,
           route_guard: false,
           confirm: null,
+          api_url: process.env.VUE_APP_API_URL,
       }
   },
 
@@ -150,7 +151,7 @@ export default {
         this.results = null;
         this.is_loading = true;
         axios
-        .post('http://localhost:8000/v1/api/calculate', {
+        .post(`https://${this.api_url}/v1/api/calculate`, {
           url: this.url,
           player_name: this.player_name,
           defiance_points: this.defiance_points,
@@ -163,7 +164,8 @@ export default {
         })
         .catch(error => {
             this.errorState = true;
-            this.errorMsg = error.response.data.detail;
+            this.errorMsg = error.response ?
+              error.response.data.details : 'Unexpected error. Try again later.';
         })
         .finally(() => this.is_loading = false);
     },

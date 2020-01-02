@@ -31,7 +31,7 @@ async def get_log_data(req: WCLDataRequest):
             return bosses
 
     wcl = WCLService()
-    resp = await wcl.get_full_report(report_id)+
+    resp = await wcl.get_full_report(report_id)
     all_bosses = [f for f in resp.get('fights') if f.get('boss') != 0]
     if not all_bosses:
         raise HTTPException(status_code=400,
