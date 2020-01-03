@@ -1,17 +1,17 @@
 # base image
-FROM node:latest
-
-# set working directory
-COPY . ./app
+FROM node:latest as build
 WORKDIR /app
-# add `/app/node_modules/.bin` to $PATH
 ENV PATH /node_modules/.bin:$PATH
-
-# install and cache app dependencies
 COPY package.json /app/package.json
-RUN ls
-RUN npm install
-RUN npm install @vue/cli -g
+RUN npm install --silent
+RUN npm install @vue/cli@latest -g
+COPY . /app
+RUN npm run build
 
-# start app
-CMD ["npm", "run", "serve"]
+# production environment
+FROM nginx:latest
+COPY --from=build /app/dist /usr/share/nginx/html
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx/nginx.conf /etc/nginx/conf.d
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]

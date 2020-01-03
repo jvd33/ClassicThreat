@@ -11,7 +11,11 @@ origins = [
     "http://localhost:8080",
     "https://localhost:8080",
     "http://frontend:8080",
-    "https://frontend:8080"
+    "https://frontend:8080",
+    "http://classicthreat.com",
+    "https://classicthreat.com",
+    "http://classicthreat.com:8080",
+    "https://classicthreat.com:8080"
 ]
 
 
