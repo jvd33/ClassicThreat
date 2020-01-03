@@ -151,7 +151,7 @@ export default {
         this.results = null;
         this.is_loading = true;
         axios
-        .post(`https://${this.api_url}/v1/api/calculate`, {
+        .post(`http://${this.api_url}/v1/api/calculate`, {
           url: this.url,
           player_name: this.player_name,
           defiance_points: this.defiance_points,

@@ -2,13 +2,14 @@ version: "3"
 services:
   app:
     build: backend/.
+    environment:
+      - PORT=8000
     ports:
       - 8000:8000
     depends_on:
       - cache
   frontend:
     build: tps-calc-ui/.
-    command: npm run serve
     environment:
       - NODE_ENV=production
     ports:

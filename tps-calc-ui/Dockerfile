@@ -1,7 +1,7 @@
 # base image
 FROM node:latest as build
 WORKDIR /app
-ENV PATH /node_modules/.bin:$PATH
+ENV PATH /app/node_modules/.bin:$PATH
 COPY package.json /app/package.json
 RUN npm install --silent
 RUN npm install @vue/cli@latest -g

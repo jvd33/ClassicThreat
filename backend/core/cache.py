@@ -6,7 +6,7 @@ import json
 class RedisClient:
 
     def __init__(self, *args, **kwargs):
-        self.__redis = redis.Redis(host='localhost', port=6379, db=0)
+        self.__redis = redis.Redis(host='cache', port=6379, db=0)
 
     def get_report_results(self, report_id: str, character: str):
         cached_settings = self.__redis.get(report_id)
@@ -15,4 +15,4 @@ class RedisClient:
         return json.loads(cached_settings)
 
     def save_results(self, report_id: str, character: str, data):
-        return self.__redis.set(report_id, {character: data})
+        return self.__redis.set(report_id, json.dumps({character: data}))
