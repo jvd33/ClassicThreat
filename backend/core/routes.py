@@ -1,14 +1,17 @@
+import ujson
+
 from fastapi import APIRouter, HTTPException
 from requests.exceptions import HTTPError
 
 from .models import WCLDataRequest
 from .tasks import get_log_data
+from .constants import ThreatValues
 
 api_router = APIRouter()
 
 
 @api_router.get('/status', tags=['api'])
-async def index():
+async def status():
     return {'status': 'OK'}
 
 
@@ -21,3 +24,8 @@ async def calculate(req: WCLDataRequest):
         raise HTTPException(status_code=exc.response.status_code)
     except HTTPException as exc:
         raise exc
+
+
+@api_router.get('/threat_values', tags=['api'])
+async def get_threat_values():
+    return ujson.dumps(ThreatValues.items())

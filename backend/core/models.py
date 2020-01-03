@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 
+from .constants import ThreatValues
 
 class ClassDPS(BaseModel):
     class_name: str
@@ -25,6 +26,7 @@ class BossActivityRequest(BaseModel):
 
 class WarriorThreatCalculationRequest(BaseModel):
     shield_slam_count: int = 0
+    bt_count: int = 0
     revenge_count: int = 0
     hs_count: int = 0
     sunder_count: int = 0
@@ -46,31 +48,27 @@ class WarriorThreatCalculationRequest(BaseModel):
     boss_name: str
     realm: str
 
+
+    defiance_key = f'Defiance{defiance_points}'
+    __t = ThreatValues.vals()
     __modifiers = {
-        'd_stance': 1.3,
-        'sunder_count': lambda x, t1: x * 261 if not t1 else x * 261 * 1.15,
-        'shield_slam_count': lambda x: x * 250,
-        'revenge_count': lambda x: x * 315,
-        'hs_count': lambda x: x * 145,
-        'goa_procs': lambda x: x * 90,
-        'rage_gains': lambda x: x * 5,
-        'defiance': {
-            0: 1,
-            1: 1.03,
-            2: 1.06,
-            3: 1.09,
-            4: 1.12,
-            5: 1.15
-        },
-        'hp_gains': lambda x: x * .5,
-        'demo_casts': lambda x: x * 42,
-        'thunderclap_casts': lambda x: x * 314 * .8,
-        'bs_casts': lambda x, n, c: (x * 56)/(n/c),
+        'sunder_count': lambda x, t1, __t=__t: x * __t.SunderArmor if not t1 else x * __t.SunderArmor * __t.Tier1Bonus,
+        'shield_slam_count': lambda x, __t=__t: x * __t.ShieldSlam,
+        'revenge_count': lambda x, __t=__t: x * __t.Revenge,
+        'hs_count': lambda x, __t=__t: x * __t.HeroicStrike,
+        'goa_procs': lambda x, __t=__t: x * __t.GiftOfArthas,
+        'rage_gains': lambda x, __t=__t: x * __t.RageGain,
+        'hp_gains': lambda x, __t=__t: x * __t.Healing,
+        'demo_casts': lambda x, __t=__t: x * __t.DemoShout,
+        'thunderclap_casts': lambda x, __t=__t: x * __t.ThunderClap,
+        'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),
     }
 
     def calculate_warrior_threat(self):
-        exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm',
-                   'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts', 'boss_name'}
+        exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_count',
+                   'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts', 'boss_name',
+                   '__modifiers', 'defiance_key', '__t'}
+
         unmodified_threat = self.total_damage
         for name, val in self.copy(exclude=exclude):
             if name == 'sunder_count':
@@ -83,12 +81,12 @@ class WarriorThreatCalculationRequest(BaseModel):
                 unmodified_threat += self.__modifiers.get(name)(val)
         tc_threat = self.__modifiers.get('thunderclap_casts')(self.thunderclap_casts)
 
-        unmodified_threat = unmodified_threat + tc_threat
-        modified_threat = (unmodified_threat - self.execute_dmg - tc_threat) \
-            * self.__modifiers.get('d_stance') * self.__modifiers.get('defiance').get(self.defiance_points)
+        modified_threat = unmodified_threat * self.__t.DefensiveStance * getattr(self.__t, self.defiance_key)
 
+        unmodified_threat = unmodified_threat + tc_threat + self.execute_dmg
         unmodified_tps = unmodified_threat/self.time
         tps = (modified_threat + self.execute_dmg + tc_threat)/self.time
+
         return WarriorThreatResult(
             **dict(self),
             total_threat=unmodified_threat,

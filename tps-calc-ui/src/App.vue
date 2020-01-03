@@ -1,10 +1,14 @@
 <template>
   <q-layout view="hHh lpR lFf">
     <link href="https://fonts.googleapis.com/css?family=Muli&display=swap" rel="stylesheet"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="public/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="public/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <q-header elevated class="bg-primary fixed-top" height-hint="98">
       <q-toolbar>
         <q-btn flat @click="drawer = !drawer" round dense material icon="menu" />
-        <q-toolbar-title>Classic Threat Estimator</q-toolbar-title>
+        <q-toolbar-title>Classic Threat Tools</q-toolbar-title>
       </q-toolbar>
     </q-header>
 
@@ -14,12 +18,34 @@
       show-if-above
       elevated
       :width="200"
-      :breakpoint="300"
+      :breakpoint="500"
     >
 
         <q-list v-for="(menuItem, index) in menuList" :key="index">
+          <q-expansion-item
+          expand-separator
+          :icon=menuItem.icon
+          :label=menuItem.label
+          default-opened
+          v-if="menuItem.label === 'Calculators'"
+          group="calculators"
+        >
+            <q-list v-for="(calc, idx) in calculators" :key="idx">
+              <q-item :to="calc.path"
+                      exact v-ripple
+                      :inset-level=".5"
+              >
+                <q-item-section avatar>
+                  <q-icon :name="calc.icon" />
+                </q-item-section>
+                <q-item-section>
+                  {{ calc.label }}
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-expansion-item>
 
-          <q-item :to="menuItem.path" exact v-ripple>
+          <q-item :to="menuItem.path" exact v-ripple v-if="menuItem.label !== 'Calculators'">
             <q-item-section avatar>
               <q-icon :name="menuItem.icon" />
             </q-item-section>
@@ -42,47 +68,59 @@
 </template>
 
 <script>
-const icons = {
-  'app:defiance': 'img:statics/abilities/defiance.png',
-  'app:bt': 'img:statics/abilities/bloodthirst.png',
-  'app:ss': 'img:statics/assets/abilities/shield_slam.png',
-};
-
-const menuList = [
-  {
-    icon: 'assessment',
-    label: 'Estimate',
-    separator: true,
-    path: '/'
-  },
-  {
-    icon: 'info',
-    label: 'Calculation Details',
-    separator: true,
-    path: '/details'
-  },
-  {
-    icon: 'contacts',
-    label: 'About',
-    separator: true,
-    path: '/about'
-
-  },
-];
+import defiance from './assets/defiance.png';
+import bt from './assets/bloodthirst.png';
+import shield_slam from './assets/shield_slam.png';
+import warr from './assets/wow_flat_warrior.png'
 export default {
   data() {
     return {
         drawer: false,
-        menuList,
         base: '/',
+        custom_icons: {
+          'app:defiance': 'img:' + defiance,
+          'app:bt': 'img:' + bt,
+          'app:ss': 'img:' + shield_slam,
+          'app:warr': 'img:' + warr,
+        },
+
+        calculators: [
+            {
+            icon: 'app:warr',
+            label: 'Warrior',
+            separator: true,
+            path: '/warrior'
+          },
+        ],
+
+        menuList: [
+          {
+            icon: 'assessment',
+            label: 'Calculators',
+            separator: true,
+          },
+          {
+            icon: 'info',
+            label: 'Calculation Details',
+            separator: true,
+            path: '/details'
+          },
+          {
+            icon: 'contacts',
+            label: 'About',
+            separator: true,
+            path: '/about'
+
+          },
+        ],
     };
   },
   created() {
     this.$q.dark.set(true);
     this.$q.iconMapFn = (iconName) => {
-      const icon = icons[iconName];
+      const icon = this.custom_icons[iconName];
       if (icon !== void 0) {
-        return { icon: icon }
+        return { icon: icon, size: 'sm' }
       }
     }
   },

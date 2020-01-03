@@ -1,6 +1,6 @@
 import redis
 import datetime
-import json
+import ujson
 
 
 class RedisClient:
@@ -12,7 +12,7 @@ class RedisClient:
         cached_settings = self.__redis.get(report_id)
         if not cached_settings or cached_settings.get(character) is None:
             return None
-        return json.loads(cached_settings)
+        return ujson.loads(cached_settings)
 
     def save_results(self, report_id: str, character: str, data):
-        return self.__redis.set(report_id, json.dumps({character: data}))
+        return self.__redis.set(report_id, ujson.dumps({character: data}))

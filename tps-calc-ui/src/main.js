@@ -2,7 +2,7 @@ import Vue from 'vue';
 import VueRouter from 'vue-router'
 import App from './App.vue';
 import './quasar';
-import CalculateForm from './components/CalculateForm.vue';
+import WarriorCalculateForm from './components/WarriorCalculateForm.vue';
 import ThreatResult from "./components/ThreatResult";
 import About from './components/About.vue';
 import CalculationDetails from './components/CalculationDetails.vue';
@@ -10,7 +10,8 @@ import CalculationDetails from './components/CalculationDetails.vue';
 const routes = [
   {
     path: '/',
-    component: CalculateForm,
+    alias: '/warrior',
+    component: WarriorCalculateForm,
   },
   {
     path: '/details',

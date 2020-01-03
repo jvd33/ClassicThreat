@@ -1,12 +1,12 @@
 import requests
+import os
 
 from .models import BossActivityRequest
 
-PUB_KEY = '829648d907b8363b0694664963fd9319'
-PRIV_KEY = 'd115f81a21ba849fbd375eee90d17a8b'
-
 
 class WCLService:
+
+    PUB_KEY = os.getenv('WCL_PUB_KEY')
 
     def __init__(self):
         self.base_url = 'https://www.warcraftlogs.com/v1/'
@@ -24,8 +24,8 @@ class WCLService:
             headers.update({'accept-encoding': 'gzip'})
 
         params = {
-            'api_key': PUB_KEY
-        } if not params else {**params, 'api_key': PUB_KEY}
+            'api_key': self.PUB_KEY
+        } if not params else {**params, 'api_key': self.PUB_KEY}
         print(f'{method}: {url}')
         resp = requests.request(method,
                                 url,
