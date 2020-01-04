@@ -6,7 +6,13 @@ module.exports = {
       new webpack.DefinePlugin({
         'process.env.VUE_APP_API_URL': JSON.stringify(process.env.VUE_APP_API_URL)
       })
-    ]
+    ],
+    optimization: {
+      runtimeChunk: 'single',
+      splitChunks: {
+        chunks: 'all'
+      }
+    }
   },
   pluginOptions: {
     quasar: {

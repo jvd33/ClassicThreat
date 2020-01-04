@@ -11,10 +11,10 @@ class RedisClient:
 
     def get_report_results(self, report_id: str, character: str):
         key = f'{report_id}:{character}'
-        cached_settings = self.__redis.get(key)
-        if not cached_settings:
+        cached_data = self.__redis.get(key)
+        if not cached_data:
             return None
-        return ujson.loads(cached_settings)
+        return ujson.loads(cached_data)
 
     def save_results(self, report_id: str, character: str, data):
         key = f'{report_id}:{character}'

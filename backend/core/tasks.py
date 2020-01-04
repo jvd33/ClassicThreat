@@ -18,19 +18,15 @@ async def get_log_data(req: WCLDataRequest):
     report_id = url_segments.path.split('/')[-1]
     fight_arg = url_segments.fragment.split('&')[0] if url_segments.fragment else None
     fight_num = fight_arg.split('=')[-1] if fight_arg else None
-    bosses = None
+    
     redis = RedisClient()
     cached_data = redis.get_report_results(report_id, req.player_name)
 
     if cached_data:
-        if fight_num:
-            bosses = [f for f in cached_data if str(f.get('id', '')) == fight_num]
-            if bosses:
-                return bosses
         if req.bosses:
-            bosses = [f for f in cached_data if f.get('name') in req.bosses]
-        if bosses and len(bosses) == len(req.bosses):
-            return bosses
+            cached_data = [f for f in cached_data if f.get('name') in req.bosses]
+            if cached_data and len(cached_data) == len(req.bosses):
+                return cached_data
 
     wcl = WCLService()
     resp = await wcl.get_full_report(report_id)
@@ -38,13 +34,17 @@ async def get_log_data(req: WCLDataRequest):
     if not all_bosses:
         raise HTTPException(status_code=400,
                             detail=f'No valid boss fights found in the linked log.')
-    cached_bosses = bosses
-    bosses = all_bosses
+
+    cached_names = [name for name in cached_data.keys()]
+    
+    bosses = filter(lambda b: b.get('name') not in cached_names, all_bosses)  
+    if not bosses:
+        return cache_data
 
     if fight_num:
-        bosses = [f for f in all_bosses if str(f.get('id', '')) == fight_num]
+        bosses = [f for f in bosses if str(f.get('id', '')) == fight_num]
     if req.bosses:
-        bosses = [f for f in all_bosses if f.get('name') in req.bosses]
+        bosses = [f for f in bosses if f.get('name') in req.bosses]
         if not bosses:
             raise HTTPException(status_code=400,
                                 detail=f'No bosses activity found matching {req.bosses}')
@@ -59,8 +59,7 @@ async def get_log_data(req: WCLDataRequest):
     realm = player_info.get('server')
 
     del player_info['fights']
-    if cached_bosses:
-        bosses = list(set(bosses).difference(set(cached_bosses)))
+    
     reqs = [BossActivityRequest(
         player_id=player_info.get('id'),
         start_time=boss.get('start_time'),
@@ -70,10 +69,12 @@ async def get_log_data(req: WCLDataRequest):
         report_id=report_id,
     ) for boss in bosses]
 
-    return await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points)
+    return [*cached_data, *await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points)]
 
 
 async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts):
+    if not reqs:
+        return []
     wcl = WCLService()
     report_id = reqs[0].report_id if reqs[0] else None
     futures = [asyncio.gather(*[wcl.get_fight_details(req, event) for event in EVENTS]) for req in reqs]
