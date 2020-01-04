@@ -84,9 +84,9 @@
       </div>
       <div>
         <span class="row-1 text-weight-bold text-negative q-pt-md text-weight-bold bg-secondary"
-           v-if="this.errorState"
+           v-if="errorState"
         >
-          {{this.errorMsg}}
+          {{errorMsg}}
         </span>
       </div>
     </q-form>

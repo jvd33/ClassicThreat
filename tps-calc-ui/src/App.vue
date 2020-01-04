@@ -71,17 +71,45 @@
 import defiance from './assets/defiance.png';
 import bt from './assets/bloodthirst.png';
 import shield_slam from './assets/shield_slam.png';
-import warr from './assets/wow_flat_warrior.png'
+import warr from './assets/wow_flat_warrior.png';
+import hs from './assets/heroic_strike.png';
+import dstance from './assets/dstance.png';
+import sunder from './assets/sunder.png';
+import demo from './assets/demo_shout.png';
+import bs from './assets/battle_shout.png';
+import rage from './assets/rage.png';
+import tc from './assets/thunder_clap.png';
+import execute from './assets/execute.png';
+import goa from './assets/goa.png';
+import healing from './assets/heal.png';
+import t1 from './assets/t1.png';
+import revenge from './assets/revenge.png';
+import taunt from './assets/taunt.png';
+
+
 export default {
   data() {
     return {
         drawer: false,
         base: '/',
         custom_icons: {
+          'app:taunt': 'img:' + taunt,
           'app:defiance': 'img:' + defiance,
           'app:bt': 'img:' + bt,
           'app:ss': 'img:' + shield_slam,
           'app:warr': 'img:' + warr,
+          'app:hs': 'img:' + hs,
+          'app:dstance': 'img:' + dstance,
+          'app:sunder': 'img:' + sunder,
+          'app:demo': 'img:' + demo,
+          'app:rage': 'img:' + rage,
+          'app:tc': 'img:' + tc,
+          'app:execute': 'img:' + execute,
+          'app:goa': 'img:' + goa,
+          'app:heals': 'img:' + healing,
+          'app:t1': 'img:' + t1,
+	  'app:revenge': 'img:' + revenge,
+	  'app:bs': 'img:' + bs,
         },
 
         calculators: [

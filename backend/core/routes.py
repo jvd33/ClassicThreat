@@ -28,4 +28,6 @@ async def calculate(req: WCLDataRequest):
 
 @api_router.get('/threat_values', tags=['api'])
 async def get_threat_values():
-    return ujson.dumps(ThreatValues.items())
+    vals = ThreatValues.items()
+    ret = [{'name': val.get('name'), **val.get('val')} for val in vals]
+    return ujson.dumps(ret)

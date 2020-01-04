@@ -18,6 +18,9 @@ origins = [
     "https://classicthreat.com",
     "http://classicthreat.com",
     "https://classicthreat.com",
+    "http://classicthreat-api:8080",
+    "http://classicthreat-api",
+    "frontend.classicthreat-service"
 ]
 
 

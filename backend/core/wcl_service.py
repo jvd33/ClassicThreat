@@ -1,11 +1,11 @@
 import requests
 import os
-
+from dotenv import load_dotenv
 from .models import BossActivityRequest
 
 
 class WCLService:
-
+    load_dotenv()
     PUB_KEY = os.getenv('WCL_PUB_KEY')
 
     def __init__(self):

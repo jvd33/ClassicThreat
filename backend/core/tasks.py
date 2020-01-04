@@ -18,16 +18,18 @@ async def get_log_data(req: WCLDataRequest):
     report_id = url_segments.path.split('/')[-1]
     fight_arg = url_segments.fragment.split('&')[0] if url_segments.fragment else None
     fight_num = fight_arg.split('=')[-1] if fight_arg else None
-
+    bosses = None
     redis = RedisClient()
     cached_data = redis.get_report_results(report_id, req.player_name)
+
     if cached_data:
-        bosses = None
         if fight_num:
             bosses = [f for f in cached_data if str(f.get('id', '')) == fight_num]
+            if bosses:
+                return bosses
         if req.bosses:
             bosses = [f for f in cached_data if f.get('name') in req.bosses]
-        if bosses:
+        if bosses and len(bosses) == len(req.bosses):
             return bosses
 
     wcl = WCLService()
@@ -36,6 +38,7 @@ async def get_log_data(req: WCLDataRequest):
     if not all_bosses:
         raise HTTPException(status_code=400,
                             detail=f'No valid boss fights found in the linked log.')
+    cached_bosses = bosses
     bosses = all_bosses
 
     if fight_num:
@@ -56,7 +59,8 @@ async def get_log_data(req: WCLDataRequest):
     realm = player_info.get('server')
 
     del player_info['fights']
-
+    if cached_bosses:
+        bosses = list(set(bosses).difference(set(cached_bosses)))
     reqs = [BossActivityRequest(
         player_id=player_info.get('id'),
         start_time=boss.get('start_time'),
