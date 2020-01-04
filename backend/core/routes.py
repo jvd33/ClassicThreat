@@ -30,4 +30,5 @@ async def calculate(req: WCLDataRequest):
 async def get_threat_values():
     vals = ThreatValues.items()
     ret = [{'name': val.get('name'), **val.get('val')} for val in vals]
+    ret.append({'name': 'Damage', 'threat_type': 'Flat', 'val': 1})
     return ujson.dumps(ret)

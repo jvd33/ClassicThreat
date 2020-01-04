@@ -14,8 +14,8 @@ class RedisClient:
         cached_data = self.__redis.smembers(key)
         if not cached_data:
             return None
-        return ujson.loads(list(cached_data))
+        return ujson.loads(str(list(cached_data)))
 
     def save_results(self, report_id: str, character: str, data):
         key = f'{report_id}:{character}'
-        return self.__redis.sadd(key, *ujson.dumps(data))
+        return self.__redis.sadd(key, ujson.dumps(data))

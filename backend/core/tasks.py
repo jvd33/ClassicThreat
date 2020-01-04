@@ -34,20 +34,24 @@ async def get_log_data(req: WCLDataRequest):
     if not all_bosses:
         raise HTTPException(status_code=400,
                             detail=f'No valid boss fights found in the linked log.')
-
-    cached_names = [name for name in cached_data.keys()]
+    
+    cached_data = cached_data or []
+    cached_names = [b.get('name') for b in cached_data]
     
     bosses = filter(lambda b: b.get('name') not in cached_names, all_bosses)  
     if not bosses:
-        return cache_data
+        return cached_data
 
     if fight_num:
         bosses = [f for f in bosses if str(f.get('id', '')) == fight_num]
+        if not bosses:
+            raise HTTPException(status_code=400, detail=f'No boss activity found matching #fight={fight_num}')
+
     if req.bosses:
         bosses = [f for f in bosses if f.get('name') in req.bosses]
         if not bosses:
             raise HTTPException(status_code=400,
-                                detail=f'No bosses activity found matching {req.bosses}')
+                                detail=f'No boss activity found matching {req.bosses}')
 
     player_info = [p for p in resp.get('friendlies') if p.get('name').lower() == req.player_name.lower()]
     if not player_info:
@@ -69,10 +73,11 @@ async def get_log_data(req: WCLDataRequest):
         report_id=report_id,
     ) for boss in bosses]
 
-    return [*cached_data, *await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points)]
+    d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.enemies_in_combat)
+    d.extend(cached_data)
+    return d
 
-
-async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts):
+async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, enemies):
     if not reqs:
         return []
     wcl = WCLService()
@@ -91,11 +96,13 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
                                             player_class=player_class,
                                             realm=realm,
                                             defiance_points=def_pts,
+                                            friendlies_in_combat=friendlies,
+                                            enemies_in_combat=enemies
                                             )
 
         tps = r.calculate_warrior_threat()
         results.append(tps)
-    ret_json = {result.boss_name: result for result in results}
+    ret_json = {result.get('boss_name'): result for result in results}
     redis = RedisClient()
     redis.save_results(report_id, player_name, ret_json)
     return ret_json
@@ -157,6 +164,7 @@ async def process_casts(data):
         'Heroic Strike': 'hs_count',
         'Revenge': 'revenge_count',
         'Thunder Clap': 'thunderclap_casts',
+        'Bloodthirst': 'bt_count',
     }
 
     data = [entry for entry in cast_entries if entry.get('name') in abilities]

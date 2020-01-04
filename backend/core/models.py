@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, AnyUrl, validator
 from typing import List
 
 from .constants import ThreatValues
@@ -9,11 +9,18 @@ class ClassDPS(BaseModel):
 
 
 class WCLDataRequest(BaseModel):
-    url: str
+    url: AnyUrl
     player_name: str
     defiance_points: int = 5
     bosses: List[str] = None
+    friendlies_in_combat: int = 1
+    enemies_in_combat: int = 1
 
+    @validator('url')
+    def check_url(cls, v):
+        assert v.host == 'classic.warcraftlogs.com' and v.path and len(v.path) > 1 and 'reports' in v.path, \
+        "Invalid Log URL."
+        return v
 
 class BossActivityRequest(BaseModel):
     player_id: int
@@ -58,10 +65,10 @@ class WarriorThreatCalculationRequest(BaseModel):
         'hs_count': lambda x, __t=__t: x * __t.HeroicStrike,
         'goa_procs': lambda x, __t=__t: x * __t.GiftOfArthas,
         'rage_gains': lambda x, __t=__t: x * __t.RageGain,
-        'hp_gains': lambda x, __t=__t: x * __t.Healing,
-        'demo_casts': lambda x, __t=__t: x * __t.DemoShout,
+        'hp_gains': lambda x, n, __t=__t: x * __t.Healing / n, # Split
+        'demo_casts': lambda x, n, __t=__t: x * __t.DemoShout / n,
         'thunderclap_casts': lambda x, __t=__t: x * __t.ThunderClap,
-        'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),
+        'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),  # N = friendlies, c = enemies
     }
 
     def calculate_warrior_threat(self):
@@ -76,7 +83,11 @@ class WarriorThreatCalculationRequest(BaseModel):
             elif name == 'bs_casts':
                 if val <= 0:
                     continue
+
+                # TODO Haven't checked, but I could probably parse out the # of targets actually affected by this Battle Shout
                 unmodified_threat += self.__modifiers.get(name)(val, self.friendlies_in_combat, self.enemies_in_combat)
+            elif name in ['hp_gains', 'demo_casts']:
+                unmodified_threat += self.__modifiers.get(name)(val, self.enemies_in_combat)
             else:
                 unmodified_threat += self.__modifiers.get(name)(val)
         tc_threat = self.__modifiers.get('thunderclap_casts')(self.thunderclap_casts)
@@ -87,13 +98,13 @@ class WarriorThreatCalculationRequest(BaseModel):
         unmodified_tps = unmodified_threat/self.time
         tps = (modified_threat + self.execute_dmg + tc_threat)/self.time
 
-        return WarriorThreatResult(
+        return dict(WarriorThreatResult(
             **dict(self),
             total_threat=unmodified_threat,
             total_threat_defiance=modified_threat,
             unmodified_tps=unmodified_tps,
             tps=tps
-        )
+        ))
 
 
 class WarriorThreatResult(WarriorThreatCalculationRequest):
@@ -112,6 +123,7 @@ class WarriorCastResponse(BaseModel):
     bs_casts: int = 0
     demo_casts: int = 0
     thunderclap_casts: int = 0
+    bt_count: int = 0
 
 
 class WarriorDamageResponse(BaseModel):
