@@ -1,4 +1,4 @@
-ssicThreat](https://classicthreat.com)
+[ClassicThreat](https://classicthreat.com)
 
 ClassicThreat is a tool meant to help tanks in Classic WoW analyze their performance. This application seeks to build on top of the extensive reporting capabilities of [Warcraft Logs](classic.warcraftlogs.com) and provide analysis that is more valuable and accessible than previously possible.
 
