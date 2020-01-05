@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md row-12 fit no-wrap overflow-auto" style="position: relative;" >
     <q-toolbar-title
-      class="text-primary text-h4 text-weight-bold q-pb-lg"
+      class="text-primary text-h2 text-center text-weight-bold q-pb-lg"
     >
       Warrior Threat Estimator
     </q-toolbar-title>
@@ -17,6 +17,7 @@
         label="Character Name"
         lazy-rules
         title=""
+        :dense="dense"
         :rules="[ val => val && val.length > 0 || 'Please type something']"
       >
       <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
@@ -31,13 +32,14 @@
         label="Log URL"
         title=""
         lazy-rules
+        :dense="dense"
         :rules="[
           val => val && val.includes('classic.warcraftlogs.com/reports/')
           || 'Please enter a valid log URL.'
         ]"
       >
         <template v-slot:prepend>
-            <q-icon name="link" />
+            <q-icon name="link" title="" />
         </template>
         <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
           To a full run or a specific fight, indicated by #fight={fight_num} in the URL fragment
@@ -50,13 +52,14 @@
         label="Points in Defiance"
         :options="options"
         lazy-rules
+        :dense="dense"
         title=""
         :rules="[
           val => (val && val >= 0 && val <= 5) || 'Invalid number of defiance points. 0 through 5, bro'
         ]"
       >
         <template v-slot:prepend>
-          <q-icon name="app:defiance" />
+          <q-icon name="app:defiance" title="" />
         </template>
         <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
           How many points the character has in defiance.
@@ -71,6 +74,7 @@
         lazy-rules
         use-chips
         stack-label
+        :dense="dense"
         multiple
         title=""
       >
@@ -78,6 +82,62 @@
           For a full report, filter which bosses you are interested in viewing data for.
         </q-tooltip>
       </q-select>
+     <div class="row">
+      <q-input
+        filled
+        class="col q-ma-lg"
+        v-model="enemies_in_combat"
+        label="(Optional) Enemies Nearby/In Combat"
+        :options="options"
+        lazy-rules
+        :dense="dense"
+        title=""
+        :rules="[
+            val => (val && !isNaN(val) && val <= 10 && val > 0) || 'Be reasonable. 1-10'
+          ]"
+        >
+          <template v-slot:prepend>
+            <q-icon name="app:bs" />
+          </template>
+          <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+            Enemies to split threat with, assuming all hits for now
+          </q-tooltip>
+        </q-input>
+        <q-input
+          filled
+          class="col q-ma-lg"
+          v-model="friendlies_in_combat"
+          label="(Optional) Friendlies Nearby/In Combat"
+          :options="options"
+          lazy-rules
+          title=""
+          :dense="dense"
+          :rules="[
+            val => (val && !isNaN(val && val <= 10 && val > 0) ) || 'Be reasonable. 1-10.'
+          ]"
+        >
+          <template v-slot:prepend>
+            <q-icon name="app:bs" />
+          </template>
+          <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+            Friendlies in combat. Once again, assuming all hits
+          </q-tooltip>
+        </q-input>
+        <q-toggle
+          class="col q-ma-lg"
+          v-model="t1"
+          label="(Optional) Tier 1 Set Bonus?"
+          lazy-rules
+          title=""
+	  icon="app:t1"
+          :dense="dense"
+        >
+          <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+            Apply the Tier 1 Sunder Armor bonus?
+          </q-tooltip>
+        </q-toggle>
+      </div>
+
 
       <div>
         <q-btn label="Estimate" type="submit" color="primary"/>
@@ -90,6 +150,7 @@
         </span>
       </div>
     </q-form>
+    <threat-result class="row-6 q-pa-sm fit overflow-auto" v-if="this.results" :results="results"/>
     <q-expansion-item
       caption="Instructions"
       :default-opened="true"
@@ -112,8 +173,6 @@
       </q-card>
     </q-expansion-item>
 
-    <threat-result class="row-6 q-pa-sm fit overflow-auto" v-if="this.results" :results="results"/>
-
   <q-inner-loading :showing="is_loading">
     <q-spinner-gears size="200px" />
     <span class="text-primary bg-secondary text-weight-bold q-pa-sm rounded-borders">
@@ -134,7 +193,10 @@ export default {
           player_name: null,
           url: null,
           defiance_points: 5,
+          enemies_in_combat: 1,
+          friendlies_in_combat: 1,
           bosses: null,
+          t1: false,
           options: [
               5, 4, 3, 2, 1, 0
           ],
@@ -165,6 +227,9 @@ export default {
           player_name: this.player_name,
           defiance_points: this.defiance_points,
           bosses: this.bosses,
+          friendlies_in_combat: this.friendlies_in_combat,
+          enemies_in_combat: this.enemies_in_combat,
+          t1_set: this.t1,
         })
         .then(response => {
           this.api_status = response.status;
@@ -174,7 +239,7 @@ export default {
         .catch(error => {
             this.errorState = true;
             this.errorMsg = error.response ?
-              error.response.data.details : 'Unexpected error. Try again later.';
+              error.response.data.detail: 'Unexpected error. Try again later.';
         })
         .finally(() => this.is_loading = false);
     },

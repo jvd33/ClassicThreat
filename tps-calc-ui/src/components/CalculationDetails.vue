@@ -1,10 +1,5 @@
 <template>
   <div class="q-pa-md">
-    <span class="row-1 text-weight-bold text-negative q-pt-md text-weight-bold bg-secondary relative-position"
-       v-if="this.errorState"
-    >
-      {{this.errorMsg}}
-    </span>
     <q-table
       title="Threat Calculation Values"
       :data="data"
@@ -22,6 +17,7 @@
             size="32px"
             :label="props.value"
 	    class="q-ma-sm"
+            title=""
           />
 	  <span class="text-right sortable">{{props.value}}</span>
         </q-td>
@@ -58,6 +54,7 @@ export default {
         case 'Healing': return 'app:heals'; 
         case 'Tier1 Bonus': return 'app:t1';
         case 'Revenge': return 'app:revenge';
+        case 'Damage': return 'app:taunt';
         default: return ability;
       };
     },

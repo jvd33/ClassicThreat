@@ -5,12 +5,12 @@
         <q-card>
           <q-card-section>
             <span class="text-h5 text-center">
-              Raw Estimated Threat Per Second: <strong class="text-h4 text-primary">{{value.tps.toPrecision(5)}}</strong>
+              Estimated Threat Per Second: <strong class="text-h5 text-primary">{{value.tps.toPrecision(5)}}</strong>
               <br/>
               <br/>
             </span>
              
-            <q-expansion-item popup default-closed icon="help" label="Raw Data">
+            <q-expansion-item popup default-closed class="bg-primary" icon="help" label="Raw Data">
               <div class="q-pa-md">
                 <q-table
                   title=""
@@ -54,10 +54,19 @@ export default {
       };
     },
     getTableCols(data) {
-      ret = []
+      let ret = [];
       for (const prop in data) { 
-        ret.push({'name': prop, 'value': data[prop]})
+        ret.push({'name': prop, 'value': data[prop]});
       }
+      if (data.bt_count > 0) {
+        ret.push({'name': 'BT CPM', 'value': data.bt_count/(data.time/60)}); 
+      } else {
+        ret.push({'name': 'Shield Slam CPM', 'value': data.shield_slam_count/(data.time/60)});
+      }
+      ret.push({'name': 'Sunder CPM', 'value': data.sunder_count/(data.time/60)});
+      ret.push({'name': 'Revenge CPM', 'value': data.revenge_count/(data.time/60)});
+      ret.push({'name': 'Heroic Strike CPM', 'value': data.hs_count/(data.time/60)});
+      ret.push({'name': 'Damage per Second', 'value': data.total_damage/(data.time/60)});
       return ret; 
     },
   },
@@ -70,10 +79,10 @@ export default {
         rowsPerPage: 0,
         sortBy: 'name',
       },
-      columns: {
+      columns: [
         { name: 'Metric', align: 'center', label: 'Metric', field: 'name', sortable: true },
         { name: 'Metric Value', align: 'center', label: 'Metric Value', field: 'value', sortable: true },
-      },
+      ],
     }
   },
 };
