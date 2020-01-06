@@ -15,6 +15,7 @@ class WCLDataRequest(BaseModel):
     bosses: List[str] = None
     friendlies_in_combat: int = 1
     enemies_in_combat: int = 1
+    t1_set: bool = False
 
     @validator('url')
     def check_url(cls, v):
@@ -53,6 +54,7 @@ class WarriorThreatCalculationRequest(BaseModel):
     player_name: str
     player_class: str
     boss_name: str
+    boss_id: int
     realm: str
 
 
@@ -74,7 +76,7 @@ class WarriorThreatCalculationRequest(BaseModel):
     def calculate_warrior_threat(self):
         exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_count',
                    'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts', 'boss_name',
-                   '__modifiers', 'defiance_key', '__t'}
+                   '__modifiers', 'defiance_key', '__t', 'boss_id'}
 
         unmodified_threat = self.total_damage
         for name, val in self.copy(exclude=exclude):
@@ -94,9 +96,9 @@ class WarriorThreatCalculationRequest(BaseModel):
 
         modified_threat = unmodified_threat * self.__t.DefensiveStance * getattr(self.__t, self.defiance_key)
 
-        unmodified_threat = unmodified_threat + tc_threat + self.execute_dmg
+        unmodified_threat = unmodified_threat + tc_threat
         unmodified_tps = unmodified_threat/self.time
-        tps = (modified_threat + self.execute_dmg + tc_threat)/self.time
+        tps = (modified_threat + tc_threat)/self.time
 
         return dict(WarriorThreatResult(
             **dict(self),

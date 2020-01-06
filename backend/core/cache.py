@@ -1,4 +1,5 @@
-import redis
+import asyncio
+import aioredis
 import datetime
 import ujson
 import os
@@ -6,16 +7,18 @@ import os
 class RedisClient:
 
     def __init__(self, *args, **kwargs):
-        redis_host = os.getenv('CACHE_HOST')
-        self.__redis = redis.Redis(host=redis_host, port=6379, db=0)
+        self.redis_host = os.getenv('CACHE_HOST')
 
-    def get_report_results(self, report_id: str, character: str):
+    async def get_report_results(self, report_id: str, character: str):
         key = f'{report_id}:{character}'
-        cached_data = self.__redis.smembers(key)
-        if not cached_data:
-            return None
-        return ujson.loads(str(list(cached_data)))
+        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=0))
+                                                            
+        cached_data = await __redis.smembers(key, encoding='utf-8')
+        return {k: v for d in cached_data for k, v in ujson.loads(d).items()}
 
-    def save_results(self, report_id: str, character: str, data):
+    async def save_results(self, report_id: str, character: str, data):
         key = f'{report_id}:{character}'
-        return self.__redis.sadd(key, ujson.dumps(data))
+        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=0))
+        d = await __redis.sadd(key, *[ujson.dumps({k: v}) for k, v in data.items()])
+        __redis.close()
+        return d

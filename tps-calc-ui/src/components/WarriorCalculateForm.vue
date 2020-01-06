@@ -143,14 +143,14 @@
         <q-btn label="Estimate" type="submit" color="primary"/>
       </div>
       <div>
-        <span class="row-1 text-weight-bold text-negative q-pt-md text-weight-bold bg-secondary"
+        <span class="row-1 text-weight-bold text-negative q-pt-md text-weight-bold text-h4"
            v-if="errorState"
         >
           {{errorMsg}}
         </span>
       </div>
     </q-form>
-    <threat-result class="row-6 q-pa-sm fit overflow-auto" v-if="this.results" :results="results"/>
+    <threat-result class="row-6 fit overflow-auto" v-if="this.results" :results="results"/>
     <q-expansion-item
       caption="Instructions"
       :default-opened="true"
@@ -167,7 +167,7 @@
           Enter your character's name exactly as it appears on the logs.<br/>
           Provide a URL to your raid log. <br/>
           Full raid logs provided will be broken down per-encounter. <br/>
-          Specific fights (indicted by #fight={fight_num}) on the end of the URL will be processed
+          Specific fights (indicated by #fight={fight_num}) on the end of the URL will be processed
           individually unless specific bosses are selected. <br/>
         </q-card-section>
       </q-card>

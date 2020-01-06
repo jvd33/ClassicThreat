@@ -8,6 +8,7 @@
       row-key="name"
       dark
       color="amber"
+      :pagination.sync="pagination"
       no-data-label="Failed to load threat values. Please try again later or file a bug report if it persists."
     >
       <template v-slot:body-cell-name="props" >

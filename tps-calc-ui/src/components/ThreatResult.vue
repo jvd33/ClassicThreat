@@ -1,25 +1,45 @@
 <template>
   <q-page>
-    <q-list bordered class="rounded-borders" v-for="(value, name) in results" :key="name">
-      <q-expansion-item :caption="name" class="q-pa-sm">
+    <q-list bordered class="rounded-borders border-color-primary q-mb-lg" v-for="(value, name) in results" :key="name">
+      <q-expansion-item :caption="name">
         <q-card>
           <q-card-section>
-            <span class="text-h5 text-center">
-              Estimated Threat Per Second: <strong class="text-h5 text-primary">{{value.tps.toPrecision(5)}}</strong>
+            <span class="text-h4 text-weight-bold text-center text-primary">
+              {{value.tps.toPrecision(5)}} <span class="text-white">Threat per Second (estimated)</span>
               <br/>
               <br/>
             </span>
-             
-            <q-expansion-item popup default-closed class="bg-primary" icon="help" label="Raw Data">
-              <div class="q-pa-md">
+            <q-list elevated dark bordered separator>
+              <q-item v-if="value.bt_count > 0" class="q-pa-md">
+                <q-item-section class="row"><span class="col-8"><q-icon name="app:bt" class="col-3 q-mr-sm" size="40px"/>                
+                Bloodthirst Casts Per Minute: {{(value.bt_count/(value.time/60)).toPrecision(4)}}</span>              
+			  </q-item>
+            <q-item v-if="value.shield_slam_count > 0" class="q-pa-md" >
+              <q-item-section class="row">
+				<span class="col-8">
+                <q-icon name="app:ss" size="40px" class="col-3 q-mr-sm"/>
+                Shield Slam Casts Per Minute: {{(value.shield_slam_count/(value.time/60)).toPrecision(4)}}</span>              
+              </q-item-section>
+            </q-item>
+            <q-item class="q-pa-md" >
+              <q-item-section class="row"><span class="col-8"><q-icon name="app:revenge" size="40px" class="col-3 q-mr-sm"/>Revenge Casts Per Minute: {{(value.revenge_count/(value.time/60)).toPrecision(4)}}</span></q-item-section>
+            </q-item>
+            <q-item class="q-pa-md" >
+              <q-item-section class="row"><span class="col-8"><q-icon name="app:sunder" class="col=3 q-mr-sm" size="40px"/>Sunder Armor Hits Per Minute: {{(value.sunder_count/(value.time/60)).toPrecision(4)}}</span></q-item-section>
+            </q-item>
+            <q-item class="q-pa-md" >
+              <q-item-section class="row"><span class="col-8"><q-icon name="app:hs" size="40px" class="col-3 q-mr-sm"/>Heroic Strike Casts Per Minute: {{(value.hs_count/(value.time/60)).toPrecision(4)}}</span></q-item-section>
+            </q-item>
+            </q-list>
+            <q-expansion-item popup flat default-closed class="bg-primary q-pt-lg" icon="help" label="Raw Data">
                 <q-table
                   title=""
+                  :pagination.sync="pagination"
                   dense
                   :data="getTableCols(value)"
                   :columns="columns"
                   row-key="name"
                 />
-              </div>  
             </q-expansion-item>
           </q-card-section>
         </q-card>
@@ -58,15 +78,6 @@ export default {
       for (const prop in data) { 
         ret.push({'name': prop, 'value': data[prop]});
       }
-      if (data.bt_count > 0) {
-        ret.push({'name': 'BT CPM', 'value': data.bt_count/(data.time/60)}); 
-      } else {
-        ret.push({'name': 'Shield Slam CPM', 'value': data.shield_slam_count/(data.time/60)});
-      }
-      ret.push({'name': 'Sunder CPM', 'value': data.sunder_count/(data.time/60)});
-      ret.push({'name': 'Revenge CPM', 'value': data.revenge_count/(data.time/60)});
-      ret.push({'name': 'Heroic Strike CPM', 'value': data.hs_count/(data.time/60)});
-      ret.push({'name': 'Damage per Second', 'value': data.total_damage/(data.time/60)});
       return ret; 
     },
   },
@@ -76,8 +87,8 @@ export default {
       errorState: false,
       errorMsg: null, 
       pagination: {
-        rowsPerPage: 0,
         sortBy: 'name',
+        rowsPerPage: 0,
       },
       columns: [
         { name: 'Metric', align: 'center', label: 'Metric', field: 'name', sortable: true },

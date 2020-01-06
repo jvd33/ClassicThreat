@@ -18,10 +18,10 @@ async def status():
 @api_router.post('/calculate', tags=['api'])
 async def calculate(req: WCLDataRequest):
     try:
-        resp = await get_log_data(req)
-        return resp
+        return await get_log_data(req)
     except HTTPError as exc:
-        raise HTTPException(status_code=exc.response.status_code)
+        raise exc
+        raise HTTPException(status_code=exc.response.status_code, detail="Bad response from WCL")
     except HTTPException as exc:
         raise exc
 

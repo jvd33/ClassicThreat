@@ -64,5 +64,5 @@ class WCLService:
             })
         resp = await self._send_scoped_request('GET', url, params=params)
         ret = resp.json()
-        ret.update({'event': event, 'boss_name': req.boss_name})
+        ret.update({'event': event, 'boss_name': req.boss_name, 'boss_id': req.encounter})
         return ret

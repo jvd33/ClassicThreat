@@ -25,7 +25,7 @@ class ThreatValues:
     ThunderClap = {'threat_type': 'Flat', 'val': 314*.8}
     BattleShout = {'threat_type': 'Flat', 'val': 56}
     Tier1Bonus = {'threat_type': 'Modifier', 'val': 1.15}
-    Execute = {'threat_type': 'Modifier', 'val': 1}
+    Execute = {'threat_type': 'Flat', 'val': 1}
 
     @staticmethod
     def vals():

@@ -1,4 +1,5 @@
 import asyncio
+import ujson
 
 from urllib.parse import urlparse
 from typing import List
@@ -13,6 +14,17 @@ EVENTS = ['damage-done', 'casts', 'resources-gains', 'healing', 'debuffs']
 
 
 async def get_log_data(req: WCLDataRequest):
+    """TODO Warning: Here be dragons
+    this is a prototype that got out of hand
+    the caching logic can definitely be separated out and error handling can be more consistent
+    """
+    def __recalculate_opts(data, req=req):
+        data['defiance_points'] = req.defiance_points
+        data['t1_set'] = req.t1_set
+        data['enemies_in_combat'] = req.enemies_in_combat
+        data['friendlies_in_combat'] = req.friendlies_in_combat
+        r = WarriorThreatCalculationRequest(**data)
+        return r.calculate_warrior_threat()
 
     url_segments = urlparse(req.url)
     report_id = url_segments.path.split('/')[-1]
@@ -20,27 +32,31 @@ async def get_log_data(req: WCLDataRequest):
     fight_num = fight_arg.split('=')[-1] if fight_arg else None
     
     redis = RedisClient()
-    cached_data = redis.get_report_results(report_id, req.player_name)
-
+    cached_data = await redis.get_report_results(report_id, req.player_name) or {}
+    cached_data = {k: __recalculate_opts(v) for k, v in cached_data.items()}
     if cached_data:
+        import copy
         if req.bosses:
-            cached_data = [f for f in cached_data if f.get('name') in req.bosses]
-            if cached_data and len(cached_data) == len(req.bosses):
-                return cached_data
-
+            t = copy.deepcopy(cached_data)
+            if all([b in t.keys() for b in req.bosses]):
+                return {k: v for k, v in sorted({a: t[a] for a in req.bosses}.items(), key=lambda x: x[1].get('boss_id'))}
+        if fight_num:
+            t = copy.deepcopy(cached_data)
+            f = {k: fight for k, fight in t.items() if str(fight.get('boss_id')) == fight_num}
+            if f:
+                return f
+    
     wcl = WCLService()
     resp = await wcl.get_full_report(report_id)
-    all_bosses = [f for f in resp.get('fights') if f.get('boss') != 0]
-    if not all_bosses:
+    bosses = [f for f in resp.get('fights') if f.get('boss') != 0]
+    if not bosses:
         raise HTTPException(status_code=400,
                             detail=f'No valid boss fights found in the linked log.')
     
-    cached_data = cached_data or []
-    cached_names = [b.get('name') for b in cached_data]
-    
-    bosses = filter(lambda b: b.get('name') not in cached_names, all_bosses)  
+
+    bosses = [boss for boss in bosses if boss.get('name') not in cached_data]
     if not bosses:
-        return cached_data
+        return {k: v for k, v in sorted(cached_data.items(), key=lambda x: x[1].get('boss_id'))}
 
     if fight_num:
         bosses = [f for f in bosses if str(f.get('id', '')) == fight_num]
@@ -61,7 +77,7 @@ async def get_log_data(req: WCLDataRequest):
     player_name = player_info.get('name')
     player_cls = player_info.get('type')
     realm = player_info.get('server')
-
+    
     del player_info['fights']
     
     reqs = [BossActivityRequest(
@@ -72,12 +88,10 @@ async def get_log_data(req: WCLDataRequest):
         boss_name=boss.get('name'),
         report_id=report_id,
     ) for boss in bosses]
-
-    d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.enemies_in_combat)
-    d.extend(cached_data)
-    return d
-
-async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, enemies):
+    d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.enemies_in_combat, req.t1_set) or {}
+    return {k: v for k, v in sorted({**d, **cached_data}.items(), key=lambda x: x[1].get('boss_id'))}
+ 
+async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, enemies, t1):
     if not reqs:
         return []
     wcl = WCLService()
@@ -90,21 +104,22 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
         for data in fight:
             resp.update({'time': data.get('totalTime') / 1000.0}) if data.get('totalTime') else {}
             info = await process_data_response(data.get('event'))(data)
-            resp.update(dict(info), boss_name=data.get('boss_name'))
+            resp.update(dict(info), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'))
         r = WarriorThreatCalculationRequest(**resp,
                                             player_name=player_name,
                                             player_class=player_class,
                                             realm=realm,
                                             defiance_points=def_pts,
                                             friendlies_in_combat=friendlies,
-                                            enemies_in_combat=enemies
+                                            enemies_in_combat=enemies,
+                                            t1_bonus=t1,
                                             )
 
         tps = r.calculate_warrior_threat()
         results.append(tps)
     ret_json = {result.get('boss_name'): result for result in results}
     redis = RedisClient()
-    redis.save_results(report_id, player_name, ret_json)
+    await redis.save_results(report_id, player_name, ret_json)
     return ret_json
 
 
