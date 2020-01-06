@@ -1,3 +1,5 @@
+![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiaGQxczA0dFVBZWpFNEhveFh0cUtqR1MvUUhXeEJhK2Q1MzBkbUJIRmpMNDlYQmx6RWQ0ckZnUGx5QmlocDFRSXBzdVFiZ1llMWJSeVQ3WHZxQ0RHSjNNPSIsIml2UGFyYW1ldGVyU3BlYyI6ImJyRHZmUVkwTTFBcWtOZ2ciLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+
 # [ClassicThreat](https://classicthreat.com)
 
 ClassicThreat is a tool meant to help tanks in Classic WoW analyze their performance. This application seeks to build on top of the extensive reporting capabilities of [Warcraft Logs](classic.warcraftlogs.com) and provide analysis that is more valuable and accessible than previously possible.
