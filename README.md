@@ -1,4 +1,4 @@
-[ClassicThreat](https://classicthreat.com)
+# [ClassicThreat](https://classicthreat.com)
 
 ClassicThreat is a tool meant to help tanks in Classic WoW analyze their performance. This application seeks to build on top of the extensive reporting capabilities of [Warcraft Logs](classic.warcraftlogs.com) and provide analysis that is more valuable and accessible than previously possible.
 
@@ -22,7 +22,7 @@ This was also kind of a tech playground for me, so there's some neat technologie
 * [FastAPI](https://github.com/tiangolo/fastapi) - A powerful, completely async alternative to some of the more traditional Python frameworks
 * [Redis](https://redis.io/) - Used to cache report results (possibly for future analysis) to improve performance primarily
 * [VueJS](https://vuejs.org/)/[Quasar](https://quasar.dev/) - A powerful and easy-to-use modern web dev framework
-* [node.js] - To support the frontend
+* [node.js](https://nodejs.org/en/) - To support the frontend
 * [AWS ECS](https://aws.amazon.com/ecs/) - The entire application is hosted in ECS, with a service for the front end, backend, and redis server to provide autoscaling and scalability as needed since this does some pretty hefty calculations
 
 ### Dev & Requirements
@@ -74,6 +74,8 @@ To report bugs/errors, simply open an issue on GitHub stating the issue, repro s
  - DPS/TPS correlation, tank survivability, CPM, etc.
  - Literally any other valuable analysis because this is so much easier than using WarcraftLogs
  - Write Tests (lazy)
+ - Refactor pretty much all the `core/tasks.py` logic
+ - Make calls to WCL more performant, they seem to not be running concurrently
 
 License
 ----
