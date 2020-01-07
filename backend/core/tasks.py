@@ -1,5 +1,7 @@
 import asyncio
 import ujson
+import aiohttp
+import logging
 
 from urllib.parse import urlparse
 from typing import List
@@ -12,8 +14,9 @@ from .cache import RedisClient
 
 EVENTS = ['damage-done', 'casts', 'resources-gains', 'healing', 'debuffs']
 
+logger = logging.getLogger()
 
-async def get_log_data(req: WCLDataRequest):
+async def get_log_data(req: WCLDataRequest, session):
     """TODO Warning: Here be dragons
     this is a prototype that got out of hand
     the caching logic can definitely be separated out and error handling can be more consistent
@@ -31,9 +34,14 @@ async def get_log_data(req: WCLDataRequest):
     fight_arg = url_segments.fragment.split('&')[0] if url_segments.fragment else None
     fight_num = fight_arg.split('=')[-1] if fight_arg and fight_arg.split('=')[-1].isdigit() else None
     
-    redis = RedisClient()
-    cached_data = await redis.get_report_results(report_id, req.player_name) or {}
-    cached_data = {k: __recalculate_opts(v) for k, v in cached_data.items()}
+    try:
+        redis = RedisClient()
+        cached_data = await redis.get_report_results(report_id, req.player_name) or {}
+        cached_data = {k: __recalculate_opts(v) for k, v in cached_data.items()}
+    except Exception as exc:
+        logger.error(f'Failed to read from cache {exc}')
+        cached_data = {}
+
     if cached_data:
         import copy
         if req.bosses:
@@ -46,9 +54,9 @@ async def get_log_data(req: WCLDataRequest):
             if f:
                 return f
     
-    wcl = WCLService()
+    wcl = WCLService(session=session)
     resp = await wcl.get_full_report(report_id)
-    bosses = [f for f in resp.get('fights') if f.get('boss') != 0]
+    bosses = [f for f in resp.get('fights', []) if f.get('boss') != 0]
     if not bosses:
         raise HTTPException(status_code=400,
                             detail=f'No valid boss fights found in the linked log.')
@@ -88,13 +96,13 @@ async def get_log_data(req: WCLDataRequest):
         boss_name=boss.get('name'),
         report_id=report_id,
     ) for boss in bosses]
-    d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.enemies_in_combat, req.t1_set) or {}
+    d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.enemies_in_combat, req.t1_set, session) or {}
     return {k: v for k, v in sorted({**d, **cached_data}.items(), key=lambda x: x[1].get('boss_id'))}
  
-async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, enemies, t1):
+async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, enemies, t1, session):
     if not reqs:
         return []
-    wcl = WCLService()
+    wcl = WCLService(session=session)
     report_id = reqs[0].report_id if reqs[0] else None
     futures = [asyncio.gather(*[wcl.get_fight_details(req, event) for event in EVENTS]) for req in reqs]
     future_results = await asyncio.gather(*futures)
@@ -118,8 +126,11 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
         tps = r.calculate_warrior_threat()
         results.append(tps)
     ret_json = {result.get('boss_name'): result for result in results}
-    redis = RedisClient()
-    await redis.save_results(report_id, player_name, ret_json)
+    try:
+        redis = RedisClient()
+        await redis.save_results(report_id, player_name, ret_json)
+    except Exception as exc:
+        logger.error(f'Failed to write to cache {exc}')
     return ret_json
 
 
