@@ -17,19 +17,19 @@ phases:
     - echo Build started on `date`
     - echo Building backend Docker image...
     - cd backend
-    - echo CACHE_HOST=$CACHE_HOST WCL_PUB_KEY=$WCL_PUB_KEY >> .env.production
+    - echo CACHE_HOST=$CACHE_HOST >> .env.production && echo WCL_PUB_KEY=$WCL_PUB_KEY >> .env.production
     - docker build -t classicthreat-api .
     - docker tag classicthreat-api:latest $BACKEND_REPO
     - echo Built and tagged backend. Building frontend...
     - cd ../tps-calc-ui
-    - echo NODE_ENV=$NODE_ENV VUE_APP_API_URL=$VUE_APP_API_URL >> .env.production
+    - echo NODE_ENV=$NODE_ENV >> .env.production && echo VUE_APP_API_URL=$VUE_APP_API_URL >> .env.production
     - docker build -t classicthreat-ui .
     - docker tag classicthreat-ui:latest $UI_REPO
-    - Front end built.
+    - echo Front end built.
   post_build: 
     commands: 
     - echo Build completed on `date` 
     - echo pushing images...
     - docker push $UI_REPO
     - docker push $BACKEND_REPO
-
+    - echo SUCCESS
