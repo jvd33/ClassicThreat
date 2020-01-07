@@ -191,6 +191,7 @@ async def process_casts(data):
         'Revenge': 'revenge_count',
         'Thunder Clap': 'thunderclap_casts',
         'Bloodthirst': 'bt_count',
+        'Cleave': 'cleave_count',
     }
 
     data = [entry for entry in cast_entries if entry.get('name') in abilities]

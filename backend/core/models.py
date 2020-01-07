@@ -72,7 +72,7 @@ class WarriorThreatCalculationRequest(BaseModel):
         'demo_casts': lambda x, n, __t=__t: x * __t.DemoShout / n,
         'thunderclap_casts': lambda x, __t=__t: x * __t.ThunderClap,
         'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),  # N = friendlies, c = enemies
-        'cleave_count': lambda x, __t__=__t: x * __t.Cleave,
+        'cleave_count': lambda x, __t=__t: x * __t.Cleave,
     }
 
     def calculate_warrior_threat(self):

@@ -1,23 +1,18 @@
 <template>
   <q-page>
-    <q-list bordered class="rounded-borders border-color-primary q-mb-lg" v-for="(value, name) in results" :key="name">
+    <q-list bordered class="rounded-borders border-color-primary q-mb-lg" v-for="(value, name) in resultData" :key="name">
       <q-expansion-item :caption="name">
         <q-card>
           <q-card-section>
-            <span class="text-h4 text-weight-bold text-center text-primary">
+            <span class="text-h4 text-weight-bold text-center text-primary row-auto">
               {{value.tps.toPrecision(5)}} <span class="text-white">Threat per Second (estimated)</span>
               <br/>
               <br/>
             </span>
-            <q-item v-if="value.bt_count > 0" class="q-pa-md">
-              <q-item-section class="row"><span class="col-8"><q-icon name="app:bt" class="col-3 q-mr-sm" size="40px"/>
-              Bloodthirst Casts Per Minute: <strong>{{(value.bt_count/(value.time/60)).toPrecision(4)}}</strong></span>
-              </q-item-section>
+            <q-item class="q-pa-md row-auto" >
+              <q-item-section class="row"><span class="col-8"><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span></q-item-section>
             </q-item>
             <q-list elevated dark bordered separator class="q-ma-md">
-              <q-item class="q-pa-md" >
-                <q-item-section class="row"><span class="col-8"><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(4)}}</strong></span></q-item-section>
-              </q-item>
               <q-item v-if="value.bt_count > 0" class="q-pa-md">
                 <q-item-section class="row"><span class="col-8"><q-icon name="app:bt" class="col-3 q-mr-sm" size="40px"/>
                 Bloodthirst Casts Per Minute: <strong>{{(value.bt_count/(value.time/60)).toPrecision(4)}}</strong></span>
@@ -44,34 +39,35 @@
               <q-item-section class="row"><span class="col-8"><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
             </q-item>
             </q-list>
-            <q-expansion-item flat class="q-pt-lg" icon="" label="DPS Rip Thresholds">
+            <q-item class="row-12">
+                          <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-6" label="DPS Rip Thresholds" icon="warning">
               <q-table
                 title=""
+                class="q-ma-md"
                 :pagination.sync="threat_pagination"
                 dense
-                :columns="getThreatTableCols()"
+                :columns="threatCols"
                 :data="getThreatTableData(value.tps)"
-                row-key="dps"
-                hide-header
+                row-key="player_class"
                 hide-bottom
               >
-                <template v-slot:body-cell-name="data">
-                  <q-td v-bind:class="{ background: data.faction }">
+                <template v-slot:body-cell-name="props">
+                  <q-td v-bind:class="{ background: props.row.faction }" :props="props">
                     <q-icon
-                      :name="getIcon(data.player_class)"
-                      size="32px"
-                      :label="data.player_class"
+                      :name="getIcon(props.value)"
+                      size="20px"
+                      :label="props.value"
                       class="q-ma-sm"
                       title=""
                     />
-                    <span class="text-right" v-if="!data.tranq || data.faction === 'Alliance'">Rip at: {{data.dps}} DPS (very roughly estimated!)</span>
-                    <span class="text-right" v-if="data.tranq && data.faction === 'Horde'">Rip at: {{(data.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
-                    <q-toggle :icon="'app:tranq'" dense v-model="data.tranq" v-if="data.faction === 'Horde'" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
+                    <span class="text-right" v-if="!props.row.tranq || props.row.faction === 'Alliance'">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
+                    <span class="text-right" v-if="props.row.tranq && props.row.faction === 'Horde'">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
+                    <q-toggle :icon="'app:tranq'" dense v-model="props.row.tranq" v-if="props.row.faction === 'Horde'" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
                   </q-td>
                 </template>
               </q-table>
             </q-expansion-item>
-            <q-expansion-item popup flat default-closed class="bg-primary q-pt-lg" icon="help" label="Raw Data">
+            <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-6" icon="help" label="Raw Data">
                 <q-table
                   title=""
                   :pagination.sync="pagination"
@@ -79,8 +75,11 @@
                   :data="getTableCols(value)"
                   :columns="columns"
                   row-key="name"
+                  class="q-ma-md"
+                  hide-bottom
                 />
             </q-expansion-item>
+            </q-item>
           </q-card-section>
         </q-card>
       </q-expansion-item>
@@ -90,7 +89,7 @@
 <script>
 export default {
   name: 'ThreatResult',
-  props: ['results'],
+  resultData: ['results'],
   methods: {
     getIcon(ability) {
       if (ability.includes('Defiance')) return 'app:defiance';
@@ -137,8 +136,8 @@ export default {
       };
       let ret = [];
       Object.keys(classes).forEach((k) => {
-          ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/classes[k].mod).toPrecision(4), faction: 'Horde' });
-          ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7)).toPrecision(4), faction: 'Alliance' });
+          ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/classes[k].mod).toPrecision(4), faction: 'Horde', tranq: false });
+          ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7)).toPrecision(4), faction: 'Alliance', tranq: false });
       });
       return ret;
     },
@@ -162,8 +161,10 @@ export default {
         { name: 'Metric Value', align: 'center', label: 'Metric Value', field: 'value', sortable: true },
       ],
       threatCols:  [
-        { name: 'Player Class', align: 'center', label: 'Player Class', field: 'class', sortable: true },
-        { name: 'DPS to Rip Aggro', align: 'center', label: 'DPS to Rip', field: 'dps', sortable: true }
+        { name: 'Player Class', align: 'center', label: 'Player Class', field: 'player_class', sortable: false },
+        { name: 'DPS to Rip Aggro', align: 'center', label: 'DPS to Rip', field: 'dps', sortable: false },
+        { name: 'Faction', align: 'center', label: 'Faction', field: 'faction', sortable: false},
+        { name: 'Tranquil Air', align: 'center', label: 'Tranquil Air', field: 'tranq', sortable: false }
       ],
     }
   },
