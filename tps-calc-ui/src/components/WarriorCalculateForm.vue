@@ -161,8 +161,7 @@
             THIS IS A WORK IN PROGRESS. THESE RESULTS ARE ESTIMATIONS. <br/>
           </span><br/>
           <span class="h6 text-accent">
-            Contact coandca#1313 on Discord with bug reports or see
-            <router-link :to="'About'" class="text-accent text-weight-bold">About</router-link> for more contact methods.
+            To contribute, report bugs, or propose features, see <router-link :to="'About'" class="text-accent text-weight-bold">about</router-link>
           </span> <br/><br/>
           Enter your character's name exactly as it appears on the logs.<br/>
           Provide a URL to your raid log. <br/>

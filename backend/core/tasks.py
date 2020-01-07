@@ -29,7 +29,7 @@ async def get_log_data(req: WCLDataRequest):
     url_segments = urlparse(req.url)
     report_id = url_segments.path.split('/')[-1]
     fight_arg = url_segments.fragment.split('&')[0] if url_segments.fragment else None
-    fight_num = fight_arg.split('=')[-1] if fight_arg else None
+    fight_num = fight_arg.split('=')[-1] if fight_arg.split('=')[-1].isdigit() else None
     
     redis = RedisClient()
     cached_data = await redis.get_report_results(report_id, req.player_name) or {}
