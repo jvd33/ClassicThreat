@@ -147,7 +147,7 @@ export default {
       let ret = [];
       Object.keys(classes).forEach((k) => {
           ret.push({class: k, dps: ((tps*classes[k].rip_at)/classes[k].mod).toPrecision(4), faction: 'Horde' });
-          ret.push({class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7).toPrecision(4), faction: 'Alliance' });
+          ret.push({class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7)).toPrecision(4), faction: 'Alliance' });
       });
       return ret;
     },
