@@ -14,7 +14,7 @@
 
     <q-drawer
       v-model="drawer"
-      class="fixed-left"
+      class="fixed-left z-max"
       show-if-above
       elevated
       :width="200"

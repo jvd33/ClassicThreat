@@ -11,14 +11,15 @@
             </span>
             <q-list elevated dark bordered separator>
               <q-item v-if="value.bt_count > 0" class="q-pa-md">
-                <q-item-section class="row"><span class="col-8"><q-icon name="app:bt" class="col-3 q-mr-sm" size="40px"/>                
-                Bloodthirst Casts Per Minute: {{(value.bt_count/(value.time/60)).toPrecision(4)}}</span>              
-			  </q-item>
+                <q-item-section class="row"><span class="col-8"><q-icon name="app:bt" class="col-3 q-mr-sm" size="40px"/>
+                Bloodthirst Casts Per Minute: {{(value.bt_count/(value.time/60)).toPrecision(4)}}</span>
+                </q-item-section>
+			        </q-item>
             <q-item v-if="value.shield_slam_count > 0" class="q-pa-md" >
               <q-item-section class="row">
-				<span class="col-8">
-                <q-icon name="app:ss" size="40px" class="col-3 q-mr-sm"/>
-                Shield Slam Casts Per Minute: {{(value.shield_slam_count/(value.time/60)).toPrecision(4)}}</span>              
+				        <span class="col-8">
+                  <q-icon name="app:ss" size="40px" class="col-3 q-mr-sm"/>
+                    Shield Slam Casts Per Minute: {{(value.shield_slam_count/(value.time/60)).toPrecision(4)}}</span>
               </q-item-section>
             </q-item>
             <q-item class="q-pa-md" >
@@ -55,7 +56,7 @@ export default {
   methods: {
     getIcon(ability) {
       if (ability.includes('Defiance')) return 'app:defiance';
-      switch(ability) { 
+      switch(ability) {
         case 'Bloodthirst': return 'app:bt';
         case 'Shield Slam': return 'app:ss';
         case 'Heroic Strike': return 'app:hs';
@@ -67,7 +68,7 @@ export default {
         case 'Thunder Clap': return 'app:tc';
         case 'Execute': return 'app:execute';
         case 'Gift Of Arthas': return 'app:goa';
-        case 'Healing': return 'app:heals'; 
+        case 'Healing': return 'app:heals';
         case 'Tier1 Bonus': return 'app:t1';
         case 'Revenge': return 'app:revenge';
         default: return ability;
@@ -75,17 +76,17 @@ export default {
     },
     getTableCols(data) {
       let ret = [];
-      for (const prop in data) { 
+      for (const prop in data) {
         ret.push({'name': prop, 'value': data[prop]});
       }
-      return ret; 
+      return ret;
     },
   },
   data () {
     return {
       name: 'RawResults',
       errorState: false,
-      errorMsg: null, 
+      errorMsg: null,
       pagination: {
         sortBy: 'name',
         rowsPerPage: 0,
