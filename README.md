@@ -14,7 +14,9 @@ Given a link to a Warcraft logs report (optionally with a fight URL fragment to 
   - Given the boss fight information, the application requests performance metrics for each specific boss encounter (which you can see in more detail on the website itself)
   - Processes the responses and estimates threat per second from ability usage and other events seen in the logs
 
-Hopefully, this will be improved upon and we can get some actually valuable tank metrics spread around
+Hopefully, this will be improved upon and we can get some actually valuable tank metrics spread around.
+
+To view the calculation logic, check out [`calculate_warrior_threat`](backend/core/models.py#L76)
 
 ### Tech
 
