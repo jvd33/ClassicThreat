@@ -72,6 +72,14 @@ import defiance from './assets/defiance.png';
 import bt from './assets/bloodthirst.png';
 import shield_slam from './assets/shield_slam.png';
 import warr from './assets/wow_flat_warrior.png';
+import druid from './assets/wow_flat_druid.png';
+import hunter from './assets/wow_flat_hunter.png';
+import mage from './assets/wow_flat_mage.png';
+import paladin from './assets/wow_flat_paladin.png';
+import priest from './assets/wow_flat_priest.png';
+import rogue from './assets/wow_flat_rogue.png';
+import shaman from './assets/wow_flat_shaman.png';
+import warlock from './assets/wow_flat_warlock.png';
 import hs from './assets/heroic_strike.png';
 import dstance from './assets/dstance.png';
 import sunder from './assets/sunder.png';
@@ -85,7 +93,6 @@ import healing from './assets/heal.png';
 import t1 from './assets/t1.png';
 import revenge from './assets/revenge.png';
 import taunt from './assets/taunt.png';
-
 
 export default {
   data() {
@@ -108,8 +115,16 @@ export default {
           'app:goa': 'img:' + goa,
           'app:heals': 'img:' + healing,
           'app:t1': 'img:' + t1,
-	  'app:revenge': 'img:' + revenge,
-	  'app:bs': 'img:' + bs,
+          'app:revenge': 'img:' + revenge,
+          'app:bs': 'img:' + bs,
+          'app:druid': 'img:' + druid,
+          'app:hunter': 'img:' + hunter,
+          'app:mage': 'img:' + mage,
+          'app:paladin': 'img:' + paladin,
+          'app:priest': 'img:' + priest,
+          'app:rogue': 'img:' + rogue,
+          'app:shaman': 'img:' + shaman,
+          'app:warlock': 'img:' + warlock,
         },
 
         calculators: [

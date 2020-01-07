@@ -14,18 +14,18 @@
       <template v-slot:body-cell-name="props" >
         <q-td>
           <q-icon
-            :name="getIcon(props.value)" 
+            :name="getIcon(props.value)"
             size="32px"
             :label="props.value"
-	    class="q-ma-sm"
+	          class="q-ma-sm"
             title=""
           />
-	  <span class="text-right sortable">{{props.value}}</span>
+	        <span class="text-right sortable">{{props.value}}</span>
         </q-td>
       </template>
 
     </q-table>
-    
+
   </div>
 </template>
 
@@ -40,7 +40,7 @@ export default {
   methods: {
     getIcon(ability) {
       if (ability.includes('Defiance')) return 'app:defiance';
-      switch(ability) { 
+      switch(ability) {
         case 'Bloodthirst': return 'app:bt';
         case 'Shield Slam': return 'app:ss';
         case 'Heroic Strike': return 'app:hs';
@@ -52,7 +52,7 @@ export default {
         case 'Thunder Clap': return 'app:tc';
         case 'Execute': return 'app:execute';
         case 'Gift Of Arthas': return 'app:goa';
-        case 'Healing': return 'app:heals'; 
+        case 'Healing': return 'app:heals';
         case 'Tier1 Bonus': return 'app:t1';
         case 'Revenge': return 'app:revenge';
         case 'Damage': return 'app:taunt';
@@ -65,7 +65,7 @@ export default {
       name: 'CalculationDetails',
       loading: true,
       errorState: false,
-      errorMsg: null, 
+      errorMsg: null,
       pagination: {
         rowsPerPage: 0,
         sortBy: 'val',

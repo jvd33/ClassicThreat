@@ -76,29 +76,29 @@ class WarriorThreatCalculationRequest(BaseModel):
     def calculate_warrior_threat(self):
         exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_count',
                    'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts', 'boss_name',
-                   '__modifiers', 'defiance_key', '__t', 'boss_id'}
+                   '__modifiers', 'defiance_key', '__t', 'boss_id', 'rage_gains', 'hp_gains'}
 
         unmodified_threat = self.total_damage
         for name, val in self.copy(exclude=exclude):
             if name == 'sunder_count':
                 unmodified_threat += self.__modifiers.get(name)(val, self.t1_set)
             elif name == 'bs_casts':
-                if val <= 0:
-                    continue
-
                 # TODO Haven't checked, but I could probably parse out the # of targets actually affected by this Battle Shout
                 unmodified_threat += self.__modifiers.get(name)(val, self.friendlies_in_combat, self.enemies_in_combat)
-            elif name in ['hp_gains', 'demo_casts']:
+            elif name == 'demo_casts':
                 unmodified_threat += self.__modifiers.get(name)(val, self.enemies_in_combat)
             else:
                 unmodified_threat += self.__modifiers.get(name)(val)
+
         tc_threat = self.__modifiers.get('thunderclap_casts')(self.thunderclap_casts)
+        rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains)
+        healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains, self.enemies_in_combat)
 
         modified_threat = unmodified_threat * self.__t.DefensiveStance * getattr(self.__t, self.defiance_key)
 
-        unmodified_threat = unmodified_threat + tc_threat
+        unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat
         unmodified_tps = unmodified_threat/self.time
-        tps = (modified_threat + tc_threat)/self.time
+        tps = (modified_threat + tc_threat + rage_threat + healing_threat)/self.time
 
         return dict(WarriorThreatResult(
             **dict(self),

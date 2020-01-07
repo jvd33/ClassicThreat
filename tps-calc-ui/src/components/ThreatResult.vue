@@ -9,6 +9,11 @@
               <br/>
               <br/>
             </span>
+            <q-item v-if="value.bt_count > 0" class="q-pa-md">
+              <q-item-section class="row"><span class="col-8"><q-icon name="app:bt" class="col-3 q-mr-sm" size="40px"/>
+              Bloodthirst Casts Per Minute: <strong>{{(value.bt_count/(value.time/60)).toPrecision(4)}}</strong></span>
+              </q-item-section>
+            </q-item>
             <q-list elevated dark bordered separator class="q-ma-md">
               <q-item class="q-pa-md" >
                 <q-item-section class="row"><span class="col-8"><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(4)}}</strong></span></q-item-section>
@@ -39,6 +44,35 @@
               <q-item-section class="row"><span class="col-8"><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
             </q-item>
             </q-list>
+            <q expansion-item flat class="q-pt-lg" icon="" label="DPS Rip Thresholds">
+                <q-table
+                  title=""
+                  :pagination.sync="threat_pagination"
+                  dense
+                  :columns="getThreatTableCols()"
+                  :data="getThreatTableData(value.tps)
+                  row-key="dps"
+                  hide-header
+                  hide-bottom
+                  selection="multi"
+                  :selected.sync="selected"
+                >
+                  <template v-slot:body-cell-name="props">
+                    <q-td v-bind:class="{'bg-alliance': props.faction === 'Alliance', 'bg-horde': props.faction === 'Horde'}">
+                        <q-icon
+                          :name="getIcon(props.player_class)"
+                          size="32px"
+                          :label="props.player_class"
+                          class="q-ma-sm"
+                          title=""
+                        />
+                      <span class="text-right" v-if="!props.tranq || props.faction === 'Alliance'>Rip at: {{props.dps}} DPS (very roughly estimated!)</span>
+                      <span class="text-right" v-if="props.tranq && props.faction === 'Horde'>Rip at: {{(props.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
+                      <q-toggle :icon="app:dstance" dense v-model="props.tranq" v-if="props.faction === 'Horde' label="Enable Tranquil Air Totem Modifier?"/>
+                    </q-td>
+                  </template>
+                </q-table>
+            </q-expansion-item>
             <q-expansion-item popup flat default-closed class="bg-primary q-pt-lg" icon="help" label="Raw Data">
                 <q-table
                   title=""
@@ -78,6 +112,12 @@ export default {
         case 'Healing': return 'app:heals';
         case 'Tier1 Bonus': return 'app:t1';
         case 'Revenge': return 'app:revenge';
+        case 'Warrior': return 'app:warr';
+        case 'Mage': return 'app:mage';
+        case 'Warlock (with imp)': return 'app:warlock';
+        case 'Rogue': return 'app:rogue';
+        case 'Druid': return 'app:druid';
+        case 'Hunter': return 'app:hunter';
         default: return ability;
       };
     },
@@ -88,6 +128,28 @@ export default {
       }
       return ret;
     },
+    getThreatTableCols() {
+      return [
+        { name: 'Player Class', align: 'center', label: 'Player Class', field: 'class', sortable: true },
+        { name: 'DPS to Rip', align: 'center', label: 'DPS to Rip', field: 'dps', sortable: true }
+      ]
+    },
+    getThreatTableData(tps) {
+      let classes = {
+        'Warrior': {mod: .8, rip_at: 1.1},
+        'Mage': {mod: .7, rip_at: 1.3},
+        'Warlock (with imp)': {mod: .8, rip_at: 1.3},
+        'Rogue': {mod: .71, rip_at: 1.1},
+        'Druid': {mod: .71, rip_at: 1.3},
+        'Hunter': {mod: 1, rip_at: 1.3},
+      };
+      let ret = [];
+      Object.keys(classes).forEach((k) => {
+          ret.push({class: k, dps: ((tps*classes[k].rip_at)/classes[k].mod).toPrecision(4), faction: 'Horde' });
+          ret.push({class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7).toPrecision(4), faction: 'Alliance' });
+      });
+      return ret;
+    },
   },
   data () {
     return {
@@ -96,6 +158,11 @@ export default {
       errorMsg: null,
       pagination: {
         sortBy: 'name',
+        rowsPerPage: 0,
+      },
+      threat_pagination: {
+        sortBy: 'faction',
+        descending: false,
         rowsPerPage: 0,
       },
       columns: [
