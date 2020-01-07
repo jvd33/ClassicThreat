@@ -168,6 +168,8 @@
           Full raid logs provided will be broken down per-encounter. <br/>
           Specific fights (indicated by #fight={fight_num}) on the end of the URL will be processed
           individually unless specific bosses are selected. <br/>
+		  Note: For encounters with multiple enemies, the calculation does not differentiate between them (yet) so threat values are not representative of TPS for the actual named boss. </br>
+		  Instead, it represents total TPS for every enemy fought during the same time window as the boss.
         </q-card-section>
       </q-card>
     </q-expansion-item>
