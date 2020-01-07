@@ -20,7 +20,7 @@
         :dense="dense"
         :rules="[ val => val && val.length > 0 || 'Please type something']"
       >
-      <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+      <q-tooltip :delay="750" anchor="bottom" self="bottom">
         As it appears in the provided log.
       </q-tooltip>
       </q-input>
@@ -41,7 +41,7 @@
         <template v-slot:prepend>
             <q-icon name="link" title="" />
         </template>
-        <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+        <q-tooltip :delay="750" anchor="bottom" self="bottom">
           To a full run or a specific fight, indicated by #fight={fight_num} in the URL fragment
         </q-tooltip>
       </q-input>
@@ -61,7 +61,7 @@
         <template v-slot:prepend>
           <q-icon name="app:defiance" title="" />
         </template>
-        <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+        <q-tooltip :delay="750" anchor="bottom" self="bottom">
           How many points the character has in defiance.
         </q-tooltip>
       </q-select>
@@ -78,7 +78,7 @@
         multiple
         title=""
       >
-        <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+        <q-tooltip :delay="750" anchor="bottom" self="bottom">
           For a full report, filter which bosses you are interested in viewing data for.
         </q-tooltip>
       </q-select>
@@ -99,7 +99,7 @@
           <template v-slot:prepend>
             <q-icon name="app:bs" />
           </template>
-          <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+          <q-tooltip :delay="750" anchor="bottom" self="bottom">
             Enemies to split threat with, assuming all hits for now
           </q-tooltip>
         </q-input>
@@ -119,7 +119,7 @@
           <template v-slot:prepend>
             <q-icon name="app:bs" />
           </template>
-          <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+          <q-tooltip :delay="750" anchor="bottom" self="bottom">
             Friendlies in combat. Once again, assuming all hits
           </q-tooltip>
         </q-input>
@@ -132,7 +132,7 @@
 	  icon="app:t1"
           :dense="dense"
         >
-          <q-tooltip :delay="750" anchor="bottom left" self="bottom left">
+          <q-tooltip :delay="750" anchor="bottom" self="bottom">
             Apply the Tier 1 Sunder Armor bonus?
           </q-tooltip>
         </q-toggle>
