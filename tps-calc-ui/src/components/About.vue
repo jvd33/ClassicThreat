@@ -17,7 +17,13 @@
           <br/><br/>
           For urgent bugs, feel free to message me on Discord.
           <br/><br/>
-
+          <span class="text-primary text-h4">Future planned features:<br/></span><br/>
+            - Calculate DPS needed to rip given the TPS per class<br/>
+            - Split TPS across individual mobs in the boss encounters (e.g. Lucifron TPS, Flamewaker 1 TPS, Flamewaker 2 TPS) <br/>
+            - Bear tanks<br/>
+            - Paladin tanks? (lol memespec)<br/>
+            - DPS/TPS correlation, tank survivability, CPM, etc.<br/>
+            - Literally any other valuable analysis because this is so much easier than using the WarcraftLogs UI<br/><br/>
           <span class="text-primary text-h4">Thanks to:<br/></span><br/>
             - Fight Club <br/>
             - Dhoris/AutumnRain for his great work on the initial TPS spreadsheet <br/>

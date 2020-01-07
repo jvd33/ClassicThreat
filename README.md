@@ -79,7 +79,6 @@ To report bugs/errors, simply open an issue on GitHub stating the issue, repro s
  - Literally any other valuable analysis because this is so much easier than using WarcraftLogs
  - Write Tests (lazy)
  - Refactor pretty much all the `core/tasks.py` logic
- - Make calls to WCL more performant, they seem to not be running concurrently
 
 License
 ----
