@@ -1,4 +1,4 @@
-![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiaGQxczA0dFVBZWpFNEhveFh0cUtqR1MvUUhXeEJhK2Q1MzBkbUJIRmpMNDlYQmx6RWQ0ckZnUGx5QmlocDFRSXBzdVFiZ1llMWJSeVQ3WHZxQ0RHSjNNPSIsIml2UGFyYW1ldGVyU3BlYyI6ImJyRHZmUVkwTTFBcWtOZ2ciLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiV2FxUGtoc05KOEVUeXdkbEVHK2NUM3hXTjkzaEk2dTd0YWVhZy92djZNVnlrcE15NFVIRXMvRk81STV0QldOTTRNRER1dURLaGV3czNSbGs5NWkyNXZrPSIsIml2UGFyYW1ldGVyU3BlYyI6IjQ2cHJqb1dXckVDVW14MGwiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 
 # [ClassicThreat](https://classicthreat.com)
 
