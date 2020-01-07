@@ -56,6 +56,7 @@ export default {
         case 'Tier1 Bonus': return 'app:t1';
         case 'Revenge': return 'app:revenge';
         case 'Damage': return 'app:taunt';
+        case 'Cleave': return 'app:cleave';
         default: return ability;
       };
     },

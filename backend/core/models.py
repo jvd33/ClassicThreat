@@ -45,6 +45,7 @@ class WarriorThreatCalculationRequest(BaseModel):
     total_damage: int = 0
     t1_set: bool = False
     defiance_points: int = 5
+    cleave_count: int = 0
     bs_casts: int = 0
     demo_casts: int = 0
     thunderclap_casts: int = 0
@@ -71,6 +72,7 @@ class WarriorThreatCalculationRequest(BaseModel):
         'demo_casts': lambda x, n, __t=__t: x * __t.DemoShout / n,
         'thunderclap_casts': lambda x, __t=__t: x * __t.ThunderClap,
         'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),  # N = friendlies, c = enemies
+        'cleave_count': lambda x, __t__=__t: x * __t.Cleave,
     }
 
     def calculate_warrior_threat(self):
@@ -126,7 +128,7 @@ class WarriorCastResponse(BaseModel):
     demo_casts: int = 0
     thunderclap_casts: int = 0
     bt_count: int = 0
-
+    cleave_count: int = 0
 
 class WarriorDamageResponse(BaseModel):
     total_damage: int = 0

@@ -68,7 +68,7 @@
                         />
                       <span class="text-right" v-if="!props.tranq || props.faction === 'Alliance'>Rip at: {{props.dps}} DPS (very roughly estimated!)</span>
                       <span class="text-right" v-if="props.tranq && props.faction === 'Horde'>Rip at: {{(props.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
-                      <q-toggle :icon="app:dstance" dense v-model="props.tranq" v-if="props.faction === 'Horde' label="Enable Tranquil Air Totem Modifier?"/>
+                      <q-toggle :icon="app:tranq" dense v-model="props.tranq" v-if="props.faction === 'Horde' label="Enable Tranquil Air Totem Modifier?"/>
                     </q-td>
                   </template>
                 </q-table>
@@ -118,6 +118,7 @@ export default {
         case 'Rogue': return 'app:rogue';
         case 'Druid': return 'app:druid';
         case 'Hunter': return 'app:hunter';
+        case 'Cleave': return 'app:cleave';
         default: return ability;
       };
     },

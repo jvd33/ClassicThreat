@@ -93,6 +93,8 @@ import healing from './assets/heal.png';
 import t1 from './assets/t1.png';
 import revenge from './assets/revenge.png';
 import taunt from './assets/taunt.png';
+import cleave from './assets/cleave.png';
+import tranq from './assets/tranq.png';
 
 export default {
   data() {
@@ -125,6 +127,8 @@ export default {
           'app:rogue': 'img:' + rogue,
           'app:shaman': 'img:' + shaman,
           'app:warlock': 'img:' + warlock,
+          'app:tranq': 'img:' + tranq,
+          'app:cleave': 'img:' + cleave,
         },
 
         calculators: [
