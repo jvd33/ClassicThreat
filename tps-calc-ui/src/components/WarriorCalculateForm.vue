@@ -20,7 +20,7 @@
         :dense="dense"
         :rules="[ val => val && val.length > 0 || 'Please type something']"
       >
-      <q-tooltip :delay="750" anchor="bottom" self="bottom">
+      <q-tooltip :delay="750" anchor="bottom middle" self="top middle">
         As it appears in the provided log.
       </q-tooltip>
       </q-input>
@@ -41,7 +41,7 @@
         <template v-slot:prepend>
             <q-icon name="link" title="" />
         </template>
-        <q-tooltip :delay="750" anchor="bottom" self="bottom">
+        <q-tooltip :delay="750" anchor="bottom middle" self="top middle">
           To a full run or a specific fight, indicated by #fight={fight_num} in the URL fragment
         </q-tooltip>
       </q-input>
@@ -61,7 +61,7 @@
         <template v-slot:prepend>
           <q-icon name="app:defiance" title="" />
         </template>
-        <q-tooltip :delay="750" anchor="bottom" self="bottom">
+        <q-tooltip :delay="750" anchor="bottom middle" self="top middle">
           How many points the character has in defiance.
         </q-tooltip>
       </q-select>
@@ -78,7 +78,7 @@
         multiple
         title=""
       >
-        <q-tooltip :delay="750" anchor="bottom" self="bottom">
+        <q-tooltip :delay="750" anchor="bottom middle" self="top middle">
           For a full report, filter which bosses you are interested in viewing data for.
         </q-tooltip>
       </q-select>
@@ -99,7 +99,7 @@
           <template v-slot:prepend>
             <q-icon name="app:bs" />
           </template>
-          <q-tooltip :delay="750" anchor="bottom" self="bottom">
+          <q-tooltip :delay="750" anchor="bottom middle" self="top middle">
             Enemies to split threat with, assuming all hits for now
           </q-tooltip>
         </q-input>
@@ -119,7 +119,7 @@
           <template v-slot:prepend>
             <q-icon name="app:bs" />
           </template>
-          <q-tooltip :delay="750" anchor="bottom" self="bottom">
+          <q-tooltip :delay="750" anchor="bottom middle" self="top middle">
             Friendlies in combat. Once again, assuming all hits
           </q-tooltip>
         </q-input>
@@ -132,7 +132,7 @@
 	  icon="app:t1"
           :dense="dense"
         >
-          <q-tooltip :delay="750" anchor="bottom" self="bottom">
+          <q-tooltip :delay="750" anchor="bottom middle" self="top middle">
             Apply the Tier 1 Sunder Armor bonus?
           </q-tooltip>
         </q-toggle>
@@ -168,8 +168,9 @@
           Full raid logs provided will be broken down per-encounter. <br/>
           Specific fights (indicated by #fight={fight_num}) on the end of the URL will be processed
           individually unless specific bosses are selected. <br/>
-		  Note: For encounters with multiple enemies, the calculation does not differentiate between them (yet) so threat values are not representative of TPS for the actual named boss. <br/>
-		  Instead, it represents total TPS for every enemy fought during the same time window as the boss.
+          As of right now, the calculator assumes the player is a tank and applies the defensive stance modifier to threat of all abilities castable from D Stance. DPS Warriors coming soon.<br/>
+          Note: For encounters with multiple enemies, the calculation does not differentiate between them (yet) so threat values are not representative of TPS for the actual named boss. <br/>
+          Instead, it represents total TPS for every enemy fought during the same time window as the boss.
         </q-card-section>
       </q-card>
     </q-expansion-item>

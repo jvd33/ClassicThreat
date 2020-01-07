@@ -9,27 +9,34 @@
               <br/>
               <br/>
             </span>
-            <q-list elevated dark bordered separator>
+            <q-list elevated dark bordered separator class="q-ma-md">
+              <q-item class="q-pa-md" >
+                <q-item-section class="row"><span class="col-8"><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(4)}}</strong></span></q-item-section>
+              </q-item>
               <q-item v-if="value.bt_count > 0" class="q-pa-md">
                 <q-item-section class="row"><span class="col-8"><q-icon name="app:bt" class="col-3 q-mr-sm" size="40px"/>
-                Bloodthirst Casts Per Minute: {{(value.bt_count/(value.time/60)).toPrecision(4)}}</span>
+                Bloodthirst Casts Per Minute: <strong>{{(value.bt_count/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item-section>
 			        </q-item>
             <q-item v-if="value.shield_slam_count > 0" class="q-pa-md" >
               <q-item-section class="row">
 				        <span class="col-8">
                   <q-icon name="app:ss" size="40px" class="col-3 q-mr-sm"/>
-                    Shield Slam Casts Per Minute: {{(value.shield_slam_count/(value.time/60)).toPrecision(4)}}</span>
+                    Shield Slam Casts Per Minute: <strong>{{(value.shield_slam_count/(value.time/60)).toPrecision(4)}}</strong></span>
               </q-item-section>
             </q-item>
             <q-item class="q-pa-md" >
-              <q-item-section class="row"><span class="col-8"><q-icon name="app:revenge" size="40px" class="col-3 q-mr-sm"/>Revenge Casts Per Minute: {{(value.revenge_count/(value.time/60)).toPrecision(4)}}</span></q-item-section>
+              <q-item-section class="row"><span class="col-8"><q-icon name="app:revenge" size="40px" class="col-3 q-mr-sm"/>
+              Revenge Casts Per Minute: <strong>{{(value.revenge_count/(value.time/60)).toPrecision(4)}}</strong></span></q-item-section>
             </q-item>
             <q-item class="q-pa-md" >
-              <q-item-section class="row"><span class="col-8"><q-icon name="app:sunder" class="col=3 q-mr-sm" size="40px"/>Sunder Armor Hits Per Minute: {{(value.sunder_count/(value.time/60)).toPrecision(4)}}</span></q-item-section>
+              <q-item-section class="row"><span class="col-8"><q-icon name="app:sunder" class="col=3 q-mr-sm" size="40px"/>Sunder Armor Hits Per Minute: <strong>{{(value.sunder_count/(value.time/60)).toPrecision(4)}}</strong></span></q-item-section>
             </q-item>
             <q-item class="q-pa-md" >
-              <q-item-section class="row"><span class="col-8"><q-icon name="app:hs" size="40px" class="col-3 q-mr-sm"/>Heroic Strike Casts Per Minute: {{(value.hs_count/(value.time/60)).toPrecision(4)}}</span></q-item-section>
+              <q-item-section class="row"><span class="col-8"><q-icon name="app:hs" size="40px" class="col-3 q-mr-sm"/>Heroic Strike Casts Per Minute: <strong>{{(value.hs_count/(value.time/60)).toPrecision(4)}}</strong></span></q-item-section>
+            </q-item>
+            <q-item class="q-pa-md" >
+              <q-item-section class="row"><span class="col-8"><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
             </q-item>
             </q-list>
             <q-expansion-item popup flat default-closed class="bg-primary q-pt-lg" icon="help" label="Raw Data">
