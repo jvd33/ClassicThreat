@@ -1,11 +1,12 @@
 <template>
-  <div class="q-pa-md">
+  <div class="q-pa-md col-auto justify-center">
     <q-table
       title="Threat Calculation Values"
       :data="data"
       separator="vertical"
       :columns="columns"
       row-key="name"
+      dense
       dark
       color="amber"
       :pagination.sync="pagination"
@@ -83,18 +84,18 @@ export default {
           sortable: true
         },
         {
-          name: 'threat_type',
-          align: 'center',
-          label: 'Threat Calculation Type',
-          field: 'threat_type',
-          format: val => `${val}`,
-          sortable: true
-        },
-        {
           name: 'val',
           align: 'center',
           label: 'Threat Value',
           field: 'val',
+          format: val => `${val}`,
+          sortable: true
+        },
+        {
+          name: 'threat_type',
+          align: 'center',
+          label: 'Threat Calculation Type',
+          field: 'threat_type',
           format: val => `${val}`,
           sortable: true
         },

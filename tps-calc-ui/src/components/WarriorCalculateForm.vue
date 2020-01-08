@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md row-12 fit no-wrap overflow-auto" style="position: relative;" >
     <q-toolbar-title
-      class="text-primary text-h2 text-center text-weight-bold q-pb-lg"
+      class="text-primary text-h3 justify-center text-weight-bold q-pb-lg"
     >
       Warrior Threat Estimator
     </q-toolbar-title>
@@ -37,9 +37,6 @@
           || 'Please enter a valid log URL.'
         ]"
       >
-        <template v-slot:prepend>
-            <q-icon name="link" title="" />
-        </template>
         <q-tooltip :delay="1000" anchor="bottom middle" self="top middle" class="q-mt-md">
           To a full run or a specific fight, indicated by #fight={fight_num} in the URL fragment
         </q-tooltip>
@@ -54,7 +51,7 @@
         :dense="dense"
         title=""
         :rules="[
-          val => (val && val >= 0 && val <= 5) || 'Invalid number of defiance points. 0 through 5, bro'
+          val => (val && 0 <= val <= 5) || 'Invalid number of defiance points. 0 through 5, bro'
         ]"
       >
         <template v-slot:prepend>
@@ -154,7 +151,7 @@
           <span class="h6 text-accent">
             To contribute, report bugs, or propose features, see <router-link :to="'About'" class="text-accent text-weight-bold">about</router-link>
     </span>
-    <threat-result class="row-10 justify-center q-mt-sm q-mb-sm" v-if="this.results" :results="results"/>
+    <threat-result class="row-10 justify-center q-mt-sm q-mb-sm" v-if="this.results" :results="this.results"/>
     <q-expansion-item
       caption="Instructions"
       :default-opened="false"

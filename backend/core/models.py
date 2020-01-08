@@ -59,7 +59,6 @@ class WarriorThreatCalculationRequest(BaseModel):
     realm: str
 
 
-    defiance_key = f'Defiance{defiance_points}'
     __t = ThreatValues.vals()
     __modifiers = {
         'sunder_count': lambda x, t1, __t=__t: x * __t.SunderArmor if not t1 else x * __t.SunderArmor * __t.Tier1Bonus,
@@ -76,6 +75,8 @@ class WarriorThreatCalculationRequest(BaseModel):
     }
 
     def calculate_warrior_threat(self):
+        defiance_key = f'Defiance{self.defiance_points}'
+
         exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_count',
                    'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts', 'boss_name',
                    '__modifiers', 'defiance_key', '__t', 'boss_id', 'rage_gains', 'hp_gains'}
@@ -96,7 +97,7 @@ class WarriorThreatCalculationRequest(BaseModel):
         rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains)
         healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains, self.enemies_in_combat)
 
-        modified_threat = unmodified_threat * self.__t.DefensiveStance * getattr(self.__t, self.defiance_key)
+        modified_threat = unmodified_threat * self.__t.DefensiveStance * getattr(self.__t, defiance_key)
 
         unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat
         unmodified_tps = unmodified_threat/self.time

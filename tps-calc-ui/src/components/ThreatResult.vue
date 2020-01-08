@@ -5,7 +5,7 @@
         <q-card class="qa-pa-md doc-container row">
           <q-card-section class="q-pa-sm row-12 col-12 justify-center">
             <span class="text-h4 text-weight-bold text-center text-primary row-12 col-12 q-pa-md">
-              <span class="text-primary">{{value.tps.toPrecision(5)}} </span> Threat per Second (estimated)
+              Estimated TPS: {{value.tps.toPrecision(5)}}
               <br/>
               <br/>
             </span>
@@ -40,7 +40,7 @@
                   <q-item-section class="row"><span><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
                 </q-item>
               </q-list>
-              <dps-threat :tank_tps="value.tps" class="q-ma-md col" />
+              <dps-threat-result :results="$value" class="q-ma-md col" />
             </q-item>
             <q-expansion-item flat default-closed class="bg-primary q-ma-lg row-12" icon="help" label="Raw Data">
                 <q-table

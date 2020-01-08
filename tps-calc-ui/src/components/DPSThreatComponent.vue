@@ -26,7 +26,7 @@
             hide-header
             :columns="threatCols"
             visible-columns="['player_class', 'dps']"
-            :data="getThreatTableData(tank_tps, 'Alliance')"
+            :data="getThreatTableData(results, 'Alliance')"
             row-key="name"
             hide-bottom
           >
@@ -96,7 +96,7 @@
 <script>
 export default {
 name: 'DPSThreat',
-  props: ['tank_tps'],
+  props: ['results'],
   tab: 'Horde',
   tranq: false,
   methods: {
