@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-pa-md row-12 fit no-wrap overflow-auto" style="position: relative;" >
+  <q-page class="q-pa-md row fit no-wrap overflow-auto" style="position: relative;" >
     <q-toolbar-title
       class="text-primary text-h2 text-center text-weight-bold q-pb-lg"
     >

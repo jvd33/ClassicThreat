@@ -4,6 +4,7 @@ import App from './App.vue';
 import './quasar';
 import WarriorCalculateForm from './components/WarriorCalculateForm.vue';
 import ThreatResult from "./components/ThreatResult";
+import DPSThreat from "./components/DPSThreatComponent.vue";
 import About from './components/About.vue';
 import CalculationDetails from './components/CalculationDetails.vue';
 
@@ -32,6 +33,7 @@ Vue.config.productionTip = false;
 Vue.use(VueRouter);
 
 Vue.component('threat-result', ThreatResult);
+Vue.component('dps-threat-result', DPSThreat);
 new Vue({
   router,
   render: h => h(App),
