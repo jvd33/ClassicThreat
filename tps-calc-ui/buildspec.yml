@@ -12,6 +12,7 @@ phases:
   build: 
     commands: 
     - echo Build started on `date`
+    - cd tps-calc-ui
     - echo NODE_ENV=$NODE_ENV >> .env.production && echo VUE_APP_API_URL=$VUE_APP_API_URL >> .env.production
     - docker build -t classicthreat-ui .
     - docker tag classicthreat-ui:latest $UI_REPO
