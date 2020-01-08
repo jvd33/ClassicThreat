@@ -3,8 +3,8 @@
     <q-list bordered class="rounded-borders border-color-primary q-mb-lg" v-for="(value, name) in results" :key="name">
       <q-expansion-item :caption="name">
         <q-card class="qa-pa-md doc-container">
-          <q-card-section class="q-pa-sm col-12 justify-start row">
-            <span class="text-h4 text-weight-bold text-center text-primary q-pa-md">
+          <q-card-section class="q-pa-sm row justify-start">
+            <span class="text-h4 text-weight-bold text-center text-primary col q-pa-md">
               {{value.tps.toPrecision(5)}} <span class="text-white">Threat per Second (estimated)</span>
               <br/>
               <br/>
@@ -41,7 +41,15 @@
                 </q-item>
               </q-list>
 
-              <q-expansion-item default-opened flat header-class="bg-primary" class="q-ma-md col-6 justify-around" label="DPS Rip Thresholds" icon="warning">
+              <q-expansion-item
+                default-opened
+                flat header-class="bg-primary"
+                class="q-ma-md col-6 justify-around"
+                label="DPS Rip Thresholds"
+                icon="warning"
+                disable="true"
+                expand-icon-class=""
+              >
                 <q-tabs
                   v-model="tab"
                   dense
@@ -51,34 +59,39 @@
                   <q-tab name="Alliance" icon="alarm" />
                 </q-tabs>
                 <q-tab-panels v-model="tab" animated>
-                  <q-tab-panel name="Alliance">
+                  <q-tab-panel name="Alliance" icon="app:alliance">
                     <q-table
                       title=""
                       :label="Alliance"
-                      class="q-ma-md"
+                      class="q-ma-md bg-alliance"
                       :pagination.sync="threat_pagination"
                       dense
                       :columns="threatCols"
                       visible-columns="['player_class', 'dps']"
-                      :data="getThreatTableData(value.tps).filter(prop => prop.faction === 'Alliance')"
+                      :data="getThreatTableData(value.tps, 'Alliance')"
                       row-key="name"
                       hide-bottom
                     >
-                    <template v-slot:body-cell="props">
-                      <q-td v-bind:class="{ background: props.row.faction }" :props="props">
-                        <q-icon
-                          :name="getIcon(props.row.player_class)"
-                          size="20px"
-                          :label="props.row.player_class"
-                          class="q-ma-sm"
-                          title=""
-                        />
-                        <span class="text-right">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
-                      </q-td>
-                    </template>
+                      <template v-slot:body-cell-name="player_class">
+                        <q-td v-bind:class="{ background: props.row.faction }" :props="props">
+                          <q-icon
+                            :name="getIcon(props.row.player_class)"
+                            size="20px"
+                            :label="props.row.player_class"
+                            class="q-ma-sm"
+                            title=""
+                          />
+                          <span class="text-right">{{props.row.player_class}}</span>
+                        </q-td>
+                      </template>
+                      <template v-slot:body-cell-name="dps">
+                        <q-td v-bind:class="{ background: props.row.dps }" :props="props">
+                          <span class="text-right">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
+                        </q-td>
+                      </template>
                     </q-table>
                   </q-tab-panel>
-                  <q-tab-panel name="Horde">
+                  <q-tab-panel name="Horde" icon="app:horde">
                     <q-table
                       title=""
                       :label="Horde"
@@ -87,12 +100,15 @@
                       dense
                       :columns="threatCols"
                       visible-columns="['player_class', 'dps']"
-                      :data="getThreatTableData(value.tps).filter(prop => prop.faction === 'Horde')"
+                      :data="getThreatTableData(value.tps, 'Horde')"
                       row-key="name"
                       hide-bottom
                     >
-                      <template v-slot:body-cell="props">
-                        <q-td class="bg-horde" :props="props">
+                    <template v-slot:top="props">
+                      <q-toggle :icon="'app:tranq'" dense v-model="tranq" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
+                    </template>
+                    <template v-slot:body-cell-name="player_class">
+                        <q-td v-bind:class="{ background: props.row.faction }" :props="props">
                           <q-icon
                             :name="getIcon(props.row.player_class)"
                             size="20px"
@@ -100,9 +116,13 @@
                             class="q-ma-sm"
                             title=""
                           />
-                          <q-toggle :icon="'app:tranq'" dense v-model="props.row.tranq" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
-                          <span class="text-right" v-if="!props.row.tranq">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
-                          <span class="text-right" v-if="props.row.tranq">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
+                          <span class="text-right">{{props.row.player_class}}</span>
+                        </q-td>
+                      </template>
+                      <template v-slot:body-cell-name="dps">
+                        <q-td v-bind:class="{ background: props.row.dps }" :props="props">
+                          <span class="text-right" v-if="tranq">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
+                          <span class="text-right" v-if="tranq">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
                         </q-td>
                       </template>
                     </q-table>
@@ -110,7 +130,7 @@
                 </q-tab-panels>
               </q-expansion-item>
             </q-item>
-            <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-6" icon="help" label="Raw Data">
+            <q-expansion-item flat default-closed class="bg-primary q-ma-lg row" icon="help" label="Raw Data">
                 <q-table
                   title=""
                   :pagination.sync="pagination"
@@ -118,9 +138,12 @@
                   :data="getTableCols(value)"
                   :columns="columns"
                   row-key="name"
-                  class="q-ma-md"
-                  hide-bottom
-                />
+                  class="q-ma-md row"
+                >
+                  <template v-slot:top>
+                    <q-btn flat dense icon="cloud-download" label="Download JSON" color="primary" @click="downloadJson(data)" class="q-mb-md" />
+                  </template>
+                </q-table>
             </q-expansion-item>
           </q-card-section>
         </q-card>
@@ -167,7 +190,7 @@ export default {
       }
       return ret;
     },
-    getThreatTableData(tps) {
+    getThreatTableData(tps, faction) {
       let classes = {
         'Warrior': {mod: .8, rip_at: 1.1},
         'Mage': {mod: .7, rip_at: 1.3},
@@ -176,12 +199,21 @@ export default {
         'Druid': {mod: .71, rip_at: 1.1},
         'Hunter': {mod: 1, rip_at: 1.3},
       };
+
       let ret = [];
       Object.keys(classes).forEach((k) => {
-          ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/classes[k].mod).toPrecision(4), faction: 'Horde', tranq: false });
-          ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7)).toPrecision(4), faction: 'Alliance', tranq: false });
+          if (faction === 'Horde') ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/classes[k].mod).toPrecision(4), faction: 'Horde', tranq: false });
+          else if (faction === 'Alliance') ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7)).toPrecision(4), faction: 'Alliance', tranq: false });
       });
       return ret;
+    },
+    downloadJson(filename, dl){
+      const url = window.URL.createObjectURL(new Blob([dl]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `${filename}.json`)
+      document.body.appendChild(link)
+      link.click()
     },
   },
   data () {
@@ -190,9 +222,10 @@ export default {
       errorState: false,
       errorMsg: null,
       tab: 'Horde',
+      tranq: false,
       pagination: {
         sortBy: 'field',
-        rowsPerPage: 10,
+        rowsPerPage: [0,10],
       },
       threat_pagination: {
         sortBy: 'faction',

@@ -95,6 +95,8 @@ import revenge from './assets/revenge.png';
 import taunt from './assets/taunt.png';
 import cleave from './assets/cleave.png';
 import tranq from './assets/tranq.png';
+import horde from './assets/horde.png';
+import alliance from './assets/alliance.png'
 
 export default {
   data() {
@@ -129,6 +131,8 @@ export default {
           'app:warlock': 'img:' + warlock,
           'app:tranq': 'img:' + tranq,
           'app:cleave': 'img:' + cleave,
+          'app:horde': 'img:' + horde,
+          'app:alliance': 'img:' + alliance,
         },
 
         calculators: [
