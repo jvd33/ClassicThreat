@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <q-list bordered class="rounded-borders border-color-primary q-mb-lg" v-for="(value, name) in resultData" :key="name">
+    <q-list bordered class="rounded-borders border-color-primary q-mb-lg" v-for="(value, name) in results" :key="name">
       <q-expansion-item :caption="name">
         <q-card>
           <q-card-section>
@@ -89,7 +89,7 @@
 <script>
 export default {
   name: 'ThreatResult',
-  resultData: ['results'],
+  results: ['results'],
   methods: {
     getIcon(ability) {
       if (ability.includes('Defiance')) return 'app:defiance';

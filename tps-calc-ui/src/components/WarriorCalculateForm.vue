@@ -158,7 +158,7 @@
     <threat-result class="row-6 fit overflow-auto" v-if="this.results" :results="results"/>
     <q-expansion-item
       caption="Instructions"
-      :default-opened="true"
+      :default-opened="false"
       class="row-2 q-ma-lg justify-left bg-secondary shadow-4">
       <q-card>
         <q-card-section>
