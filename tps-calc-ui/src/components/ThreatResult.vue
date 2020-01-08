@@ -3,70 +3,72 @@
     <q-list bordered class="rounded-borders border-color-primary q-mb-lg" v-for="(value, name) in results" :key="name">
       <q-expansion-item :caption="name">
         <q-card>
-          <q-card-section>
+          <q-card-section class="q-pa-sm row-auto">
             <span class="text-h4 text-weight-bold text-center text-primary row-auto">
               {{value.tps.toPrecision(5)}} <span class="text-white">Threat per Second (estimated)</span>
               <br/>
               <br/>
             </span>
             <q-item class="q-pa-md row-auto" >
-              <q-item-section class="row"><span class="col-8"><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span></q-item-section>
+              <q-list elevated dark bordered separator class="q-ma-md col-6">
+                <q-item class="q-pa-md col-6 row-auto" >
+                  <q-item-section class="row"><span><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span></q-item-section>
+                </q-item>
+                <q-item v-if="value.bt_count > 0" class="q-pa-md">
+                  <q-item-section class="row"><span class="col-8"><q-icon name="app:bt" class="col-3 q-mr-sm" size="40px"/>
+                  Bloodthirst Casts Per Minute: <strong>{{(value.bt_count/(value.time/60)).toPrecision(4)}}</strong></span>
+                  </q-item-section>
+                </q-item>
+                <q-item v-if="value.shield_slam_count > 0" class="q-pa-md" >
+                  <q-item-section class="row">
+                    <span class="col-8">
+                      <q-icon name="app:ss" size="40px" class="col-3 q-mr-sm"/>
+                        Shield Slam Casts Per Minute: <strong>{{(value.shield_slam_count/(value.time/60)).toPrecision(4)}}</strong></span>
+                  </q-item-section>
+                </q-item>
+                <q-item class="q-pa-md" >
+                  <q-item-section class="row"><span class="col-8"><q-icon name="app:revenge" size="40px" class="col-3 q-mr-sm"/>
+                  Revenge Casts Per Minute: <strong>{{(value.revenge_count/(value.time/60)).toPrecision(4)}}</strong></span></q-item-section>
+                </q-item>
+                <q-item class="q-pa-md" >
+                  <q-item-section class="row"><span class="col-8"><q-icon name="app:sunder" class="col=3 q-mr-sm" size="40px"/>Sunder Armor Hits Per Minute: <strong>{{(value.sunder_count/(value.time/60)).toPrecision(4)}}</strong></span></q-item-section>
+                </q-item>
+                <q-item class="q-pa-md" >
+                  <q-item-section class="row"><span class="col-8"><q-icon name="app:hs" size="40px" class="col-3 q-mr-sm"/>Heroic Strike Casts Per Minute: <strong>{{(value.hs_count/(value.time/60)).toPrecision(4)}}</strong></span></q-item-section>
+                </q-item>
+                <q-item class="q-pa-md" >
+                  <q-item-section class="row"><span class="col-8"><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
+                </q-item>
+              </q-list>
+              <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-6" label="DPS Rip Thresholds" icon="warning">
+                <q-table
+                  title=""
+                  class="q-ma-md"
+                  :pagination.sync="threat_pagination"
+                  dense
+                  :columns="threatCols"
+                  visible-columns="['player_name', 'dps']"
+                  :data="getThreatTableData(value.tps)"
+                  row-key="player_class"
+                  hide-bottom
+                >
+                  <template v-slot:body-cell-name="props">
+                    <q-td v-bind:class="{ background: props.row.faction }" :props="props">
+                      <q-icon
+                        :name="getIcon(props.value)"
+                        size="20px"
+                        :label="props.value"
+                        class="q-ma-sm"
+                        title=""
+                      />
+                      <span class="text-right" v-if="!props.row.tranq || props.row.faction === 'Alliance'">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
+                      <span class="text-right" v-if="props.row.tranq && props.row.faction === 'Horde'">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
+                      <q-toggle :icon="'app:tranq'" dense v-model="props.row.tranq" v-if="props.row.faction === 'Horde'" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
+                    </q-td>
+                  </template>
+                </q-table>
+              </q-expansion-item>
             </q-item>
-            <q-list elevated dark bordered separator class="q-ma-md">
-              <q-item v-if="value.bt_count > 0" class="q-pa-md">
-                <q-item-section class="row"><span class="col-8"><q-icon name="app:bt" class="col-3 q-mr-sm" size="40px"/>
-                Bloodthirst Casts Per Minute: <strong>{{(value.bt_count/(value.time/60)).toPrecision(4)}}</strong></span>
-                </q-item-section>
-			        </q-item>
-            <q-item v-if="value.shield_slam_count > 0" class="q-pa-md" >
-              <q-item-section class="row">
-				        <span class="col-8">
-                  <q-icon name="app:ss" size="40px" class="col-3 q-mr-sm"/>
-                    Shield Slam Casts Per Minute: <strong>{{(value.shield_slam_count/(value.time/60)).toPrecision(4)}}</strong></span>
-              </q-item-section>
-            </q-item>
-            <q-item class="q-pa-md" >
-              <q-item-section class="row"><span class="col-8"><q-icon name="app:revenge" size="40px" class="col-3 q-mr-sm"/>
-              Revenge Casts Per Minute: <strong>{{(value.revenge_count/(value.time/60)).toPrecision(4)}}</strong></span></q-item-section>
-            </q-item>
-            <q-item class="q-pa-md" >
-              <q-item-section class="row"><span class="col-8"><q-icon name="app:sunder" class="col=3 q-mr-sm" size="40px"/>Sunder Armor Hits Per Minute: <strong>{{(value.sunder_count/(value.time/60)).toPrecision(4)}}</strong></span></q-item-section>
-            </q-item>
-            <q-item class="q-pa-md" >
-              <q-item-section class="row"><span class="col-8"><q-icon name="app:hs" size="40px" class="col-3 q-mr-sm"/>Heroic Strike Casts Per Minute: <strong>{{(value.hs_count/(value.time/60)).toPrecision(4)}}</strong></span></q-item-section>
-            </q-item>
-            <q-item class="q-pa-md" >
-              <q-item-section class="row"><span class="col-8"><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
-            </q-item>
-            </q-list>
-            <q-item class="row-12">
-                          <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-6" label="DPS Rip Thresholds" icon="warning">
-              <q-table
-                title=""
-                class="q-ma-md"
-                :pagination.sync="threat_pagination"
-                dense
-                :columns="threatCols"
-                :data="getThreatTableData(value.tps)"
-                row-key="player_class"
-                hide-bottom
-              >
-                <template v-slot:body-cell-name="props">
-                  <q-td v-bind:class="{ background: props.row.faction }" :props="props">
-                    <q-icon
-                      :name="getIcon(props.value)"
-                      size="20px"
-                      :label="props.value"
-                      class="q-ma-sm"
-                      title=""
-                    />
-                    <span class="text-right" v-if="!props.row.tranq || props.row.faction === 'Alliance'">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
-                    <span class="text-right" v-if="props.row.tranq && props.row.faction === 'Horde'">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
-                    <q-toggle :icon="'app:tranq'" dense v-model="props.row.tranq" v-if="props.row.faction === 'Horde'" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
-                  </q-td>
-                </template>
-              </q-table>
-            </q-expansion-item>
             <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-6" icon="help" label="Raw Data">
                 <q-table
                   title=""
@@ -79,7 +81,6 @@
                   hide-bottom
                 />
             </q-expansion-item>
-            </q-item>
           </q-card-section>
         </q-card>
       </q-expansion-item>

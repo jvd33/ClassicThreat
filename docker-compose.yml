@@ -4,6 +4,7 @@ services:
     build: backend/.
     environment:
       - PORT=8000
+      - CACHE_HOST=redis
     ports:
       - 8000:8000
     depends_on:
@@ -12,6 +13,7 @@ services:
     build: tps-calc-ui/.
     environment:
       - NODE_ENV=production
+      - VUE_APP_API_URL=http://classicthreat-api
     ports:
       - 80:80
     depends_on:

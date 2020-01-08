@@ -13,14 +13,14 @@ origins = [
     "http://localhost:8080",
     "https://localhost:8080",
     "http://classicthreat-ui:8080",
-    "https://classicthreat-ui:8080",
+    "http://classicthreat-ui",
     "http://classicthreat.com",
     "https://classicthreat.com",
-    "http://classicthreat.com",
-    "https://classicthreat.com",
-    "http://classicthreat-api:8080",
     "http://classicthreat-api",
-    "frontend.classicthreat-service"
+    "https://classicthreat-api",
+    "http://frontend.classicthreat-service",
+    "http://frontend.classicthreat-service",
+
 ]
 
 
