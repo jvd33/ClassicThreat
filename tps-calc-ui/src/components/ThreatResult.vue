@@ -2,15 +2,15 @@
   <q-page>
     <q-list bordered class="rounded-borders border-color-primary q-mb-lg" v-for="(value, name) in results" :key="name">
       <q-expansion-item :caption="name">
-        <q-card>
-          <q-card-section class="q-pa-sm row-auto">
-            <span class="text-h4 text-weight-bold text-center text-primary row-auto q-pa-md">
+        <q-card class="qa-pa-md doc-container">
+          <q-card-section class="q-pa-sm col-12 justify-start row">
+            <span class="text-h4 text-weight-bold text-center text-primary q-pa-md">
               {{value.tps.toPrecision(5)}} <span class="text-white">Threat per Second (estimated)</span>
               <br/>
               <br/>
             </span>
-            <q-item class="row-auto" >
-              <q-list elevated dark bordered separator class="q-ma-sm col-4">
+            <q-item class="row">
+              <q-list elevated dark bordered separator class="q-ma-sm col-4 justify-around">
                 <q-item class="q-pa-md" >
                   <q-item-section class="row"><span><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span></q-item-section>
                 </q-item>
@@ -41,7 +41,7 @@
                 </q-item>
               </q-list>
 
-              <q-expansion-item flat class="bg-primary q-ma-lg col-8" fit label="DPS Rip Thresholds" icon="warning">
+              <q-expansion-item default-opened flat header-class="bg-primary" class="q-ma-md col-6 justify-around" label="DPS Rip Thresholds" icon="warning">
                 <q-tabs
                   v-model="tab"
                   dense
@@ -54,13 +54,14 @@
                   <q-tab-panel name="Alliance">
                     <q-table
                       title=""
+                      :label="Alliance"
                       class="q-ma-md"
                       :pagination.sync="threat_pagination"
                       dense
                       :columns="threatCols"
                       visible-columns="['player_class', 'dps']"
-                      :data="getThreatTableData(value.tps).filter(prop => prop.faction == 'Alliance')"
-                      row-key="player_class"
+                      :data="getThreatTableData(value.tps).filter(prop => prop.faction === 'Alliance')"
+                      row-key="name"
                       hide-bottom
                     >
                     <template v-slot:body-cell="props">
@@ -80,13 +81,14 @@
                   <q-tab-panel name="Horde">
                     <q-table
                       title=""
+                      :label="Horde"
                       class="q-ma-md"
                       :pagination.sync="threat_pagination"
                       dense
                       :columns="threatCols"
                       visible-columns="['player_class', 'dps']"
-                      :data="getThreatTableData(value.tps).filter(prop => prop.faction == 'Horde')"
-                      row-key="player_class"
+                      :data="getThreatTableData(value.tps).filter(prop => prop.faction === 'Horde')"
+                      row-key="name"
                       hide-bottom
                     >
                       <template v-slot:body-cell="props">
@@ -187,9 +189,10 @@ export default {
       name: 'RawResults',
       errorState: false,
       errorMsg: null,
+      tab: 'Horde',
       pagination: {
-        sortBy: 'name',
-        rowsPerPage: 0,
+        sortBy: 'field',
+        rowsPerPage: 10,
       },
       threat_pagination: {
         sortBy: 'faction',
