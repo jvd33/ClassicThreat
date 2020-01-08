@@ -47,7 +47,7 @@
                   dense
                   align="justify"
                 >
-                  <q-tab name="Horde" icon="" />
+                  <q-tab name="Horde" icon="alarm" />
                   <q-tab name="Alliance" icon="alarm" />
                 </q-tabs>
                 <q-tab-panels v-model="tab" animated>
@@ -65,15 +65,15 @@
                       hide-bottom
                     >
                     <template v-slot:body-cell="props">
-                      <q-td v-bind:class="{ background: props.faction }" :props="props">
+                      <q-td v-bind:class="{ background: props.row.faction }" :props="props">
                         <q-icon
-                          :name="getIcon(props.player_class)"
+                          :name="getIcon(props.row.player_class)"
                           size="20px"
-                          :label="props.player_class"
+                          :label="props.row.player_class"
                           class="q-ma-sm"
                           title=""
                         />
-                        <span class="text-right">Rip at: {{props.dps}} DPS (very roughly estimated!)</span>
+                        <span class="text-right">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
                       </q-td>
                     </template>
                     </q-table>
@@ -92,17 +92,17 @@
                       hide-bottom
                     >
                       <template v-slot:body-cell="props">
-                        <q-td v-bind:class="{ background: props.faction }" :props="props">
+                        <q-td class="bg-horde" :props="props">
                           <q-icon
-                            :name="getIcon(props.player_class)"
+                            :name="getIcon(props.row.player_class)"
                             size="20px"
-                            :label="props.player_class"
+                            :label="props.row.player_class"
                             class="q-ma-sm"
                             title=""
                           />
-                          <q-toggle :icon="'app:tranq'" dense v-model="tranq" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
-                          <span class="text-right" v-if="!tranq">Rip at: {{props.dps}} DPS (very roughly estimated!)</span>
-                          <span class="text-right" v-if="tranq">Rip at: {{(props.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
+                          <q-toggle :icon="'app:tranq'" dense v-model="props.row.tranq" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
+                          <span class="text-right" v-if="!props.row.tranq">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
+                          <span class="text-right" v-if="props.row.tranq">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
                         </q-td>
                       </template>
                     </q-table>
