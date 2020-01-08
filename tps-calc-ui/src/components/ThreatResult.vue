@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <q-list bordered class="rounded-borders border-color-primary q-mb-lg" v-for="(value, name) in results" :key="name">
+    <q-list bordered class="rounded-borders border-primary q-mb-lg" v-for="(value, name) in results" :key="name">
       <q-expansion-item :caption="name">
         <q-card class="qa-pa-md doc-container row">
           <q-card-section class="q-pa-sm row col justify-center">
@@ -40,7 +40,7 @@
                   <q-item-section class="row"><span class="col-8"><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
                 </q-item>
               </q-list>
-              <dps-threat :value="value"/>
+              <dps-threat :value="value" class="q-ma-md col-6" />
             </q-item>
             <q-expansion-item flat default-closed class="bg-primary q-ma-lg row" icon="help" label="Raw Data">
                 <q-table
@@ -102,23 +102,6 @@ export default {
       }
       return ret;
     },
-    getThreatTableData(tps, faction) {
-      let classes = {
-        'Warrior': {mod: .8, rip_at: 1.1},
-        'Mage': {mod: .7, rip_at: 1.3},
-        'Warlock (with imp)': {mod: .8, rip_at: 1.3},
-        'Rogue': {mod: .71, rip_at: 1.1},
-        'Druid': {mod: .71, rip_at: 1.1},
-        'Hunter': {mod: 1, rip_at: 1.3},
-      };
-
-      let ret = [];
-      Object.keys(classes).forEach((k) => {
-          if (faction === 'Horde') ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/classes[k].mod).toPrecision(4), faction: 'Horde', tranq: false });
-          else if (faction === 'Alliance') ret.push({player_class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7)).toPrecision(4), faction: 'Alliance', tranq: false });
-      });
-      return ret;
-    },
     downloadJson(filename, dl){
       const url = window.URL.createObjectURL(new Blob([dl]))
       const link = document.createElement('a')
@@ -133,26 +116,13 @@ export default {
       name: 'RawResults',
       errorState: false,
       errorMsg: null,
-      tab: 'Horde',
-      tranq: false,
       pagination: {
         sortBy: 'field',
         rowsPerPage: [0,10],
       },
-      threat_pagination: {
-        sortBy: 'faction',
-        descending: false,
-        rowsPerPage: 0,
-      },
       columns: [
         { name: 'Metric', align: 'center', label: 'Metric', field: 'name', sortable: true },
         { name: 'Metric Value', align: 'center', label: 'Metric Value', field: 'value', sortable: true },
-      ],
-      threatCols:  [
-        { name: 'player_class', align: 'center', label: 'Player Class', field: row => row.player_class, sortable: false },
-        { name: 'dps', align: 'center', label: 'DPS to Rip Aggro', field: row => row.dps, sortable: false },
-        { name: 'faction', label: 'Faction', field: row => row.faction, sortable: true },
-        { name: 'tranq', label: 'Tranquil Air', field: row => row.tranq, sortable: false },
       ],
     }
   },

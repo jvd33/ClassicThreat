@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-pa-md row fit no-wrap overflow-auto" style="position: relative;" >
+  <q-page class="q-pa-md row-12 fit no-wrap overflow-auto" style="position: relative;" >
     <q-toolbar-title
       class="text-primary text-h2 text-center text-weight-bold q-pb-lg"
     >
@@ -27,7 +27,6 @@
 
       <q-input
         filled
-        type="url"
         v-model="url"
         label="Log URL"
         title=""
@@ -155,7 +154,7 @@
           <span class="h6 text-accent">
             To contribute, report bugs, or propose features, see <router-link :to="'About'" class="text-accent text-weight-bold">about</router-link>
     </span>
-    <threat-result class="row-6 fit overflow-auto" v-if="this.results" :results="results"/>
+    <threat-result class="row-10 justify-center q-mt-sm q-mb-sm" v-if="this.results" :results="results"/>
     <q-expansion-item
       caption="Instructions"
       :default-opened="false"

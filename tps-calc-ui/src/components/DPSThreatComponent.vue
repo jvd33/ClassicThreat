@@ -6,7 +6,6 @@
       class="q-ma-md col-6"
       label="DPS Rip Thresholds"
       icon="warning"
-      disable="true"
       expand-icon-class=""
     >
       <q-tabs
