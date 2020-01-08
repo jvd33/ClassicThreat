@@ -3,13 +3,13 @@
     <q-list bordered class="rounded-borders border-primary q-mb-lg" v-for="(value, name) in results" :key="name">
       <q-expansion-item :caption="name">
         <q-card class="qa-pa-md doc-container row">
-          <q-card-section class="q-pa-sm row col justify-center">
-            <span class="text-h4 text-weight-bold text-center text-primary col q-pa-md">
+          <q-card-section class="q-pa-sm row-12 col-12 justify-center">
+            <span class="text-h4 text-weight-bold text-center text-primary row-12 col-12 q-pa-md">
               <span class="text-primary">{{value.tps.toPrecision(5)}} </span> Threat per Second (estimated)
               <br/>
               <br/>
             </span>
-            <q-item class="row no-wrap">
+            <q-item class="row-12 col-12 no-wrap">
               <q-list elevated dark bordered separator class="q-ma-sm col-4">
                 <q-item class="q-pa-md" >
                   <q-item-section class="row"><span><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span></q-item-section>
@@ -40,9 +40,9 @@
                   <q-item-section class="row"><span class="col-8"><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
                 </q-item>
               </q-list>
-              <dps-threat :value="value" class="q-ma-md col-6" />
+              <dps-threat :value="value" class="q-ma-md col-8" />
             </q-item>
-            <q-expansion-item flat default-closed class="bg-primary q-ma-lg row" icon="help" label="Raw Data">
+            <q-expansion-item flat default-closed class="bg-primary q-ma-lg row-12" icon="help" label="Raw Data">
                 <q-table
                   title=""
                   :pagination.sync="pagination"
@@ -53,7 +53,7 @@
                   class="q-ma-md col"
                 >
                   <template v-slot:top>
-                    <q-btn flat dense justify-center icon="download" label="Download JSON" color="primary" @click="downloadJson(data)" class="q-mb-md" />
+                    <q-btn flat dense justify-left icon="cloud_download" label="Download JSON" color="primary" @click="downloadJson(data)" class="q-mb-md" />
                   </template>
                 </q-table>
             </q-expansion-item>

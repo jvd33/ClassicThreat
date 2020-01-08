@@ -96,20 +96,19 @@
 <script>
 export default {
 name: 'DPSThreat',
-  props: ['value'],
+  props: ['key', 'value'],
   tab: 'Horde',
   tranq: false,
   methods: {
-    getIcon(ability) {
-      if (ability.includes('Defiance')) return 'app:defiance';
-      switch(ability) {
+    getIcon(cls) {
+      switch(cls) {
         case 'Warrior': return 'app:warr';
         case 'Mage': return 'app:mage';
         case 'Warlock (with imp)': return 'app:warlock';
         case 'Rogue': return 'app:rogue';
         case 'Druid': return 'app:druid';
         case 'Hunter': return 'app:hunter';
-        default: return ability;
+        default: return cls;
       };
     },
     getThreatTableData(tps, faction) {
