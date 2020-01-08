@@ -3,7 +3,7 @@
   <q-expansion-item
       default-opened
       flat header-class="bg-primary"
-      class="q-ma-md col-6"
+      class="q-ma-md"
       label="DPS Rip Thresholds"
       icon="warning"
       expand-icon-class=""
@@ -26,7 +26,7 @@
             hide-header
             :columns="threatCols"
             visible-columns="['player_class', 'dps']"
-            :data="getThreatTableData(value.tps, 'Alliance')"
+            :data="getThreatTableData(tank_tps, 'Alliance')"
             row-key="name"
             hide-bottom
           >
@@ -57,7 +57,7 @@
             :pagination.sync="threat_pagination"
             :columns="threatCols"
             visible-columns="['player_class', 'dps']"
-            :data="getThreatTableData(value.tps, 'Horde')"
+            :data="getThreatTableData(tank_tps, 'Horde')"
             row-key="name"
             hide-header
             hide-bottom
@@ -96,7 +96,7 @@
 <script>
 export default {
 name: 'DPSThreat',
-  props: ['key', 'value'],
+  props: ['tank_tps'],
   tab: 'Horde',
   tranq: false,
   methods: {
