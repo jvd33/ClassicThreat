@@ -89,7 +89,6 @@
 <script>
 export default {
   name: 'ThreatResult',
-  results: ['results'],
   methods: {
     getIcon(ability) {
       if (ability.includes('Defiance')) return 'app:defiance';
