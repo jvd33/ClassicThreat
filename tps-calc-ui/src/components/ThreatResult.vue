@@ -89,6 +89,7 @@
 <script>
 export default {
   name: 'ThreatResult',
+  props: ['results'],
   methods: {
     getIcon(ability) {
       if (ability.includes('Defiance')) return 'app:defiance';
@@ -130,7 +131,7 @@ export default {
         'Mage': {mod: .7, rip_at: 1.3},
         'Warlock (with imp)': {mod: .8, rip_at: 1.3},
         'Rogue': {mod: .71, rip_at: 1.1},
-        'Druid': {mod: .71, rip_at: 1.3},
+        'Druid': {mod: .71, rip_at: 1.1},
         'Hunter': {mod: 1, rip_at: 1.3},
       };
       let ret = [];
@@ -162,8 +163,6 @@ export default {
       threatCols:  [
         { name: 'Player Class', align: 'center', label: 'Player Class', field: 'player_class', sortable: false },
         { name: 'DPS to Rip Aggro', align: 'center', label: 'DPS to Rip', field: 'dps', sortable: false },
-        { name: 'Faction', align: 'center', label: 'Faction', field: 'faction', sortable: false},
-        { name: 'Tranquil Air', align: 'center', label: 'Tranquil Air', field: 'tranq', sortable: false }
       ],
     }
   },
