@@ -1,92 +1,85 @@
 <template>
 <q-page>
-  <q-expansion-item
-      default-opened
-      flat header-class="bg-primary"
-      class="q-ma-md"
-      label="DPS Rip Thresholds"
-      icon="warning"
-      expand-icon-class=""
+    <q-tabs
+      :v-model="tab"
+      dense
+      align="justify"
+      no-caps
+      class="bg-primary text-white shadow-2"
     >
-      <q-tabs
-        :v-model="tab"
-        dense
-        align="justify"
-      >
-        <q-tab name="Horde" icon="app:horde" label="Horde"/>
-        <q-tab name="Alliance" icon="app:alliance" label="Alliance"/>
-      </q-tabs>
-      <q-tab-panels v-model="tab" animated>
-        <q-tab-panel name="Alliance">
-          <q-table
-            title=""
-            :label="Alliance"
-            class="q-ma-md bg-alliance"
-            :pagination.sync="threat_pagination"
-            hide-header
-            :columns="threatCols"
-            visible-columns="['player_class', 'dps']"
-            :data="getThreatTableData(results, 'Alliance')"
-            row-key="name"
-            hide-bottom
-          >
-            <template v-slot:body-cell-name="player_class">
-              <q-td :props="props">
-                <q-icon
-                  :name="getIcon(props.row.player_class)"
-                  size="20px"
-                  :label="props.row.player_class"
-                  class="q-ma-sm"
-                  title=""
-                />
-                <span class="text-right">{{props.row.player_class}}</span>
-              </q-td>
-            </template>
-            <template v-slot:body-cell-name="dps">
-              <q-td v-bind:class="{ background: props.row.dps }" :props="props">
-                <span class="text-right">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
-              </q-td>
-            </template>
-          </q-table>
-        </q-tab-panel>
-        <q-tab-panel name="Horde" icon="app:horde">
-          <q-table
-            title=""
-            :label="Horde"
-            class="q-ma-md"
-            :pagination.sync="threat_pagination"
-            :columns="threatCols"
-            visible-columns="['player_class', 'dps']"
-            :data="getThreatTableData(tank_tps, 'Horde')"
-            row-key="name"
-            hide-header
-            hide-bottom
-          >
-          <template v-slot:top="props">
-            <q-toggle :icon="'app:tranq'" dense v-model="tranq" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
-          </template>
+      <q-tab name="Horde" icon="app:horde" label="Horde" style="background: #DF493D"/>
+      <q-tab name="Alliance" icon="app:alliance" label="Alliance" style="background: #3C5C84"/>
+    </q-tabs>
+    <q-tab-panels v-model="tab" animated>
+      <q-tab-panel name="Alliance">
+        <q-table
+          title=""
+          :label="Alliance"
+          class="q-ma-md"
+          :pagination.sync="threat_pagination"
+          hide-header
+          :columns="threatCols"
+          visible-columns="['player_class', 'dps']"
+          data="getThreatTableData(results, 'Alliance')"
+          row-key="name"
+          hide-bottom
+        >
           <template v-slot:body-cell-name="player_class">
-              <q-td :props="props">
-                <q-icon
-                  :name="getIcon(props.row.player_class)"
-                  size="20px"
-                  :label="props.row.player_class"
-                  class="q-ma-sm"
-                  title=""
-                />
-                <span class="text-right">{{props.row.player_class}}</span>
-              </q-td>
-            </template>
-            <template v-slot:body-cell-name="dps">
-              <q-td :props="props">
-                <span class="text-right" v-if="!tranq">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
-                <span class="text-right" v-if="tranq">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
-              </q-td>
-            </template>
-          </q-table>
-        </q-tab-panel>
-      </q-tab-panels>
-    </q-expansion-item>
+            <q-td :props="props">
+              <q-icon
+                :name="getIcon(props.row.player_class)"
+                size="20px"
+                :label="props.row.player_class"
+                class="q-ma-sm"
+                title=""
+              />
+              <span class="text-right">{{props.row.player_class}}</span>
+            </q-td>
+          </template>
+          <template v-slot:body-cell-name="dps">
+            <q-td v-bind:class="{ background: props.row.dps }" :props="props">
+              <span class="text-right">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
+            </q-td>
+          </template>
+        </q-table>
+      </q-tab-panel>
+      <q-tab-panel name="Horde" icon="app:horde">
+        <q-table
+          title=""
+          :label="Horde"
+          class="q-ma-md"
+          :pagination.sync="threat_pagination"
+          :columns="threatCols"
+          visible-columns="['player_class', 'dps']"
+          data="getThreatTableData(tank_tps, 'Horde')"
+          row-key="name"
+          hide-header
+          hide-bottom
+        >
+        <template v-slot:top="props">
+          <q-toggle :icon="'app:tranq'" dense v-model="tranq" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
+        </template>
+        <template v-slot:body-cell-name="player_class">
+            <q-td :props="props">
+              <q-icon
+                :name="getIcon(props.row.player_class)"
+                size="20px"
+                :label="props.row.player_class"
+                class="q-ma-sm"
+                title=""
+              />
+              <span class="text-right">{{props.row.player_class}}</span>
+            </q-td>
+          </template>
+          <template v-slot:body-cell-name="dps">
+            <q-td :props="props">
+              <span class="text-right" v-if="!tranq">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
+              <span class="text-right" v-if="tranq">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
+            </q-td>
+          </template>
+        </q-table>
+      </q-tab-panel>
+    </q-tab-panels>
   </q-page>
 </template>
 

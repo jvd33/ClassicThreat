@@ -235,7 +235,7 @@ export default {
         })
         .catch(error => {
             this.errorState = true;
-            this.errorMsg = error.response ?
+            this.errorMsg = error.response && error.response.data && error.response.data.detail ?
               error.response.data.detail: 'Unexpected error. Try again later.';
         })
         .finally(() => this.is_loading = false);

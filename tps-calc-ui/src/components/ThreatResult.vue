@@ -2,15 +2,15 @@
   <q-page>
     <q-list bordered class="rounded-borders border-primary q-mb-lg" v-for="(value, name) in results" :key="name">
       <q-expansion-item :caption="name">
-        <q-card class="qa-pa-md doc-container row">
+        <q-card class="qa-pa-md doc-container row-12 col-12 row-sm-12 col-sm-12">
           <q-card-section class="q-pa-sm row-12 col-12 justify-center">
-            <span class="text-h4 text-weight-bold text-center text-primary row-12 col-12 q-pa-md">
+            <span class="text-h4 text-weight-bold text-center text-primary q-pa-md">
               Estimated TPS: {{value.tps.toPrecision(5)}}
               <br/>
               <br/>
             </span>
             <q-item class="row-12 col-12 no-wrap">
-              <q-list elevated dark bordered separator class="q-ma-sm col-4">
+              <q-list elevated dark bordered separator class="q-ma-sm col-12 col-sm-4">
                 <q-item class="q-pa-md" >
                   <q-item-section class="row"><span><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span></q-item-section>
                 </q-item>
@@ -40,14 +40,14 @@
                   <q-item-section class="row"><span><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
                 </q-item>
               </q-list>
-              <dps-threat-result :results="$value" class="q-ma-md col" />
+              <dps-threat-result :results="value" class="col-12 col-sm-8" />
             </q-item>
-            <q-expansion-item flat default-closed class="bg-primary q-ma-lg row-12" icon="help" label="Raw Data">
+            <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-12" icon="help" label="Raw Data">
                 <q-table
                   title=""
                   :pagination.sync="pagination"
                   dense
-                  data="getTableCols(value)"
+                  :data="getTableCols(value)"
                   :columns="columns"
                   row-key="name"
                   class="q-ma-md col"
