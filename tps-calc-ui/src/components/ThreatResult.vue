@@ -4,14 +4,14 @@
       <q-expansion-item :caption="name">
         <q-card>
           <q-card-section class="q-pa-sm row-auto">
-            <span class="text-h4 text-weight-bold text-center text-primary row-auto">
+            <span class="text-h4 text-weight-bold text-center text-primary row-auto q-pa-md">
               {{value.tps.toPrecision(5)}} <span class="text-white">Threat per Second (estimated)</span>
               <br/>
               <br/>
             </span>
-            <q-item class="q-pa-md row-auto" >
-              <q-list elevated dark bordered separator class="q-ma-md col-6">
-                <q-item class="q-pa-md col-6 row-auto" >
+            <q-item class="row-auto" >
+              <q-list elevated dark bordered separator class="q-ma-sm col-4">
+                <q-item class="q-pa-md" >
                   <q-item-section class="row"><span><q-icon name="app:dstance" size="40px" class="col-3 q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span></q-item-section>
                 </q-item>
                 <q-item v-if="value.bt_count > 0" class="q-pa-md">
@@ -40,33 +40,72 @@
                   <q-item-section class="row"><span class="col-8"><q-icon name="app:taunt" size="40px" class="col-3 q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span></q-item-section>
                 </q-item>
               </q-list>
-              <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-6" label="DPS Rip Thresholds" icon="warning">
-                <q-table
-                  title=""
-                  class="q-ma-md"
-                  :pagination.sync="threat_pagination"
+
+              <q-expansion-item flat class="bg-primary q-ma-lg col-8" fit label="DPS Rip Thresholds" icon="warning">
+                <q-tabs
+                  v-model="tab"
                   dense
-                  :columns="threatCols"
-                  visible-columns="['player_name', 'dps']"
-                  :data="getThreatTableData(value.tps)"
-                  row-key="player_class"
-                  hide-bottom
+                  align="justify"
                 >
-                  <template v-slot:body-cell-name="props">
-                    <q-td v-bind:class="{ background: props.row.faction }" :props="props">
-                      <q-icon
-                        :name="getIcon(props.value)"
-                        size="20px"
-                        :label="props.value"
-                        class="q-ma-sm"
-                        title=""
-                      />
-                      <span class="text-right" v-if="!props.row.tranq || props.row.faction === 'Alliance'">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
-                      <span class="text-right" v-if="props.row.tranq && props.row.faction === 'Horde'">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
-                      <q-toggle :icon="'app:tranq'" dense v-model="props.row.tranq" v-if="props.row.faction === 'Horde'" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
-                    </q-td>
-                  </template>
-                </q-table>
+                  <q-tab name="Horde" icon="" />
+                  <q-tab name="Alliance" icon="alarm" />
+                </q-tabs>
+                <q-tab-panels v-model="tab" animated>
+                  <q-tab-panel name="Alliance">
+                    <q-table
+                      title=""
+                      class="q-ma-md"
+                      :pagination.sync="threat_pagination"
+                      dense
+                      :columns="threatCols"
+                      visible-columns="['player_class', 'dps']"
+                      :data="getThreatTableData(value.tps).filter(prop => prop.faction == 'Alliance')"
+                      row-key="player_class"
+                      hide-bottom
+                    >
+                    <template v-slot:body-cell="props">
+                      <q-td v-bind:class="{ background: props.faction }" :props="props">
+                        <q-icon
+                          :name="getIcon(props.player_class)"
+                          size="20px"
+                          :label="props.player_class"
+                          class="q-ma-sm"
+                          title=""
+                        />
+                        <span class="text-right">Rip at: {{props.dps}} DPS (very roughly estimated!)</span>
+                      </q-td>
+                    </template>
+                    </q-table>
+                  </q-tab-panel>
+                  <q-tab-panel name="Horde">
+                    <q-table
+                      title=""
+                      class="q-ma-md"
+                      :pagination.sync="threat_pagination"
+                      dense
+                      :columns="threatCols"
+                      visible-columns="['player_class', 'dps']"
+                      :data="getThreatTableData(value.tps).filter(prop => prop.faction == 'Horde')"
+                      row-key="player_class"
+                      hide-bottom
+                    >
+                      <template v-slot:body-cell="props">
+                        <q-td v-bind:class="{ background: props.faction }" :props="props">
+                          <q-icon
+                            :name="getIcon(props.player_class)"
+                            size="20px"
+                            :label="props.player_class"
+                            class="q-ma-sm"
+                            title=""
+                          />
+                          <q-toggle :icon="'app:tranq'" dense v-model="tranq" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
+                          <span class="text-right" v-if="!tranq">Rip at: {{props.dps}} DPS (very roughly estimated!)</span>
+                          <span class="text-right" v-if="tranq">Rip at: {{(props.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
+                        </q-td>
+                      </template>
+                    </q-table>
+                  </q-tab-panel>
+                </q-tab-panels>
               </q-expansion-item>
             </q-item>
             <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-6" icon="help" label="Raw Data">
@@ -162,8 +201,10 @@ export default {
         { name: 'Metric Value', align: 'center', label: 'Metric Value', field: 'value', sortable: true },
       ],
       threatCols:  [
-        { name: 'Player Class', align: 'center', label: 'Player Class', field: 'player_class', sortable: false },
-        { name: 'DPS to Rip Aggro', align: 'center', label: 'DPS to Rip', field: 'dps', sortable: false },
+        { name: 'player_class', align: 'center', label: 'Player Class', field: row => row.player_class, sortable: false },
+        { name: 'dps', align: 'center', label: 'DPS to Rip Aggro', field: row => row.dps, sortable: false },
+        { name: 'faction', label: 'Faction', field: row => row.faction, sortable: true },
+        { name: 'tranq', label: 'Tranquil Air', field: row => row.tranq, sortable: false },
       ],
     }
   },
