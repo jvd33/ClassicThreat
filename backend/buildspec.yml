@@ -1,6 +1,9 @@
 version: 0.2 
 
 phases: 
+  install:
+    runtime-versions:
+      docker: 18
   pre_build:
     commands:
     - echo Logging in to Amazon ECR....
@@ -10,6 +13,7 @@ phases:
     commands: 
     - echo Build started on `date`
     - echo Building backend Docker image...
+    - cd backend
     - echo CACHE_HOST=$CACHE_HOST >> .env && echo WCL_PUB_KEY=$WCL_PUB_KEY >> .env
     - docker build -t classicthreat-api .
     - docker tag classicthreat-api:latest $BACKEND_REPO

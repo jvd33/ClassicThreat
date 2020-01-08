@@ -32,7 +32,7 @@
             hide-bottom
           >
             <template v-slot:body-cell-name="player_class">
-              <q-td class= :props="props">
+              <q-td :props="props">
                 <q-icon
                   :name="getIcon(props.row.player_class)"
                   size="20px"
@@ -79,7 +79,7 @@
               </q-td>
             </template>
             <template v-slot:body-cell-name="dps">
-              <q-td v-bind:class="{ background: props.row.dps }" :props="props">
+              <q-td :props="props">
                 <span class="text-right" v-if="!tranq">Rip at: {{props.row.dps}} DPS (very roughly estimated!)</span>
                 <span class="text-right" v-if="tranq">Rip at: {{(props.row.dps/.7).toPrecision(4)}} DPS (very roughly estimated!)</span>
               </q-td>
@@ -112,13 +112,6 @@ name: 'DPSThreat',
         case 'Hunter': return 'app:hunter';
         default: return ability;
       };
-    },
-    getTableCols(data) {
-      let ret = [];
-      for (const prop in data) {
-        ret.push({'name': prop, 'value': data[prop]});
-      }
-      return ret;
     },
     getThreatTableData(tps, faction) {
       let classes = {
