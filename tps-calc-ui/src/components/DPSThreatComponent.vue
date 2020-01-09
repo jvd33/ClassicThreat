@@ -12,7 +12,7 @@
       <q-tab name="alliance" icon="app:alliance" label="Alliance" style="background: #1b3658"/>
     </q-tabs>
     <q-tab-panels v-model="tab" animated class="shadow-2 rounded-borders row" transition-prev="fade" transition-next="fade">
-      <q-tab-panel name="alliance" icon="app:alliance" style="background: #1b3658" class="col-6 col-sm-6 fit">
+      <q-tab-panel name="alliance" icon="app:alliance" style="background: #1b3658">
         <q-table
           title=""
           label="alliance"

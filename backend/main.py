@@ -12,6 +12,7 @@ origins = [
     "https://localhost",
     "http://localhost:8080",
     "https://localhost:8080",
+    "http://192.168.210.171:8080",
     "http://classicthreat-ui:8080",
     "http://classicthreat-ui",
     "http://classicthreat.com",

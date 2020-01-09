@@ -9,7 +9,7 @@
               <br/>
               <br/>
             </span>
-              <q-list dark bordered separator dense class="q-ma-sm col col-sm-4">
+              <q-list dark bordered separator dense class="q-ma-sm">
                 <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:dstance" size="40px" class="q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span>
                 </q-item>
@@ -36,10 +36,10 @@
                   <span class="q-pa-md"><q-icon name="app:taunt" size="40px" class="q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span>
                 </q-item>
               </q-list>
-              <dps-threat-result :results="value" class="q-pa-sm col-8 col-sm" />
+              <dps-threat-result :results="value" class="q-pa-sm col-8 col-sm-8" />
 
 
-            <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-12 col-sm-12" icon="help" label="Raw Data">
+            <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-8 col-sm-8" icon="help" label="Raw Data">
                 <q-table
                   title=""
                   :pagination="pagination"

@@ -12,8 +12,8 @@ services:
   classicthreat-ui:
     build: tps-calc-ui/.
     environment:
-      - NODE_ENV=production
-      - VUE_APP_API_URL=http://classicthreat-api
+      - NODE_ENV=development
+      - VUE_APP_API_URL=http://classicthreat-api:8000
     ports:
       - 80:80
     depends_on:
