@@ -117,7 +117,6 @@ class WarriorThreatResult(WarriorThreatCalculationRequest):
     total_threat_defiance: float = 0
     unmodified_tps: float = 0.0
     tps: float = 0.0
-    dps_caps: List[ClassDPS] = None
 
 
 class WarriorCastResponse(BaseModel):

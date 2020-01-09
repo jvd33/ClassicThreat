@@ -125,7 +125,7 @@
           lazy-rules
           title=""
           dense
-        >          
+        >
           <template v-slot:prepend>
             <q-icon name="app:t1" title="" size="20px"/>
           </template>
@@ -221,7 +221,7 @@ export default {
         this.results = null;
         this.is_loading = true;
         axios
-        .post(process.env.VUE_APP_API_URL + '/v1/api/calculate', {
+        .post(process.env.VUE_APP_API_URL + '/api/v1/calculate', {
           url: this.url,
           player_name: this.player_name,
           defiance_points: this.defiance_points,

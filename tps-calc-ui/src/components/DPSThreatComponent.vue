@@ -1,81 +1,80 @@
 <template>
-<q-page>
-    <q-header>Hi</q-header>
-    <q-tabs
-      v-model="tab"
-      dense
-      align="justify"
-      no-caps
-      class="text-white shadow-2 rounded-borders"
-    >
-      <q-tab name="horde" icon="app:horde" label="Horde" style="background: #5f110d"/>
-      <q-tab name="alliance" icon="app:alliance" label="Alliance" style="background: #1b3658"/>
-    </q-tabs>
-    <q-tab-panels v-model="tab" animated class="shadow-2 rounded-borders row" transition-prev="fade" transition-next="fade">
-      <q-tab-panel name="alliance" icon="app:alliance" style="background: #1b3658">
-        <q-table
-          title=""
-          label="alliance"
-          hide-header
-          :columns="threatCols"
-          :visible-columns="['class', 'dps']"
-          :data="getThreatTableData(results.tps, 'Alliance')"
-          row-key="name"
-          hide-bottom
-        >
-          <template v-slot:body-cell-class="props">
-            <q-td :props="props">
-              <q-icon
-                :name="getIcon(props.row.class)"
-                size="20px"
-                :label="props.row.class"
-                class="q-ma-sm"
-                title=""
-              />
-              <span class="text-right">{{props.row.class}}</span>
-            </q-td>
-          </template>
-          <template v-slot:body-cell-dps="props">
-            <q-td :props="props">
-              <span class="text-right">Rips at: <span class="text-primary text-h6 text-weight-bold">{{props.row.dps}} DPS</span> (roughly)</span>
-            </q-td>
-          </template>
-        </q-table>
-      </q-tab-panel>
-      <q-tab-panel name="horde" icon="app:horde" value="horde" style="background: #5f110d">
-        <q-table
-          title=""
-          label="horde"
-          :columns="threatCols"
-          :visible-columns="['class', 'dps']"
-          :data="getThreatTableData(results.tps, 'Horde')"
-          row-key="name"
-          hide-header
-        >
-        <template v-slot:body-cell-class="props">
-            <q-td :props="props">
-              <q-icon
-                :name="getIcon(props.row.class)"
-                size="20px"
-                :label="props.row.class"
-                class="q-ma-sm"
-                title=""
-              />
-              <span class="text-right">{{props.row.class}}</span>
-            </q-td>
-          </template>
-          <template v-slot:body-cell-dps="props">
-            <q-td :props="props">
-              <span class="text-right" v-if="!tranq">Rips at:  <span class="text-primary text-h6 text-weight-bold">{{props.row.dps}} DPS</span>  (very roughly estimated!)</span>
-              <span class="text-right" v-if="tranq">Rips at: <span class="text-primary text-h6 text-weight-bold">{{(props.row.dps/.7).toPrecision(4)}} DPS</span> (very roughly estimated!)</span>
-            </q-td>
-          </template>
-          <template v-slot:bottom="props">
-            <q-toggle :icon="'app:tranq'" dense v-model="tranq" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
-          </template>
-        </q-table>
-      </q-tab-panel>
-    </q-tab-panels>
+<q-page class="q-pa-sm col-10 col-sm-8" style="min-height: inherit">
+  <q-tabs
+    v-model="tab"
+    dense
+    align="justify"
+    no-caps
+    class="text-white shadow-2 rounded-borders"
+  >
+    <q-tab name="horde" icon="app:horde" label="Horde" style="background: #5f110d"/>
+    <q-tab name="alliance" icon="app:alliance" label="Alliance" style="background: #1b3658"/>
+  </q-tabs>
+  <q-tab-panels v-model="tab" animated class="shadow-2 rounded-borders row" transition-prev="fade" transition-next="fade">
+    <q-tab-panel name="alliance" icon="app:alliance" style="background: #1b3658">
+      <q-table
+        title=""
+        label="alliance"
+        hide-header
+        :columns="threatCols"
+        :data="getThreatTableData(results.tps, 'Alliance')"
+        row-key="name"
+        hide-bottom
+        class="wrap"
+      >
+        <template v-slot:body-cell-class="props" class="justify-around">
+          <q-td :props="props">
+            <q-icon
+              :name="getIcon(props.row.class)"
+              size="20px"
+              :label="props.row.class"
+              class="q-ma-sm"
+              title=""
+            />
+            <span>{{props.row.class}}</span>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-dps="props">
+          <q-td :props="props">
+            <span>Rips at: <span class="text-primary text-h6 text-weight-bold">{{props.row.dps}} DPS</span> (roughly)</span>
+          </q-td>
+        </template>
+      </q-table>
+    </q-tab-panel>
+    <q-tab-panel name="horde" icon="app:horde" value="horde" style="background: #5f110d">
+      <q-table
+        title=""
+        label="horde"
+        :columns="threatCols"
+        :data="getThreatTableData(results.tps, 'Horde')"
+        row-key="name"
+        hide-header
+        class="wrap"
+      >
+      <template v-slot:body-cell-class="props">
+          <q-td :props="props">
+            <q-icon
+              :name="getIcon(props.row.class)"
+              size="20px"
+              :label="props.row.class"
+              class="q-ma-sm"
+              title=""
+            />
+            <span>{{props.row.class}}</span>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-dps="props">
+          <q-td :props="props">
+            <span v-if="!tranq">Rips at:  <span class="text-primary text-h6 text-weight-bold">{{props.row.dps}} DPS</span>  (roughly)</span>
+            <span v-if="tranq">Rips at: <span class="text-primary text-h6 text-weight-bold">{{(props.row.dps/.7).toPrecision(4)}} DPS</span> (roughly)</span>
+          </q-td>
+        </template>
+        <template v-slot:bottom="props">
+          <q-toggle :icon="'app:tranq'" dense v-model="tranq" label="Enable Tranquil Air Totem Modifier?"></q-toggle>
+        </template>
+      </q-table>
+    </q-tab-panel>
+  </q-tab-panels>
   </q-page>
 </template>
 
@@ -100,7 +99,10 @@ name: 'DPSThreat',
     },
     getThreatTableData(tps, faction) {
       let classes = {
-        'Warrior': {mod: .8, rip_at: 1.1},
+        'Warrior': {
+          mod: (tps) => {
+
+        }, rip_at: 1.1},
         'Mage': {mod: .7, rip_at: 1.3},
         'Warlock (with imp)': {mod: .8, rip_at: 1.3},
         'Rogue': {mod: .71, rip_at: 1.1},
@@ -126,8 +128,6 @@ name: 'DPSThreat',
       threatCols:  [
         { name: 'class', align: 'center', label: 'Player Class', field: row => row.class, sortable: false },
         { name: 'dps', align: 'center', label: 'DPS to Rip Aggro', field: row => row.dps, sortable: true },
-        { name: 'faction', label: 'Faction', field: row => row.faction, sortable: false },
-        { name: 'tranq', label: 'Tranquil Air', field: row => row.tranq, sortable: false },
       ],
     }
   },

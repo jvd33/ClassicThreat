@@ -3,13 +3,13 @@
     <q-list bordered class="rounded-borders border-primary q-mb-lg" v-for="(value, name) in results" :key="name">
       <q-expansion-item :caption="name">
         <q-card class="qa-pa-md">
-          <q-card-section class="q-pa-sm row">
+          <q-card-section class="q-pa-sm row justify-around">
             <span class="text-h4 text-weight-bold text-center text-primary q-pa-md col-12 col-sm-12">
               Estimated TPS: {{value.tps.toPrecision(5)}}
               <br/>
               <br/>
             </span>
-              <q-list dark bordered separator dense class="q-ma-sm">
+              <q-list dark bordered separator dense class="q-ma-sm col-auto">
                 <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:dstance" size="40px" class="q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span>
                 </q-item>
@@ -36,10 +36,10 @@
                   <span class="q-pa-md"><q-icon name="app:taunt" size="40px" class="q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span>
                 </q-item>
               </q-list>
-              <dps-threat-result :results="value" class="q-pa-sm col-8 col-sm-8" />
+              <dps-threat-result :results="value" />
 
 
-            <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-8 col-sm-8" icon="help" label="Raw Data">
+            <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-8 col-sm-8 justify-center" icon="help" label="Raw Data">
                 <q-table
                   title=""
                   :pagination="pagination"

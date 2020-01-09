@@ -8,6 +8,11 @@
           <br/>
           or send gold to Aemin - Skeram US (pls)
           <br/><br/>
+          API Documentation can be viewed
+          <a class="text-accent text-weight-bold" href="https://classicthreat.com/api/v1/docs">
+            Here
+          </a>
+          <br/><br/>
           Feature Requests and Bug Reports can be submitted on GitHub: <br/>
           <a class="text-accent text-weight-bold" href="https://github.com/jvd33/ClassicTPSEstimator/issues">
             https://github.com/jvd33/ClassicThreat

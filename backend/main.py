@@ -8,24 +8,18 @@ from core import routes
 
 load_dotenv()
 origins = [
-    "http://localhost",
-    "https://localhost",
-    "http://localhost:8080",
-    "https://localhost:8080",
-    "http://192.168.210.171:8080",
-    "http://classicthreat-ui:8080",
-    "http://classicthreat-ui",
-    "http://classicthreat.com",
-    "https://classicthreat.com",
-    "http://classicthreat-api",
-    "https://classicthreat-api",
-    "http://frontend.classicthreat-service",
-    "http://frontend.classicthreat-service",
-
+    "*",
 ]
 
 
-app = FastAPI()
+app = FastAPI(
+            redoc_url="/api/v1/docs", 
+            docs_url=None,
+            title="ClassicThreat API",
+            description="Provides a mechanism to parse Warcraft Logs data for information more valuable for tanks.",
+            version="0.5.0",
+            openapi_url="/api/v1/openapi.json"
+        )
 
 
 app.add_middleware(
@@ -35,4 +29,4 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(routes.api_router, prefix='/v1/api', tags=['api'])
+app.include_router(routes.api_router, prefix='/api/v1', tags=['v1'])

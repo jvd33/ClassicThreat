@@ -58,8 +58,8 @@ async def get_log_data(req: WCLDataRequest, session):
     resp = await wcl.get_full_report(report_id)
     bosses = [f for f in resp.get('fights', []) if f.get('boss') != 0]
     if not bosses:
-        raise HTTPException(status_code=400,
-                            detail=f'No valid boss fights found in the linked log.')
+        raise HTTPException(status_code=404,
+                            detail=f'Not found: No valid boss fights found in the linked log.')
     
 
     bosses = [boss for boss in bosses if boss.get('name') not in cached_data]
@@ -69,18 +69,18 @@ async def get_log_data(req: WCLDataRequest, session):
     if fight_num:
         bosses = [f for f in bosses if str(f.get('id', '')) == fight_num]
         if not bosses:
-            raise HTTPException(status_code=400, detail=f'No boss activity found matching #fight={fight_num}')
+            raise HTTPException(status_code=404, detail=f'Not found: No boss activity found matching #fight={fight_num}')
 
     if req.bosses:
         bosses = [f for f in bosses if f.get('name') in req.bosses]
         if not bosses:
-            raise HTTPException(status_code=400,
-                                detail=f'No boss activity found matching {req.bosses}')
+            raise HTTPException(status_code=404,
+                                detail=f'Not found: No boss activity found matching {req.bosses}')
 
     player_info = [p for p in resp.get('friendlies') if p.get('name').lower() == req.player_name.lower()]
     if not player_info:
-        raise HTTPException(status_code=400,
-                            detail=f'Bad request: No player named {req.player_name} found in the linked log.')
+        raise HTTPException(status_code=404,
+                            detail=f'Not found: No player named {req.player_name} found in the linked log.')
     player_info = player_info[0]
     player_name = player_info.get('name')
     player_cls = player_info.get('type')

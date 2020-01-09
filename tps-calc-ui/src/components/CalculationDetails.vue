@@ -106,7 +106,7 @@ export default {
   },
   mounted() {
     axios
-    .get(process.env.VUE_APP_API_URL + '/v1/api/threat_values')
+    .get(process.env.VUE_APP_API_URL + '/api/v1/threat_values')
     .then(response => {
       this.data = JSON.parse(response.data);
       this.loading = false;
