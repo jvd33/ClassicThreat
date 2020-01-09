@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-pa-md row-12 fit no-wrap overflow-auto" style="position: relative;" >
+  <q-page class="q-pa-md row-12" style="position: relative;" >
     <q-toolbar-title
       class="text-primary text-h3 justify-center text-weight-bold q-pb-lg"
     >
@@ -17,7 +17,7 @@
         label="Character Name"
         lazy-rules
         title=""
-        :dense="dense"
+        dense
         :rules="[ val => val && val.length > 0 || 'Please type something']"
       >
       <q-tooltip :delay="1000" anchor="bottom middle" self="top middle" class="q-mt-md">
@@ -31,7 +31,7 @@
         label="Log URL"
         title=""
         lazy-rules
-        :dense="dense"
+        dense
         :rules="[
           val => val && val.includes('classic.warcraftlogs.com/reports/')
           || 'Please enter a valid log URL.'
@@ -48,7 +48,7 @@
         label="Points in Defiance"
         :options="options"
         lazy-rules
-        :dense="dense"
+        dense
         title=""
         :rules="[
           val => (val && 0 <= val <= 5) || 'Invalid number of defiance points. 0 through 5, bro'
@@ -70,7 +70,7 @@
         lazy-rules
         use-chips
         stack-label
-        :dense="dense"
+        dense
         multiple
         title=""
       >
@@ -81,12 +81,12 @@
      <div class="row">
       <q-input
         filled
-        class="col q-ma-sm"
+        class="col-4 col-sm-4 q-ma-sm"
         v-model="enemies_in_combat"
         label="(Optional) Enemies Nearby/In Combat"
         :options="options"
         lazy-rules
-        :dense="dense"
+        dense
         title=""
         :rules="[
             val => (val && !isNaN(val) && val <= 10 && val > 0) || 'Be reasonable. 1-10'
@@ -101,12 +101,12 @@
         </q-input>
         <q-input
           filled
-          class="col q-ma-sm"
+          class="col-4 col-sm-4 q-ma-sm"
           v-model="friendlies_in_combat"
           label="(Optional) Friendlies Nearby/In Combat"
           lazy-rules
           title=""
-          :dense="dense"
+          dense
           :rules="[
             val => (val && !isNaN(val && val <= 10 && val > 0) ) || 'Be reasonable. 1-10.'
           ]"
@@ -119,14 +119,16 @@
           </q-tooltip>
         </q-input>
         <q-toggle
-          class="col q-ma-sm"
+          class="col-2 col-sm-2 q-ma-sm"
           v-model="t1"
           label="(Optional) Tier 1 Set Bonus?"
           lazy-rules
           title=""
-	        icon="app:t1"
-          :dense="dense"
-        >
+          dense
+        >          
+          <template v-slot:prepend>
+            <q-icon name="app:t1" title="" size="20px"/>
+          </template>
           <q-tooltip :delay="1000" anchor="bottom middle" self="top middle">
             Apply the Tier 1 Sunder Armor bonus?
           </q-tooltip>
@@ -151,7 +153,7 @@
           <span class="h6 text-accent">
             To contribute, report bugs, or propose features, see <router-link :to="'About'" class="text-accent text-weight-bold">about</router-link>
     </span>
-    <threat-result class="row-10 justify-center q-mt-sm q-mb-sm" v-if="this.results" :results="this.results"/>
+    <threat-result class="q-mt-sm q-mb-sm" v-if="this.results" :results="this.results"/>
     <q-expansion-item
       caption="Instructions"
       :default-opened="false"
