@@ -1,4 +1,4 @@
-CALC_RESP_EXAMPLE = {
+CALC_RESP_EXAMPLE = """{
   "Magmadar": {
     "shield_slam_count": 0,
     "bt_count": 11,
@@ -29,9 +29,9 @@ CALC_RESP_EXAMPLE = {
     "unmodified_tps": 545.2443107655639,
     "tps": 808.644089438738,
   }
-}
+}"""
 
-THREAT_RESP_EXAMPLE = [
+THREAT_RESP_EXAMPLE = """[
   {
     "name": "BattleShout",
     "threat_type": "Flat",
@@ -137,6 +137,6 @@ THREAT_RESP_EXAMPLE = [
     "threat_type": "Flat",
     "val": 1
   }
-],
+]""",
 
-HEARTBEAT = {'status': 'OK'}
+HEARTBEAT = "{'status': 'OK'}"

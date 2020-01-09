@@ -47,20 +47,20 @@ async def status():
                                         "example": CALC_RESP_EXAMPLE
                                     }
                                 },
+                            },
                             400: {
                                 "description": "Bad response to WCL"
                                 },
                             },
-                        },
                 )
 async def calculate(req: WCLDataRequest, session=Depends(get_http_session)):
     try:
         async with session:
             return await get_log_data(req, session=session)
-    except ClientResponseError as exc:
-        return JSONResponse(content=exc.message, status_code=exc.status)
-    except HTTPException as exc:
-        return JSONResponse(content=exc.message, status_code=exc.status_code)
+    except ClientResponseError as cexc:
+        return JSONResponse(content=cexc.message, status_code=cexc.status)
+    except HTTPException as hexc:
+        raise hexc
 
 
 @api_router.get('/threat_values', 

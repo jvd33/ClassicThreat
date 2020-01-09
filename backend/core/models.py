@@ -41,7 +41,7 @@ class WarriorThreatCalculationRequest(BaseModel):
     execute_dmg: int = 0
     goa_procs: int = 0
     rage_gains: int = 0
-    time: float
+    time: float = 0
     total_damage: int = 0
     t1_set: bool = False
     defiance_points: int = 5
@@ -103,13 +103,13 @@ class WarriorThreatCalculationRequest(BaseModel):
         unmodified_tps = unmodified_threat/self.time
         tps = (modified_threat + tc_threat + rage_threat + healing_threat)/self.time
 
-        return dict(WarriorThreatResult(
+        return WarriorThreatResult(
             **dict(self),
             total_threat=unmodified_threat,
             total_threat_defiance=modified_threat,
             unmodified_tps=unmodified_tps,
             tps=tps
-        ))
+        )
 
 
 class WarriorThreatResult(WarriorThreatCalculationRequest):
