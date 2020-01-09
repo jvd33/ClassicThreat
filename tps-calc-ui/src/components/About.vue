@@ -8,10 +8,12 @@
           <br/>
           or send gold to Aemin - Skeram US (pls)
           <br/><br/>
-          API Documentation can be viewed
+          There's a public API, documentation can be viewed
           <a class="text-accent text-weight-bold" href="https://classicthreat.com/api/v1/docs">
             Here
-          </a>
+          </a>. There's almost no functionality, but the functionality that drives the website is accessible via a RESTful interface.
+          <br/><br/>
+          Don't break it, I have done 0 load testing
           <br/><br/>
           Feature Requests and Bug Reports can be submitted on GitHub: <br/>
           <a class="text-accent text-weight-bold" href="https://github.com/jvd33/ClassicTPSEstimator/issues">

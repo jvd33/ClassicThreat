@@ -108,7 +108,7 @@ export default {
     axios
     .get(process.env.VUE_APP_API_URL + '/api/v1/threat_values')
     .then(response => {
-      this.data = JSON.parse(response.data);
+      this.data = response.data;
       this.loading = false;
     })
     .catch(error => {

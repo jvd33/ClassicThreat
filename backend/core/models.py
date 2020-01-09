@@ -52,11 +52,11 @@ class WarriorThreatCalculationRequest(BaseModel):
     hp_gains: float = 0
     friendlies_in_combat: int = 1
     enemies_in_combat: int = 1  # for healing and shout threat
-    player_name: str
-    player_class: str
-    boss_name: str
-    boss_id: int
-    realm: str
+    player_name: str = None
+    player_class: str = None
+    boss_name: str = None
+    boss_id: int = None
+    realm: str = None
 
 
     __t = ThreatValues.vals()

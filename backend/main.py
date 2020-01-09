@@ -17,8 +17,7 @@ app = FastAPI(
             docs_url=None,
             title="ClassicThreat API",
             description="Provides a mechanism to parse Warcraft Logs data for information more valuable for tanks.",
-            version="0.5.0",
-            openapi_url="/api/v1/openapi.json"
+            version="0.5.0"
         )
 
 

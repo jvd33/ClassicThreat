@@ -60,7 +60,7 @@ async def calculate(req: WCLDataRequest, session=Depends(get_http_session)):
     except ClientResponseError as exc:
         return JSONResponse(content=exc.message, status_code=exc.status)
     except HTTPException as exc:
-        return JSONResponse(content=exc.mess, status_code=exc.status_code)
+        return JSONResponse(content=exc.message, status_code=exc.status_code)
 
 
 @api_router.get('/threat_values', 
