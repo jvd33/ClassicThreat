@@ -29,4 +29,4 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(routes.api_router, prefix='/api/v1', tags=['v1'])
+app.include_router(routes.api_router, prefix='/api/v1')

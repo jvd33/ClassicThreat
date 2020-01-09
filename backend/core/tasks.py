@@ -205,7 +205,7 @@ async def process_casts(data):
 
 
 async def process_debuffs(data):
-    goa_procs = [d for d in data.get('auras') if d.get('name') == 'Gift of Arthas']
+    goa_procs = [d for d in data.get('auras', ) if d.get('name') == 'Gift of Arthas']
     if goa_procs:
         return {'goa_procs': goa_procs[0].get('totalUses')}
     return {'goa_procs': 0}

@@ -37,7 +37,6 @@ async def status():
                 response_model=WarriorThreatResult,
                 responses={
                             404: {
-                                "model": WCLDataRequest, 
                                 "description": "The report was not found, no player with the name was found in the report, or there were no valid boss fights found."
                             },
                             200: {
@@ -56,7 +55,8 @@ async def status():
 async def calculate(req: WCLDataRequest, session=Depends(get_http_session)):
     try:
         async with session:
-            return await get_log_data(req, session=session)
+            results = await get_log_data(req, session=session)
+            return JSONResponse(content=results, status_code=200)
     except ClientResponseError as cexc:
         return JSONResponse(content=cexc.message, status_code=cexc.status)
     except HTTPException as hexc:

@@ -31,7 +31,6 @@ class WCLService:
         } if not params else {**params, 'api_key': self.PUB_KEY}
 
         print(f'{method}: {url}')
-        print(params)
         async with await __request(url, params=params, json=data or '{}', headers=headers) as resp:
             return await resp.content.read()
 

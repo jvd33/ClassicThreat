@@ -103,13 +103,13 @@ class WarriorThreatCalculationRequest(BaseModel):
         unmodified_tps = unmodified_threat/self.time
         tps = (modified_threat + tc_threat + rage_threat + healing_threat)/self.time
 
-        return WarriorThreatResult(
+        return dict(WarriorThreatResult(
             **dict(self),
             total_threat=unmodified_threat,
             total_threat_defiance=modified_threat,
             unmodified_tps=unmodified_tps,
             tps=tps
-        )
+        ))
 
 
 class WarriorThreatResult(WarriorThreatCalculationRequest):
