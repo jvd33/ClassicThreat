@@ -106,9 +106,9 @@ name: 'DPSThreat',
             // Will take these as args when I'm not sick of building UI components, for now deal with 20 CPM 20% execute
             let hs_cps = (20/60); // 15 casts per minute, on the conservative side
             let execute_percent = .2;
-            return tps/((((tps - (hs_cps * 145 * .8)) * 1.1/.8) * (1 - execute_percent)) 
+            return tps/((((tps - (hs_cps * 145 * .8)) * 1.1/.8) * (1 - execute_percent))
             + (execute_percent * (tps + (hs_cps * 145 * .8) * 1.1))) // quick maths
-          }, 
+          },
           rip_at: 1
           },
         'Mage': {mod: () => .7, rip_at: 1.3},

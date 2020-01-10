@@ -1,7 +1,7 @@
 <template>
   <q-page>
     <q-list bordered class="rounded-borders border-primary q-mb-lg" v-for="(value, name) in results" :key="name">
-      <q-expansion-item :caption="name">
+      <q-expansion-item :caption="getRowTitle(name, value)">
         <q-card class="qa-pa-md">
           <q-card-section class="q-pa-sm row justify-around">
             <span class="text-h4 text-weight-bold text-center text-primary q-pa-md col-12 col-sm-12">
@@ -27,7 +27,7 @@
                   Revenge Casts Per Minute: <strong>{{(value.revenge_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
-                  <span class="q-pa-md"><q-icon name="app:sunder" class="q-mr-sm" size="40px"/>Sunder Armor Hits Per Minute: <strong>{{(value.sunder_count/(value.time/60)).toPrecision(4)}}</strong></span>
+                  <span class="q-pa-md"><q-icon name="app:sunder" class="q-mr-sm" size="40px"/>Sunder Armor Casts Per Minute: <strong>{{(value.sunder_count/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:hs" size="40px" class="q-mr-sm"/>Heroic Strike Casts Per Minute: <strong>{{(value.hs_casts/(value.time/60)).toPrecision(4)}}</strong></span>
@@ -98,6 +98,9 @@ export default {
         ret.push({'name': prop, 'value': data[prop]});
       }
       return ret;
+    },
+    getRowTitle(name, val) {
+      return `${name}: ${val.tps.toPrecision(5)} Estimated TPS`
     },
     downloadJson(filename, dl){
       const url = window.URL.createObjectURL(new Blob([JSON.stringify(dl, null, 2)]))

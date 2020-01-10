@@ -12,7 +12,7 @@ from docs.examples import CALC_RESP_EXAMPLE, THREAT_RESP_EXAMPLE, HEARTBEAT
 api_router = APIRouter()
 
 async def get_http_session():
-    return aiohttp.ClientSession(json_serialize=ujson.dumps)
+    return aiohttp.ClientSession(json_serialize=ujson.dumps, raise_for_status=True)
 
 @api_router.get('/status', 
                 tags=['v1'],
@@ -58,7 +58,7 @@ async def calculate(req: WCLDataRequest, session=Depends(get_http_session)):
             results = await get_log_data(req, session=session)
             return JSONResponse(content=results, status_code=200)
     except ClientResponseError as cexc:
-        return JSONResponse(content=cexc.message, status_code=cexc.status)
+        return JSONResponse(content={'detail': f'Error from Warcraft Logs: {cexc.message}', 'code': cexc.status}, status_code=cexc.status)
     except HTTPException as hexc:
         raise hexc
 

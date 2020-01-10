@@ -50,6 +50,7 @@ class WarriorThreatCalculationRequest(BaseModel):
     hs_casts: int = 0
     hs_count: int = 0
     sunder_count: int = 0
+    sunder_casts: int = 0
     execute_dmg: int = 0
     goa_procs: int = 0
     rage_gains: int = 0
@@ -88,12 +89,10 @@ class WarriorThreatCalculationRequest(BaseModel):
     }
 
     def calculate_warrior_threat(self):
-        defiance_key = f'Defiance{self.defiance_points}'
-
         exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_count',
                    'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts', 'boss_name',
                    '__modifiers', 'defiance_key', '__t', 'boss_id', 'rage_gains', 'hp_gains', 'shield_slam_casts', 
-                   'revenge_casts', 'hs_casts'}
+                   'revenge_casts', 'hs_casts', 'sunder_casts'}
 
         unmodified_threat = self.total_damage
         for name, val in self.copy(exclude=exclude):
@@ -113,9 +112,9 @@ class WarriorThreatCalculationRequest(BaseModel):
 
         modified_threat = self.__modifiers.get('stance')(unmodified_threat, self.defiance_points)
 
-        unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat
+        unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat + self.execute_dmg
         unmodified_tps = unmodified_threat/self.time
-        tps = (modified_threat + tc_threat + rage_threat + healing_threat)/self.time
+        tps = (modified_threat + tc_threat + rage_threat + healing_threat + self.execute_dmg)/self.time
 
         return dict(WarriorThreatResult(
             **dict(self),
@@ -124,7 +123,6 @@ class WarriorThreatCalculationRequest(BaseModel):
             unmodified_tps=unmodified_tps,
             tps=tps
         ))
-
 
 class WarriorThreatResult(WarriorThreatCalculationRequest):
     total_threat: float = 0
@@ -148,6 +146,7 @@ class WarriorDamageResponse(BaseModel):
     total_damage: int = 0
     execute_dmg: int = 0
     sunder_count: int = 0
+    sunder_casts: int = 0
     shield_slam_count: int = 0
     revenge_count: int = 0
     hs_count: int = 0
