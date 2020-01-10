@@ -1,5 +1,7 @@
 import asyncio
 import ujson
+import aiohttp
+import logging
 
 from urllib.parse import urlparse
 from typing import List
@@ -12,13 +14,14 @@ from .cache import RedisClient
 
 EVENTS = ['damage-done', 'casts', 'resources-gains', 'healing', 'debuffs']
 
+logger = logging.getLogger()
 
-async def get_log_data(req: WCLDataRequest):
+async def get_log_data(req: WCLDataRequest, session):
     """TODO Warning: Here be dragons
     this is a prototype that got out of hand
     the caching logic can definitely be separated out and error handling can be more consistent
     """
-    def __recalculate_opts(data, req=req):
+    async def __recalculate_opts(data, req=req):
         data['defiance_points'] = req.defiance_points
         data['t1_set'] = req.t1_set
         data['enemies_in_combat'] = req.enemies_in_combat
@@ -26,58 +29,51 @@ async def get_log_data(req: WCLDataRequest):
         r = WarriorThreatCalculationRequest(**data)
         return r.calculate_warrior_threat()
 
+    logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
+
     url_segments = urlparse(req.url)
-    report_id = url_segments.path.split('/')[-1]
-    fight_arg = url_segments.fragment.split('&')[0] if url_segments.fragment else None
-    fight_num = fight_arg.split('=')[-1] if fight_arg and fight_arg.split('=')[-1].isdigit() else None
+    seg = url_segments.path.split('/')
+    report_index = next((i for i, s  in enumerate(seg) if s == 'reports'), None)
+    if not report_index or len(url_segments) <= report_index:
+        logger.error(f'400: Bad log url: {req.url} --- {report_index}')
+        raise HTTPException(status_code=400,
+                            detail=f'Bad log URL. Try the format /reports/<report_id>')
+    report_id = seg[report_index + 1]
+
+    missing = req.bosses
+    cache_resp = {}
     
-    redis = RedisClient()
-    cached_data = await redis.get_report_results(report_id, req.player_name) or {}
-    cached_data = {k: __recalculate_opts(v) for k, v in cached_data.items()}
-    if cached_data:
-        import copy
-        if req.bosses:
-            t = copy.deepcopy(cached_data)
-            if all([b in t.keys() for b in req.bosses]):
-                return {k: v for k, v in sorted({a: t[a] for a in req.bosses}.items(), key=lambda x: x[1].get('boss_id'))}
-        if fight_num:
-            t = copy.deepcopy(cached_data)
-            f = {k: fight for k, fight in t.items() if str(fight.get('boss_id')) == fight_num}
-            if f:
-                return f
+    try:
+        redis = RedisClient()
+        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses) or {}
+        if cached_data.get('matches'):
+            cache_resp = {k: await __recalculate_opts(v) for k, v in cached_data.get('matches').items()}
+        missing = cached_data.get('missing', [])
+    except Exception as exc:
+        logger.error(f'Failed to read from cache {exc}')
     
-    wcl = WCLService()
+    wcl = WCLService(session=session)
     resp = await wcl.get_full_report(report_id)
-    bosses = [f for f in resp.get('fights') if f.get('boss') != 0]
-    if not bosses:
-        raise HTTPException(status_code=400,
-                            detail=f'No valid boss fights found in the linked log.')
+    bosses = [v for v in resp.get('fights') if v.get('boss') != 0 and v.get('kill') == True]
     
-
-    bosses = [boss for boss in bosses if boss.get('name') not in cached_data]
     if not bosses:
-        return {k: v for k, v in sorted(cached_data.items(), key=lambda x: x[1].get('boss_id'))}
-
-    if fight_num:
-        bosses = [f for f in bosses if str(f.get('id', '')) == fight_num]
-        if not bosses:
-            raise HTTPException(status_code=400, detail=f'No boss activity found matching #fight={fight_num}')
-
-    if req.bosses:
-        bosses = [f for f in bosses if f.get('name') in req.bosses]
-        if not bosses:
-            raise HTTPException(status_code=400,
-                                detail=f'No boss activity found matching {req.bosses}')
-
-    player_info = [p for p in resp.get('friendlies') if p.get('name').lower() == req.player_name.lower()]
+        if not cache_resp:
+            logger.error(f'No bosses found in log {report_id} OR cache for player {req.player_name}: {bosses}')
+            raise HTTPException(status_code=404,
+                                detail=f'Not found: No boss activity found matching {req.bosses}')
+        return {k: v for k, v in sorted(cache_resp.items(), key=lambda x: x[1].get('boss_id'))}
+    
+    bosses = list(filter(lambda x: x.get('name') in [*req.bosses, *missing], bosses)) or bosses
+    player_info = [p for p in resp.get('friendlies') if p.get('name').casefold() == req.player_name.casefold()]
     if not player_info:
-        raise HTTPException(status_code=400,
-                            detail=f'Bad request: No player named {req.player_name} found in the linked log.')
+        logger.error(f'Player {req.player_name} not found in provided report {report_id}.')
+        raise HTTPException(status_code=404,
+                            detail=f'Not found: No player named {req.player_name} found in the linked log.')
+
     player_info = player_info[0]
     player_name = player_info.get('name')
     player_cls = player_info.get('type')
     realm = player_info.get('server')
-    
     del player_info['fights']
     
     reqs = [BossActivityRequest(
@@ -88,13 +84,14 @@ async def get_log_data(req: WCLDataRequest):
         boss_name=boss.get('name'),
         report_id=report_id,
     ) for boss in bosses]
-    d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.enemies_in_combat, req.t1_set) or {}
-    return {k: v for k, v in sorted({**d, **cached_data}.items(), key=lambda x: x[1].get('boss_id'))}
+
+    d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.enemies_in_combat, req.t1_set, session) or {}
+    return {k: v for k, v in sorted({**d, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
  
-async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, enemies, t1):
+async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, enemies, t1, session):
     if not reqs:
         return []
-    wcl = WCLService()
+    wcl = WCLService(session=session)
     report_id = reqs[0].report_id if reqs[0] else None
     futures = [asyncio.gather(*[wcl.get_fight_details(req, event) for event in EVENTS]) for req in reqs]
     future_results = await asyncio.gather(*futures)
@@ -105,6 +102,7 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
             resp.update({'time': data.get('totalTime') / 1000.0}) if data.get('totalTime') else {}
             info = await process_data_response(data.get('event'))(data)
             resp.update(dict(info), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'))
+
         r = WarriorThreatCalculationRequest(**resp,
                                             player_name=player_name,
                                             player_class=player_class,
@@ -117,9 +115,12 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
 
         tps = r.calculate_warrior_threat()
         results.append(tps)
-    ret_json = {result.get('boss_name'): result for result in results}
-    redis = RedisClient()
-    await redis.save_results(report_id, player_name, ret_json)
+    ret_json = {result.get('boss_name'): {k: v for k, v in sorted(result.items(), key=lambda x: x[0])} for result in results}
+    try:
+        redis = RedisClient()
+        await redis.save_results(report_id, player_name, ret_json)
+    except Exception as exc:
+        logger.error(f'Failed to write to cache {exc}')
     return ret_json
 
 
@@ -134,6 +135,12 @@ def process_data_response(request_type):
 
 
 async def process_damage_done(data):
+
+    __flat = {
+        'Shield Slam': 'shield_slam_count',
+        'Revenge': 'revenge_count',
+        'Heroic Strike': 'hs_count',
+    }
     damage_entries = data.get('entries')
     if not damage_entries:
         # Return 0 for damage or set the equivalent, dunno yet haven't gotten that far
@@ -141,14 +148,19 @@ async def process_damage_done(data):
     total = []
     sunder_casts = 0
     execute_damage = 0
+    hits = {}
     for entry in damage_entries:
-        if entry.get('name') == 'Sunder Armor':
-            sunder_casts = entry.get('uses') - entry.get('missCount')
+        if entry.get('name') in __flat.keys():
+            hits[__flat[entry.get('name')]] = entry.get('hitCount')
+            total.append(entry.get('total'))
+        elif entry.get('name') == 'Sunder Armor':
+            hits['sunder_count'] = entry.get('uses') - entry.get('missCount')
+            sunder_casts = entry.get('uses')
         elif entry.get('name') == 'Execute':
             execute_damage = entry.get('total')
         else:
-            total.append(entry.get('total', 0))
-    return WarriorDamageResponse(total_damage=sum(total) + execute_damage, execute_dmg=execute_damage, sunder_count=sunder_casts)
+            total.append(entry.get('total'))
+    return WarriorDamageResponse(total_damage=sum(total), execute_dmg=execute_damage, sunder_casts=sunder_casts, **hits)
 
 
 async def process_rage_gains(data):
@@ -175,17 +187,18 @@ async def process_casts(data):
     abilities = {
         'Demoralizing Shout': 'demo_casts',
         'Battle Shout': 'bs_casts',
-        'Shield Slam': 'shield_slam_count',
-        'Heroic Strike': 'hs_count',
-        'Revenge': 'revenge_count',
+        'Shield Slam': 'shield_slam_casts',
+        'Heroic Strike': 'hs_casts',
+        'Revenge': 'revenge_casts',
         'Thunder Clap': 'thunderclap_casts',
         'Bloodthirst': 'bt_count',
+        'Cleave': 'cleave_count',
     }
 
     data = [entry for entry in cast_entries if entry.get('name') in abilities]
     resp = WarriorCastResponse()
     for entry in data:
-        count = entry.get('hitCount', 0)
+        count = entry.get('hitCount')
         name = entry.get('name')
         resp_attr = abilities.get(name)
         setattr(resp, resp_attr, count)
@@ -193,7 +206,7 @@ async def process_casts(data):
 
 
 async def process_debuffs(data):
-    goa_procs = [d for d in data.get('auras') if d.get('name') == 'Gift of Arthas']
+    goa_procs = [d for d in data.get('auras', []) if d.get('name') == 'Gift of Arthas']
     if goa_procs:
         return {'goa_procs': goa_procs[0].get('totalUses')}
     return {'goa_procs': 0}

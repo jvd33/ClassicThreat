@@ -1,0 +1,25 @@
+version: 0.2 
+
+phases: 
+  install:
+    runtime-versions:
+      docker: 18
+  pre_build:
+    commands:
+    - echo Logging in to Amazon ECR....
+    - aws --version
+    - $(aws ecr get-login --no-include-email --region $CI_REGION)
+  build: 
+    commands: 
+    - echo Build started on `date`
+    - cd tps-calc-ui
+    - touch .env.production && echo NODE_ENV=$NODE_ENV >> .env.production && echo VUE_APP_API_URL=$VUE_APP_API_URL >> .env.production
+    - docker build -t classicthreat-ui .
+    - docker tag classicthreat-ui:latest $UI_REPO
+    - echo Front end built.
+  post_build: 
+    commands: 
+    - echo Build completed on `date` 
+    - echo pushing images...
+    - docker push $UI_REPO
+    - echo SUCCESS

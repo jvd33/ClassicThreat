@@ -21,11 +21,12 @@ class ThreatValues:
     Defiance4 = {'threat_type': 'Modifier', 'val': 1.12}
     Defiance5 = {'threat_type': 'Modifier', 'val': 1.15}
     Healing = {'threat_type': 'Flat', 'val': .5}
-    DemoShout = {'threat_type': 'Flat', 'val': 45}
-    ThunderClap = {'threat_type': 'Flat', 'val': 314*.8}
+    DemoShout = {'threat_type': 'Flat', 'val': 43}
+    ThunderClap = {'threat_type': 'Flat', 'val': 130*.8}
     BattleShout = {'threat_type': 'Flat', 'val': 56}
     Tier1Bonus = {'threat_type': 'Modifier', 'val': 1.15}
     Execute = {'threat_type': 'Flat', 'val': 1}
+    Cleave = {'threat_type': 'Flat', 'val': 100}
 
     @staticmethod
     def vals():
