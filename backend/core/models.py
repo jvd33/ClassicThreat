@@ -107,7 +107,7 @@ class WarriorThreatCalculationRequest(BaseModel):
         rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains)
         healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains, self.enemies_in_combat)
 
-        modified_threat = unmodified_threat * __t.DefensiveStance * getattr(__t, defiance_key)
+        modified_threat = self.__modifiers.get('stance')(unmodified_threat)
 
         unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat
         unmodified_tps = unmodified_threat/self.time

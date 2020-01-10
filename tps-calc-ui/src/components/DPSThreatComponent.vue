@@ -97,10 +97,13 @@ name: 'DPSThreat',
         default: return cls;
       };
     },
-    getThreatTableData(d, faction) {
+    getThreatTableData(tps, faction) {
       let classes = {
         'Warrior': {
-          mod: (tps, hs_cps, execute_percent) => {
+          mod: () => {
+            // Will take these as args when I'm not sick of building UI components, for now deal with 20 CPM 20% execute
+            let hs_cps = (20/60); // 15 casts per minute, on the conservative side
+            let execute_percent = .2;
             return 1/((((tps - (hs_cps * 145 * .8)) * 1.1/.8) * (1 - execute_percent)) 
             + (execute_percent * (tps + (hs_cps * 145 * .8) * 1.1))) // quick maths
           }, 
@@ -113,6 +116,7 @@ name: 'DPSThreat',
         'Hunter': {mod: 1, rip_at: 1.3},
       };
 
+      let ret = [];
       Object.keys(classes).forEach((k) => {
           if (faction === 'Horde') ret.push({class: k, dps: ((tps*classes[k].rip_at)/classes[k].mod).toPrecision(4), faction: 'Horde', tranq: false });
           else if (faction === 'Alliance') ret.push({class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7)).toPrecision(4), faction: 'Alliance', tranq: false });
