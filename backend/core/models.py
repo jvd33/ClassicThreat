@@ -23,6 +23,15 @@ class WCLDataRequest(BaseModel):
         "Invalid Log URL."
         return v
 
+
+    @validator('defiance_points')
+    def check_defiance(cls, v):
+        assert defiance_points in [0, 1, 2, 3, 4, 5], "0 through 5."
+        return v
+
+    
+        
+
 class BossActivityRequest(BaseModel):
     player_id: int
     start_time: int
@@ -72,6 +81,7 @@ class WarriorThreatCalculationRequest(BaseModel):
         'thunderclap_casts': lambda x, __t=__t: x * __t.ThunderClap,
         'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),  # N = friendlies, c = enemies
         'cleave_count': lambda x, __t=__t: x * __t.Cleave,
+        'stance': lambda x, __t=__t: x * __t.DefensiveStance * getattr(__t, f'Defiance{self.defiance_points}')
     }
 
     def calculate_warrior_threat(self):
@@ -97,7 +107,7 @@ class WarriorThreatCalculationRequest(BaseModel):
         rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains)
         healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains, self.enemies_in_combat)
 
-        modified_threat = unmodified_threat * self.__t.DefensiveStance * getattr(self.__t, defiance_key)
+        modified_threat = unmodified_threat * __t.DefensiveStance * getattr(__t, defiance_key)
 
         unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat
         unmodified_tps = unmodified_threat/self.time

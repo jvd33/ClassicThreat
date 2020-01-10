@@ -46,7 +46,7 @@
         title=""
         label="horde"
         :columns="threatCols"
-        :data="getThreatTableData(results.tps, 'Horde')"
+        :data="getThreatTableData(results, 'Horde')"
         row-key="name"
         hide-header
         class="wrap"
@@ -88,7 +88,7 @@ name: 'DPSThreat',
   methods: {
     getIcon(cls) {
       switch(cls) {
-        case 'Warrior': return 'app:warr';
+        case 'Warrior (assuming 20 HS CPM, 15% execute)': return 'app:warr';
         case 'Mage': return 'app:mage';
         case 'Warlock (with imp)': return 'app:warlock';
         case 'Rogue': return 'app:rogue';
@@ -97,12 +97,15 @@ name: 'DPSThreat',
         default: return cls;
       };
     },
-    getThreatTableData(tps, faction) {
+    getThreatTableData(d, faction) {
       let classes = {
         'Warrior': {
-          mod: (tps) => {
-
-        }, rip_at: 1.1},
+          mod: (tps, hs_cps, execute_percent) => {
+            return 1/((((tps - (hs_cps * 145 * .8)) * 1.1/.8) * (1 - execute_percent)) 
+            + (execute_percent * (tps + (hs_cps * 145 * .8) * 1.1))) // quick maths
+          }, 
+          rip_at: 1
+          },
         'Mage': {mod: .7, rip_at: 1.3},
         'Warlock (with imp)': {mod: .8, rip_at: 1.3},
         'Rogue': {mod: .71, rip_at: 1.1},
@@ -110,7 +113,6 @@ name: 'DPSThreat',
         'Hunter': {mod: 1, rip_at: 1.3},
       };
 
-      let ret = [];
       Object.keys(classes).forEach((k) => {
           if (faction === 'Horde') ret.push({class: k, dps: ((tps*classes[k].rip_at)/classes[k].mod).toPrecision(4), faction: 'Horde', tranq: false });
           else if (faction === 'Alliance') ret.push({class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod * .7)).toPrecision(4), faction: 'Alliance', tranq: false });
