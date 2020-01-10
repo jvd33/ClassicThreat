@@ -29,10 +29,13 @@ async def get_log_data(req: WCLDataRequest, session):
         r = WarriorThreatCalculationRequest(**data)
         return r.calculate_warrior_threat()
 
+    logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
+
     url_segments = urlparse(req.url)
     seg = url_segments.path.split('/')
     report_index = next((i for i, s  in enumerate(seg) if s == 'reports'), None)
     if not report_index or len(url_segments) <= report_index:
+        logger.error(f'400: Bad log url: {req.url} --- {report_index}')
         raise HTTPException(status_code=400,
                             detail=f'Bad log URL. Try the format /reports/<report_id>')
     report_id = seg[report_index + 1]
@@ -51,8 +54,9 @@ async def get_log_data(req: WCLDataRequest, session):
     
     wcl = WCLService(session=session)
     resp = await wcl.get_full_report(report_id)
-    bosses = [f for f in resp.get('fights') if f.get('boss') != 0]
+    bosses = [v for v in resp.get('fights') if v.get('boss') != 0]
     if not bosses:
+        logger.error(f'No bosses found in log {report_id} for player {req.player_name}: {bosses} {resp}')
         raise HTTPException(status_code=404,
                             detail=f'Not found: No valid boss fights found in the linked log.')
     
@@ -60,6 +64,7 @@ async def get_log_data(req: WCLDataRequest, session):
     bosses = [boss for boss in bosses if boss.get('name') in missing and boss.get('id') not in [v.get('boss_id') for k, v in cache_resp.items()]]
     if not bosses:
         if not cache_resp:
+            logger.error(f'No bosses found in log {report_id} OR cache for player {req.player_name}: {bosses}')
             raise HTTPException(status_code=404,
                                 detail=f'Not found: No boss activity found matching {req.bosses}')
         return {k: v for k, v in sorted(cache_resp.items(), key=lambda x: x[1].get('boss_id'))}
@@ -67,6 +72,7 @@ async def get_log_data(req: WCLDataRequest, session):
 
     player_info = [p for p in resp.get('friendlies') if p.get('name').casefold() == req.player_name.casefold()]
     if not player_info:
+        logger.error(f'Player {player_name} not found in provided report {report_id}.')
         raise HTTPException(status_code=404,
                             detail=f'Not found: No player named {req.player_name} found in the linked log.')
     player_info = player_info[0]

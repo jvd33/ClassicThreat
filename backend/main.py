@@ -2,11 +2,11 @@ import asyncio
 
 from fastapi import FastAPI, Header, HTTPException
 from starlette.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 from core import routes
 
-load_dotenv()
+load_dotenv(find_dotenv())
 origins = [
     "*",
 ]
