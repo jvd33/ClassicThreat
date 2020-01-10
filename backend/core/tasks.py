@@ -21,7 +21,7 @@ async def get_log_data(req: WCLDataRequest, session):
     this is a prototype that got out of hand
     the caching logic can definitely be separated out and error handling can be more consistent
     """
-    def __recalculate_opts(data, req=req):
+    async def __recalculate_opts(data, req=req):
         data['defiance_points'] = req.defiance_points
         data['t1_set'] = req.t1_set
         data['enemies_in_combat'] = req.enemies_in_combat
@@ -36,42 +36,36 @@ async def get_log_data(req: WCLDataRequest, session):
         raise HTTPException(status_code=400,
                             detail=f'Bad log URL. Try the format /reports/<report_id>')
     report_id = seg[report_index + 1]
-    
+
+    missing = req.bosses
+    cache_resp = {}
     try:
         redis = RedisClient()
-        cached_data = await redis.get_report_results(report_id, req.player_name) or {}
-        cached_data = {k: __recalculate_opts(v) for k, v in cached_data.items()}
+        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses) or {}
+        if cached_data.get('matches'):
+            cache_resp = {k: await __recalculate_opts(v) for k, v in cached_data.get('matches').items()}
+        missing = cached_data.get('missing', [])
     except Exception as exc:
         logger.error(f'Failed to read from cache {exc}')
-        cached_data = {}
-
-    if cached_data:
-        import copy
-        if req.bosses:
-            t = copy.deepcopy(cached_data)
-            if all([b in t.keys() for b in req.bosses]):
-                return {k: v for k, v in sorted({a: t[a] for a in req.bosses}.items(), key=lambda x: x[1].get('boss_id'))}
+        
     
     wcl = WCLService(session=session)
     resp = await wcl.get_full_report(report_id)
-    bosses = [f for f in resp.get('fights', []) if f.get('boss') != 0]
+    bosses = [f for f in resp.get('fights') if f.get('boss') != 0]
     if not bosses:
         raise HTTPException(status_code=404,
                             detail=f'Not found: No valid boss fights found in the linked log.')
     
 
-    bosses = [boss for boss in bosses if boss.get('name') not in cached_data]
+    bosses = [boss for boss in bosses if boss.get('name') in missing and boss.get('id') not in [v.get('boss_id') for k, v in cache_resp.items()]]
     if not bosses:
-        return {k: v for k, v in sorted(cached_data.items(), key=lambda x: x[1].get('boss_id'))}
-    if req.bosses:
-        bosses = [f for f in bosses if f.get('name') in req.bosses]
-
-        if not bosses:
+        if not cache_resp:
             raise HTTPException(status_code=404,
                                 detail=f'Not found: No boss activity found matching {req.bosses}')
+        return {k: v for k, v in sorted(cache_resp.items(), key=lambda x: x[1].get('boss_id'))}
 
 
-    player_info = [p for p in resp.get('friendlies') if p.get('name').lower() == req.player_name.lower()]
+    player_info = [p for p in resp.get('friendlies') if p.get('name').casefold() == req.player_name.casefold()]
     if not player_info:
         raise HTTPException(status_code=404,
                             detail=f'Not found: No player named {req.player_name} found in the linked log.')
@@ -91,7 +85,7 @@ async def get_log_data(req: WCLDataRequest, session):
         report_id=report_id,
     ) for boss in bosses]
     d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.enemies_in_combat, req.t1_set, session) or {}
-    return {k: v for k, v in sorted({**d, **cached_data}.items(), key=lambda x: x[1].get('boss_id'))}
+    return {k: v for k, v in sorted({**d, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
  
 async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, enemies, t1, session):
     if not reqs:
