@@ -26,7 +26,7 @@ class WCLDataRequest(BaseModel):
 
     @validator('defiance_points')
     def check_defiance(cls, v):
-        assert defiance_points in [0, 1, 2, 3, 4, 5], "0 through 5."
+        assert v in [0, 1, 2, 3, 4, 5], "0 through 5."
         return v
 
     
@@ -45,6 +45,9 @@ class WarriorThreatCalculationRequest(BaseModel):
     shield_slam_count: int = 0
     bt_count: int = 0
     revenge_count: int = 0
+    revenge_casts: int = 0
+    shield_slam_casts: int = 0
+    hs_casts: int = 0
     hs_count: int = 0
     sunder_count: int = 0
     execute_dmg: int = 0
@@ -81,7 +84,7 @@ class WarriorThreatCalculationRequest(BaseModel):
         'thunderclap_casts': lambda x, __t=__t: x * __t.ThunderClap,
         'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),  # N = friendlies, c = enemies
         'cleave_count': lambda x, __t=__t: x * __t.Cleave,
-        'stance': lambda x, __t=__t: x * __t.DefensiveStance * getattr(__t, f'Defiance{self.defiance_points}')
+        'stance': lambda x, d, __t=__t: x * __t.DefensiveStance * getattr(__t, f'Defiance{d}')
     }
 
     def calculate_warrior_threat(self):
@@ -89,7 +92,8 @@ class WarriorThreatCalculationRequest(BaseModel):
 
         exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_count',
                    'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_casts', 'boss_name',
-                   '__modifiers', 'defiance_key', '__t', 'boss_id', 'rage_gains', 'hp_gains'}
+                   '__modifiers', 'defiance_key', '__t', 'boss_id', 'rage_gains', 'hp_gains', 'shield_slam_casts', 
+                   'revenge_casts', 'hs_casts'}
 
         unmodified_threat = self.total_damage
         for name, val in self.copy(exclude=exclude):
@@ -107,7 +111,7 @@ class WarriorThreatCalculationRequest(BaseModel):
         rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains)
         healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains, self.enemies_in_combat)
 
-        modified_threat = self.__modifiers.get('stance')(unmodified_threat)
+        modified_threat = self.__modifiers.get('stance')(unmodified_threat, self.defiance_points)
 
         unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat
         unmodified_tps = unmodified_threat/self.time
@@ -130,9 +134,9 @@ class WarriorThreatResult(WarriorThreatCalculationRequest):
 
 
 class WarriorCastResponse(BaseModel):
-    shield_slam_count: int = 0
-    revenge_count: int = 0
-    hs_count: int = 0
+    shield_slam_casts: int = 0
+    revenge_casts: int = 0
+    hs_casts: int = 0
     goa_procs: int = 0
     bs_casts: int = 0
     demo_casts: int = 0
@@ -144,4 +148,7 @@ class WarriorDamageResponse(BaseModel):
     total_damage: int = 0
     execute_dmg: int = 0
     sunder_count: int = 0
+    shield_slam_count: int = 0
+    revenge_count: int = 0
+    hs_count: int = 0
     time: int = 0

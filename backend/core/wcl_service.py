@@ -27,8 +27,9 @@ class WCLService:
             raise HTTPException(status_code=400, detail="Bad request")
         headers = {'content-type': 'application/json', 'accept-encoding': 'gzip'}
         params = {
-            'api_key': self.PUB_KEY
-        } if not params else {**params, 'api_key': self.PUB_KEY}
+            'api_key': self.PUB_KEY,
+            'translate': True
+        } if not params else {**params, 'api_key': self.PUB_KEY, 'translate': True}, 
 
         print(f'{method}: {url}')
         async with await __request(url, params=params, json=data or '{}', headers=headers) as resp:
@@ -37,6 +38,7 @@ class WCLService:
     async def get_full_report(self, report_id):
         url = self.base_url + f'report/fights/{report_id}'
         resp = await self._send_scoped_request('GET', url)
+        print(url)
         return ujson.loads(resp)
 
     async def get_fight_details(self, req: BossActivityRequest, event):

@@ -1,5 +1,5 @@
 <template>
-  <div class="q-pa-md col-auto justify-center">
+  <q-page class="q-pa-md row">
     <q-table
       title="Threat Calculation Values"
       :data="data"
@@ -9,7 +9,9 @@
       dense
       dark
       color="amber"
+      hide-bottom
       :pagination.sync="pagination"
+      class="col"
       no-data-label="Failed to load threat values. Please try again later or file a bug report if it persists."
     >
       <template v-slot:body-cell-name="props" >
@@ -27,7 +29,7 @@
 
     </q-table>
 
-  </div>
+  </q-page>
 </template>
 
 <style>

@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md row-12" style="position: relative;" >
     <q-toolbar-title
-      class="text-primary text-h3 justify-center text-weight-bold q-pb-lg"
+      class="text-primary text-h3 text-weight-bold q-pb-lg col-auto col-sm shadow-2 wrap-auto text-h6-sm"
     >
       Warrior Threat Estimator
     </q-toolbar-title>
@@ -17,18 +17,17 @@
         label="Character Name"
         lazy-rules
         title=""
+        hint="As it appears in the provided log."
         dense
         :rules="[ val => val && val.length > 0 || 'Please type something']"
       >
-      <q-tooltip :delay="1000" anchor="bottom middle" self="top middle" class="q-mt-md">
-        As it appears in the provided log.
-      </q-tooltip>
       </q-input>
 
       <q-input
         filled
         v-model="url"
         label="Log URL"
+        hint="A warcrafts logs '/reports/<report_id>' URL"
         title=""
         lazy-rules
         dense
@@ -37,9 +36,6 @@
           || 'Please enter a valid log URL.'
         ]"
       >
-        <q-tooltip :delay="1000" anchor="bottom middle" self="top middle" class="q-mt-md">
-          To a full run or a specific fight, indicated by #fight={fight_num} in the URL fragment
-        </q-tooltip>
       </q-input>
 
       <q-select
@@ -51,15 +47,12 @@
         dense
         title=""
         :rules="[
-          val => (val && 0 <= val <= 5) || 'Invalid number of defiance points. 0 through 5, bro'
+          val => (!isNaN(val) && 0 <= val <= 5) || 'Invalid number of defiance points. 0 through 5, bro'
         ]"
       >
         <template v-slot:prepend>
           <q-icon name="app:defiance" title="" />
         </template>
-        <q-tooltip :delay="1000" anchor="bottom middle" self="top middle" class="q-mt-md">
-          How many points the character has in defiance.
-        </q-tooltip>
       </q-select>
 
       <q-select
@@ -74,19 +67,17 @@
         multiple
         title=""
       >
-        <q-tooltip :delay="1000" anchor="bottom middle" self="top middle" class="q-mt-md">
-          For a full report, filter which bosses you are interested in viewing data for.
-        </q-tooltip>
       </q-select>
      <div class="row">
       <q-input
         filled
-        class="col-4 col-sm-4 q-ma-sm"
+        class="col-5 col-sm-5 q-ma-sm"
         v-model="enemies_in_combat"
         label="(Optional) Enemies Nearby/In Combat"
         :options="options"
         lazy-rules
         dense
+        hint="Enemies nearby for splitting threat"
         title=""
         :rules="[
             val => (val && !isNaN(val) && val <= 10 && val > 0) || 'Be reasonable. 1-10'
@@ -95,17 +86,15 @@
           <template v-slot:prepend>
             <q-icon name="app:bs" title="" size="20px" />
           </template>
-          <q-tooltip :delay="1000" anchor="bottom middle" self="top middle" class="q-mt-md">
-            Enemies to split threat with, assuming all hits for now
-          </q-tooltip>
         </q-input>
         <q-input
           filled
-          class="col-4 col-sm-4 q-ma-sm"
+          class="col-5 col-sm-5 q-ma-sm"
           v-model="friendlies_in_combat"
           label="(Optional) Friendlies Nearby/In Combat"
           lazy-rules
           title=""
+          hint="Friendlies nearby for splitting threat"
           dense
           :rules="[
             val => (val && !isNaN(val && val <= 10 && val > 0) ) || 'Be reasonable. 1-10.'
@@ -114,29 +103,20 @@
           <template v-slot:prepend>
             <q-icon name="app:bs" title="" size="20px"/>
           </template>
-          <q-tooltip :delay="1000" anchor="bottom middle" self="top middle" class="q-mt-md">
-            Friendlies in combat. Once again, assuming all hits
-          </q-tooltip>
         </q-input>
         <q-toggle
-          class="col-2 col-sm-2 q-ma-sm"
+          class="col-2 col-sm-1 q-ma-sm"
           v-model="t1"
           label="(Optional) Tier 1 Set Bonus?"
           lazy-rules
           title=""
           dense
         >
-          <template v-slot:prepend>
-            <q-icon name="app:t1" title="" size="20px"/>
-          </template>
-          <q-tooltip :delay="1000" anchor="bottom middle" self="top middle">
-            Apply the Tier 1 Sunder Armor bonus?
-          </q-tooltip>
         </q-toggle>
       </div>
 
 
-      <div>
+      <div class="q-pt-lg q-mt-lg col-12 col-12-sm">
         <q-btn label="Estimate" type="submit" color="primary"/>
       </div>
       <div>

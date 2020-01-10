@@ -20,17 +20,17 @@
                 <q-item v-else-if="value.shield_slam_count > 0" class="q-pa-md" >
                     <span class="q-pa-md">
                       <q-icon name="app:ss" size="40px" class="q-mr-sm"/>
-                        Shield Slam Casts Per Minute: <strong>{{(value.shield_slam_count/(value.time/60)).toPrecision(4)}}</strong></span>
+                        Shield Slam Casts Per Minute: <strong>{{(value.shield_slam_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
                 <span class="q-pa-md"><q-icon name="app:revenge" size="40px" class="q-mr-sm"/>
-                  Revenge Casts Per Minute: <strong>{{(value.revenge_count/(value.time/60)).toPrecision(4)}}</strong></span>
+                  Revenge Casts Per Minute: <strong>{{(value.revenge_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:sunder" class="q-mr-sm" size="40px"/>Sunder Armor Hits Per Minute: <strong>{{(value.sunder_count/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
-                  <span class="q-pa-md"><q-icon name="app:hs" size="40px" class="q-mr-sm"/>Heroic Strike Casts Per Minute: <strong>{{(value.hs_count/(value.time/60)).toPrecision(4)}}</strong></span>
+                  <span class="q-pa-md"><q-icon name="app:hs" size="40px" class="q-mr-sm"/>Heroic Strike Casts Per Minute: <strong>{{(value.hs_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:taunt" size="40px" class="q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span>
