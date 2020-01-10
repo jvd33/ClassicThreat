@@ -50,18 +50,21 @@ async def get_log_data(req: WCLDataRequest, session):
         missing = cached_data.get('missing', [])
     except Exception as exc:
         logger.error(f'Failed to read from cache {exc}')
+        cache_resp = {}
+        missing = []
         
     
     wcl = WCLService(session=session)
     resp = await wcl.get_full_report(report_id)
     bosses = [v for v in resp.get('fights') if v.get('boss') != 0]
+
     if not bosses:
         logger.error(f'No bosses found in log {report_id} for player {req.player_name}: {bosses} {resp}')
         raise HTTPException(status_code=404,
                             detail=f'Not found: No valid boss fights found in the linked log.')
     
 
-    bosses = [boss for boss in bosses if boss.get('name') in missing and boss.get('id') not in [v.get('boss_id') for k, v in cache_resp.items()]]
+    bosses = [boss for boss in bosses if boss.get('name') in missing or boss.get('id') not in [v.get('boss_id') for k, v in cache_resp.items()]]
     if not bosses:
         if not cache_resp:
             logger.error(f'No bosses found in log {report_id} OR cache for player {req.player_name}: {bosses}')
@@ -72,7 +75,7 @@ async def get_log_data(req: WCLDataRequest, session):
 
     player_info = [p for p in resp.get('friendlies') if p.get('name').casefold() == req.player_name.casefold()]
     if not player_info:
-        logger.error(f'Player {player_name} not found in provided report {report_id}.')
+        logger.error(f'Player {req.player_name} not found in provided report {report_id}.')
         raise HTTPException(status_code=404,
                             detail=f'Not found: No player named {req.player_name} found in the linked log.')
     player_info = player_info[0]

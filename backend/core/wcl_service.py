@@ -3,7 +3,6 @@ import ujson
 import logging
 
 from fastapi import HTTPException
-from dotenv import load_dotenv, find_dotenv
 
 from .models import BossActivityRequest
 
@@ -14,9 +13,8 @@ class WCLService:
     def __init__(self, session):
         self.base_url = 'https://www.warcraftlogs.com/v1/'
         self.session = session
-        load_dotenv(find_dotenv())
         self.wcl_key = os.getenv('WCL_PUB_KEY')
-        logger.error(self.wcl_key)
+
 
     async def _send_scoped_request(self,
                                    method: str,
@@ -29,19 +27,18 @@ class WCLService:
         if not __request:
             raise HTTPException(status_code=400, detail="Bad request")
         headers = {'content-type': 'application/json', 'accept-encoding': 'gzip'}
-        params = {
-            'api_key': self.wcl_key,
-            'translate': True
-        } if not params else {**params, 'api_key': self.wcl_key, 'translate': True}, 
+        query = {
+            'translate': 'true',   # Turns out WCL breaks if you pass it boolean True LOL
+            'api_key': self.wcl_key
+        } if not params else {**params, 'translate': 'true', 'api_key': self.wcl_key}
 
         logger.error(f'{method}: {url}, {params}, {data}')
-        async with await __request(url, params=params, json=data or '{}', headers=headers) as resp:
+        async with await __request(url, params=query, json=data or '{}', headers=headers) as resp:
             return await resp.content.read()
 
     async def get_full_report(self, report_id):
         url = self.base_url + f'report/fights/{report_id}'
         resp = await self._send_scoped_request('GET', url)
-        logger.error(resp)
         return ujson.loads(resp)
 
     async def get_fight_details(self, req: BossActivityRequest, event):
