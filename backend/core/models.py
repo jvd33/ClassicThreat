@@ -12,7 +12,7 @@ class WCLDataRequest(BaseModel):
     url: AnyUrl
     player_name: str
     defiance_points: int = 5
-    bosses: List[str] = None
+    bosses: List[str] = []
     friendlies_in_combat: int = 1
     enemies_in_combat: int = 1
     t1_set: bool = False

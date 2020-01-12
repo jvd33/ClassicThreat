@@ -205,7 +205,7 @@ export default {
           url: this.url,
           player_name: this.player_name,
           defiance_points: this.defiance_points,
-          bosses: this.bosses,
+          bosses: this.bosses || [],
           friendlies_in_combat: this.friendlies_in_combat,
           enemies_in_combat: this.enemies_in_combat,
           t1_set: this.t1,
