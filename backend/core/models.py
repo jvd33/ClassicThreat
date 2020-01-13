@@ -1,5 +1,5 @@
 from pydantic import BaseModel, AnyUrl, validator
-from typing import List
+from typing import List, Any
 
 from .constants import WarriorThreatValues, Spell
 
@@ -32,7 +32,6 @@ class WCLDataRequest(BaseModel):
 
 class StanceDanceEvent(BaseModel):
     shield_slam_hits: int = 0
-    revenge_hits: int = 0
     hs_hits: int = 0
     sunder_hits: int = 0
     rage_gains: int = 0
@@ -42,11 +41,10 @@ class StanceDanceEvent(BaseModel):
     demo_casts: int = 0
     thunderclap_hits: int = 0
     hp_gains: float = 0
-    disarm_hits: int = 0
     hamstring_hits: int = 0
     shieldbash_hits: int = 0
     mockingblow_hits: int = 0
-
+    bt_casts: int = 0
 
 class BossActivityRequest(BaseModel):
     player_id: int
@@ -94,7 +92,7 @@ class WarriorThreatCalculationRequest(BaseModel):
     mockingblow_hits: int = 0
     revenge_rank: int = None
     realm: str = None
-    stance_dance_events: StanceDanceEvent = None
+    stance_dance_events: Any = None
 
     @property
     def __modifiers(self):
@@ -149,7 +147,7 @@ class WarriorThreatCalculationRequest(BaseModel):
         unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat + self.execute_dmg
         unmodified_tps = unmodified_threat/self.time
         tps = (modified_threat + tc_threat + rage_threat + healing_threat + self.execute_dmg)/self.time
-
+        self.stance_dance_events = dict(self.stance_dance_events)
         return dict(WarriorThreatResult(
             **dict(self),
             total_threat=unmodified_threat,

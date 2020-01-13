@@ -108,10 +108,8 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
             stance = [stance for stance in stances if stance.get('boss_name') == data.get('boss_name')]
             resp.update({'time': data.get('totalTime') / 1000.0}) if data.get('totalTime') else {}
             dstance, nostance = await process_data_response(data.get('event'))(data, stance)
-            print(dstance)
-            print(nostance)
             resp.update(dict(dstance), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'))
-
+            print(nostance)
         r = WarriorThreatCalculationRequest(**resp,
                                             player_name=player_name,
                                             player_class=player_class,
@@ -181,7 +179,6 @@ async def process_damage_done(data, stance_events):
         else:
             total.append(entry.get('amount', 0))
     hits.total_damage = sum(total)
-    print(add_count)
     hits.enemies_in_combat = len(add_count)
     return hits, no_d_stance
 
@@ -230,6 +227,7 @@ async def process_casts(data, stance_events):
         guid = entry.get('ability').get('guid')
         if guid in [Spell.BattleShout6, Spell.BattleShout7]:
             resp.bs_rank = guid
+            print(entry)
         if guid in [Spell.HeroicStrike8, Spell.HeroicStrike9]:
             resp.hs_rank = guid
         if guid in [Spell.Revenge5, Spell.Revenge6]:

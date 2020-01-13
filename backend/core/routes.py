@@ -78,7 +78,7 @@ async def calculate(req: WCLDataRequest, session=Depends(get_http_session)):
                         },
                 )
 async def get_threat_values():
-    vals = ThreatValues.items()
+    vals = WarriorThreatValues.items()
     ret = [{'name': val.get('name'), **val.get('val')} for val in vals]
     ret.append({'name': 'Damage', 'threat_type': 'Flat', 'val': 1})
     return JSONResponse(content=ret, status_code=200)
