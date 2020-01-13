@@ -30,7 +30,7 @@ class WCLDataRequest(BaseModel):
         return v
 
 
-class NoDStanceEvents(BaseModel):
+class StanceDanceEvent(BaseModel):
     shield_slam_hits: int = 0
     revenge_hits: int = 0
     hs_hits: int = 0
@@ -94,6 +94,7 @@ class WarriorThreatCalculationRequest(BaseModel):
     mockingblow_hits: int = 0
     revenge_rank: int = None
     realm: str = None
+    stance_dance_events: StanceDanceEvent = None
 
     @property
     def __modifiers(self):
@@ -110,7 +111,9 @@ class WarriorThreatCalculationRequest(BaseModel):
             'thunderclap_hits': lambda x, __t=__t: x * __t.ThunderClap,
             'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),  # N = friendlies, c = enemies
             'cleave_hits': lambda x, __t=__t: x * __t.Cleave,
-            'stance': lambda x, d, __t=__t: x * __t.DefensiveStance * getattr(__t, f'Defiance{d}'),
+            Spell.DefensiveStance: lambda x, d, __t=__t: x * __t.DefensiveStance * getattr(__t, f'Defiance{d}'),
+            Spell.BattleStance: lambda x, d, __t=__t: x * __t.BattleStance,
+            Spell.BerserkerStance: lambda x, d, __t=__t: x * __t.BerserkerStance,
             'hamstring_hits': lambda x, __t=__t: x * __t.Hamstring,
             'disarm_hits': lambda x, __t=__t: x * __t.Disarm,
             'shieldbash_hits': lambda x, __t=__t: x * __t.ShieldBash,
@@ -118,12 +121,13 @@ class WarriorThreatCalculationRequest(BaseModel):
 
         }
 
-    def calculate_warrior_threat(self):
+    def calculate_warrior_threat(self, stance=Spell.DefensiveStance):
         exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_casts',
                    'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_hits', 'boss_name',
                    '__modifiers', 'defiance_key', '__t', 'boss_id', 'rage_gains', 'hp_gains', 'shield_slam_casts', 
-                   'revenge_casts', 'hs_casts', 'sunder_casts', 'bs_rank', 'hs_rank', 'revenge_rank', 'cleave_casts'}
+                   'revenge_casts', 'hs_casts', 'sunder_casts', 'bs_rank', 'hs_rank', 'revenge_rank', 'cleave_casts', 'stance_dance_events'}
 
+        print(self.stance_dance_events)
         unmodified_threat = self.total_damage
         for name, val in self.copy(exclude=exclude):
             if name == 'sunder_hits':
@@ -139,8 +143,8 @@ class WarriorThreatCalculationRequest(BaseModel):
         tc_threat = self.__modifiers.get('thunderclap_hits')(self.thunderclap_hits)
         rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains)
         healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains, self.enemies_in_combat)
-
-        modified_threat = self.__modifiers.get('stance')(unmodified_threat, self.defiance_points)
+        
+        modified_threat = self.__modifiers.get(stance)(unmodified_threat, self.defiance_points)
 
         unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat + self.execute_dmg
         unmodified_tps = unmodified_threat/self.time
@@ -176,6 +180,7 @@ class WarriorCastResponse(BaseModel):
     revenge_rank: int = Spell.Revenge5
     hs_rank: int = Spell.HeroicStrike8
 
+
 class WarriorDamageResponse(BaseModel):
     total_damage: int = 0
     execute_dmg: int = 0
@@ -190,3 +195,4 @@ class WarriorDamageResponse(BaseModel):
     thunderclap_hits: int = 0
     disarm_hits: int = 0
     shieldbash_hits: int = 0
+    enemies_in_combat: int = 0

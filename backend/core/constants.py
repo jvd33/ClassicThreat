@@ -44,32 +44,35 @@ class WarriorThreatValues:
         pass
 
     DefensiveStance = {'threat': {'threat_type': 'Modifier', 'val': 1.3}, 'guid': Spell.DefensiveStance}
+    BerserkerStance = {'threat': {'threat_type': 'Modifier', 'val': .8}, 'guid': Spell.BerserkerStance}
+    BattleStance = {'threat': {'threat_type': 'Modifier', 'val': .8}, 'guid': Spell.BattleStance}
+
     SunderArmor = {'threat': {'threat_type': 'Flat', 'val': 261}, 'guid': Spell.SunderArmor}
     ShieldSlam = {'threat': {'threat_type': 'Flat', 'val': 250}, 'guid': Spell.ShieldSlam}
     Revenge5 = {'threat': {'threat_type': 'Flat', 'val': 315}, 'guid': Spell.Revenge5}
     Revenge6 = {'threat': {'threat_type': 'Flat', 'val': 355}, 'guid': Spell.Revenge5}
-    HeroicStrike8 = {'threat': {'threat_type': 'Flat', 'val': 145}, 'guid': [Spell.HeroicStrike8]}
-    HeroicStrike9 = {'threat': {'threat_type': 'Flat', 'val': 175}, 'guid': [Spell.HeroicStrike9]}
-    GiftOfArthas = {'threat': {'threat_type': 'Flat', 'val': 90}, 'guid': [Spell.GiftOfArthas]}
-    RageGain = {'threat': {'threat_type': 'Flat', 'val': 5}, 'guid': [Spell.RageGain]}
-    Defiance0 = {'threat': {'threat_type': 'Modifier', 'val': 1}, 'guid': []}
-    Defiance1 = {'threat': {'threat_type': 'Modifier', 'val': 1.03}, 'guid': []}
-    Defiance2 = {'threat': {'threat_type': 'Modifier', 'val': 1.06} ,'guid': []}
-    Defiance3 = {'threat': {'threat_type': 'Modifier', 'val': 1.09}, 'guid': []}
-    Defiance4 = {'threat': {'threat_type': 'Modifier', 'val': 1.12} ,'guid': []}
-    Defiance5 = {'threat': {'threat_type': 'Modifier', 'val': 1.15}, 'guid': []}
-    Healing = {'threat': {'threat_type': 'Flat', 'val': .5}, 'guid': []}
-    DemoShout = {'threat': {'threat_type': 'Flat', 'val': 43}, 'guid': [Spell.DemoShout]}
-    ThunderClap = {'threat': {'threat_type': 'Flat', 'val': 130}, 'guid': [Spell.ThunderClap]}
-    BattleShout6 ={'threat':  {'threat_type': 'Flat', 'val': 56}, 'guid': [Spell.BattleShout6]}
-    BattleShout7 ={'threat':  {'threat_type': 'Flat', 'val': 70}, 'guid': [Spell.BattleShout7]} # Not sure if it is actually 70 threat, we'll see 
-    Tier1Bonus = {'threat': {'threat_type': 'Modifier', 'val': 1.15}, 'guid': []}
-    Execute = {'threat': {'threat_type': 'Flat', 'val': 1}, 'guid': [Spell.Execute]}
-    Cleave = {'threat': {'threat_type': 'Flat', 'val': 100}, 'guid': [Spell.Cleave]}
-    ShieldBash = {'threat': {'threat_type': 'Flat', 'val': 180}, 'guid': [Spell.ShieldBash]}
-    Hamstring = {'threat': {'threat_type': 'Flat', 'val': 141}, 'guid': [Spell.Hamstring]}
-    MockingBlow = {'threat': {'threat_type': 'Flat', 'val': 250}, 'guid': [Spell.MockingBlow]} # From libthreat 2, is it really 250?
-    Disarm = {'threat': {'threat_type': 'Flat', 'val': 104}, 'guid': [Spell.Disarm]}
+    HeroicStrike8 = {'threat': {'threat_type': 'Flat', 'val': 145}, 'guid': Spell.HeroicStrike8}
+    HeroicStrike9 = {'threat': {'threat_type': 'Flat', 'val': 175}, 'guid': Spell.HeroicStrike9}
+    GiftOfArthas = {'threat': {'threat_type': 'Flat', 'val': 90}, 'guid': Spell.GiftOfArthas}
+    RageGain = {'threat': {'threat_type': 'Flat', 'val': 5}, 'guid': Spell.RageGain}
+    Defiance0 = {'threat': {'threat_type': 'Modifier', 'val': 1}, 'guid': None}
+    Defiance1 = {'threat': {'threat_type': 'Modifier', 'val': 1.03}, 'guid': None}
+    Defiance2 = {'threat': {'threat_type': 'Modifier', 'val': 1.06} ,'guid': None}
+    Defiance3 = {'threat': {'threat_type': 'Modifier', 'val': 1.09}, 'guid': None}
+    Defiance4 = {'threat': {'threat_type': 'Modifier', 'val': 1.12} ,'guid': None}
+    Defiance5 = {'threat': {'threat_type': 'Modifier', 'val': 1.15}, 'guid': None}
+    Healing = {'threat': {'threat_type': 'Flat', 'val': .5}, 'guid': None}
+    DemoShout = {'threat': {'threat_type': 'Flat', 'val': 43}, 'guid': Spell.DemoShout}
+    ThunderClap = {'threat': {'threat_type': 'Flat', 'val': 130}, 'guid': Spell.ThunderClap}
+    BattleShout6 ={'threat':  {'threat_type': 'Flat', 'val': 56}, 'guid': Spell.BattleShout6}
+    BattleShout7 ={'threat':  {'threat_type': 'Flat', 'val': 70}, 'guid': Spell.BattleShout7} # Not sure if it is actually 70 threat, we'll see 
+    Tier1Bonus = {'threat': {'threat_type': 'Modifier', 'val': 1.15}, 'guid': None}
+    Execute = {'threat': {'threat_type': 'Flat', 'val': 1}, 'guid': Spell.Execute}
+    Cleave = {'threat': {'threat_type': 'Flat', 'val': 100}, 'guid': Spell.Cleave}
+    ShieldBash = {'threat': {'threat_type': 'Flat', 'val': 180}, 'guid': Spell.ShieldBash}
+    Hamstring = {'threat': {'threat_type': 'Flat', 'val': 141}, 'guid': Spell.Hamstring}
+    MockingBlow = {'threat': {'threat_type': 'Flat', 'val': 250}, 'guid': Spell.MockingBlow} # From libthreat 2, is it really 250?
+    Disarm = {'threat': {'threat_type': 'Flat', 'val': 104}, 'guid': Spell.Disarm}
 
     @staticmethod
     def vals(hs_rank=Spell.HeroicStrike8, revenge_rank=Spell.Revenge5, battleshout_rank=Spell.BattleShout6):
