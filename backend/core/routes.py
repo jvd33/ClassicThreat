@@ -6,7 +6,7 @@ from starlette.responses import JSONResponse
 
 from .models import WCLDataRequest, WarriorThreatResult
 from .tasks import get_log_data
-from .constants import ThreatValues, Threat
+from .constants import WarriorThreatValues, Threat
 from docs.examples import CALC_RESP_EXAMPLE, THREAT_RESP_EXAMPLE, HEARTBEAT
 
 api_router = APIRouter()
