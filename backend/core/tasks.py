@@ -104,12 +104,13 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
     results = []
     for fight in future_results:
         resp = {}
+        nostance = []
         for data in fight:
             stance = [stance for stance in stances if stance.get('boss_name') == data.get('boss_name')]
             resp.update({'time': data.get('totalTime') / 1000.0}) if data.get('totalTime') else {}
-            dstance, nostance = await process_data_response(data.get('event'))(data, stance)
-            resp.update(dict(dstance), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'))
-            print(nostance)
+            r = await process_data_response(data.get('event'))(data, stance)
+            resp.update(dict(r[0]), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'))
+            nostance
         r = WarriorThreatCalculationRequest(**resp,
                                             player_name=player_name,
                                             player_class=player_class,

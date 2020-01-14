@@ -59,37 +59,39 @@
         filled
         v-model="bosses"
         label="(Optional) Bosses"
-        :options="raids"
+        :options="boss_opts"
         lazy-rules
         use-chips
         stack-label
         dense
+        clickable
         multiple
         title=""
         clearable
-        @clear="bosses = []"
+        @clear="(value) => this.bosses = []"
       >
-        <template v-slot:option="props">
-        <q-item v-for="(value, key) in props.opt" :key="key">
-            <q-item-section clickable @click="bosses = (value) => bosses.concat(value)">{{key}}</q-item-section>
-            <q-item-section side>
-              <q-icon name="keyboard_arrow_right" ></q-icon>
-            </q-item-section>
-            <q-menu>
-              <q-list>
-                <q-item
-                  v-for="boss in value"
-                  :key="boss"
-                  clickable
-                  class="bg-primary"
-                  popout
-                >
-                  <q-item-section @click="bosses = bosses.push(boss)">{{boss}}</q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-item>
-        </template>
+      <q-template v-slot:default="props">
+        <q-expansion-item v-for="(value, key) in raids" :key="key"  
+          dense style="background:#121212" 
+        > 
+            <q-list
+              dense
+              bordered
+              v-for="v in value"
+              :key="v"
+            >
+              <q-item
+                clickable
+                v-for="boss in v"
+                :key="boss"
+                :v-model="bosses" 
+                rounded-borders
+                dense
+                :inset-level=".25"
+              >{{boss}}</q-item>
+            </q-list>
+          </q-expansion-item>
+        </q-template>
       </q-select>
      <div class="row">
         <q-input
@@ -182,6 +184,13 @@ export default {
           options: [
               5, 4, 3, 2, 1, 0
           ],
+          boss_opts:  [
+                'Lucifron', 'Magmadar', 'Gehennas', 'Garr',
+                'Baron Geddon', 'Shazzrah', 'Sulfuron Harbinger', 'Golemagg the Incinerator',
+                'Majordomo Executus', 'Ragnaros', 'Razorgore the Untamed', 'Vaelastrasz the Corrupt',
+                'Broodlord Lashlayer', 'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus',
+                'Nefarian', 'Onyxia'
+              ],
           raids: [
             {
               MoltenCore: [
@@ -191,14 +200,14 @@ export default {
               ],
             },
             {
-              OnyxiasLair: ['Onyxia'],
-            },
-            {
               BlackwingLair: [
                 'Razorgore the Untamed', 'Vaelastrasz the Corrupt',
                 'Broodlord Lashlayer', 'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus',
                 'Nefarian'
               ],
+            },
+            {
+              OnyxiasLair: ['Onyxia'],
             },
           ],
           api_status: null,
