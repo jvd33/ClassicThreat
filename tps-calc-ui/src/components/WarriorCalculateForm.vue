@@ -59,8 +59,9 @@
         filled
         v-model="bosses"
         label="(Optional) Bosses"
-        :options="boss_opts"
         lazy-rules
+        :options="boss_opts"
+        :raids="raids"
         use-chips
         stack-label
         dense
@@ -68,30 +69,10 @@
         multiple
         title=""
         clearable
+        options-dense
+        separator
         @clear="(value) => this.bosses = []"
       >
-      <q-template v-slot:default="props">
-        <q-expansion-item v-for="(value, key) in raids" :key="key"  
-          dense style="background:#121212" 
-        > 
-            <q-list
-              dense
-              bordered
-              v-for="v in value"
-              :key="v"
-            >
-              <q-item
-                clickable
-                v-for="boss in v"
-                :key="boss"
-                :v-model="bosses" 
-                rounded-borders
-                dense
-                :inset-level=".25"
-              >{{boss}}</q-item>
-            </q-list>
-          </q-expansion-item>
-        </q-template>
       </q-select>
      <div class="row">
         <q-input
@@ -184,30 +165,34 @@ export default {
           options: [
               5, 4, 3, 2, 1, 0
           ],
-          boss_opts:  [
-                'Lucifron', 'Magmadar', 'Gehennas', 'Garr',
-                'Baron Geddon', 'Shazzrah', 'Sulfuron Harbinger', 'Golemagg the Incinerator',
-                'Majordomo Executus', 'Ragnaros', 'Razorgore the Untamed', 'Vaelastrasz the Corrupt',
-                'Broodlord Lashlayer', 'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus',
-                'Nefarian', 'Onyxia'
-              ],
+          boss_opts: [
+              'Lucifron', 'Magmadar', 'Gehennas', 'Garr',
+              'Baron Geddon', 'Shazzrah', 'Sulfuron Harbinger', 'Golemagg the Incinerator',
+              'Majordomo Executus', 'Ragnaros', 'Razorgore the Untamed', 'Vaelastrasz the Corrupt',
+              'Broodlord Lashlayer', 'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus',
+              'Nefarian', 'Onyxia'
+
+          ],
           raids: [
             {
-              MoltenCore: [
+              name: 'Molten Core',
+              bosses: [
                 'Lucifron', 'Magmadar', 'Gehennas', 'Garr',
                 'Baron Geddon', 'Shazzrah', 'Sulfuron Harbinger', 'Golemagg the Incinerator',
                 'Majordomo Executus', 'Ragnaros'
               ],
             },
             {
-              BlackwingLair: [
+              name: 'Blackwing Lair',
+              bosses: [
                 'Razorgore the Untamed', 'Vaelastrasz the Corrupt',
                 'Broodlord Lashlayer', 'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus',
                 'Nefarian'
               ],
             },
             {
-              OnyxiasLair: ['Onyxia'],
+              name: 'Onyxia\'s Lair',
+              bosses: ['Onyxia'],
             },
           ],
           api_status: null,
@@ -221,6 +206,9 @@ export default {
   },
 
   methods: {
+    selected(value) {
+      return this.bosses.includes(value);
+    },
     submit() {
         this.errorState = false;
         this.errorMsg = null;
