@@ -59,34 +59,22 @@
         filled
         v-model="bosses"
         label="(Optional) Bosses"
-        :options="all_bosses"
         lazy-rules
+        :options="boss_opts"
+        :raids="raids"
         use-chips
         stack-label
         dense
+        clickable
         multiple
         title=""
+        clearable
+        options-dense
+        separator
+        @clear="(value) => this.bosses = []"
       >
       </q-select>
      <div class="row">
-      <q-input
-        filled
-        class="col-5 col-sm-5 q-ma-sm"
-        v-model="enemies_in_combat"
-        label="(Optional) Enemies Nearby/In Combat"
-        :options="options"
-        lazy-rules
-        dense
-        hint="Enemies nearby for splitting threat"
-        title=""
-        :rules="[
-            val => (val && !isNaN(val) && val <= 10 && val > 0) || 'Be reasonable. 1-10'
-          ]"
-        >
-          <template v-slot:prepend>
-            <q-icon name="app:bs" title="" size="20px" />
-          </template>
-        </q-input>
         <q-input
           filled
           class="col-5 col-sm-5 q-ma-sm"
@@ -143,11 +131,10 @@
           Enter your character's name exactly as it appears on the logs.<br/>
           Provide a URL to your raid log. <br/>
           Full raid logs provided will be broken down per-encounter. <br/><br/>
-          Specific fights (indicated by #fight={fight_num}) on the end of the URL will be processed
-          individually unless specific bosses are selected. <br/><br/>
-          As of right now, the calculator assumes the player is a tank and applies the defensive stance modifier to threat of all abilities castable from D Stance. DPS Warriors coming soon.<br/><br/>
+          The tool captures Stance change events and calculates threat accordingly.
+          <br/> DPS Warriors coming soon.<br/><br/>
           Note: For encounters with multiple enemies, the calculation does not differentiate between them (yet) so threat values are not representative of TPS for the actual named boss. <br/>
-          Instead, it represents total TPS for <strong>every</strong> enemy fought during the same time window as the boss.
+          Instead, it represents total TPS for <strong>every</strong> enemy fought during the same time window as the boss. Damage done to non-NPC targets (e.g., Mind Control) is not counted.
         </q-card-section>
       </q-card>
     </q-expansion-item>
@@ -172,17 +159,41 @@ export default {
           player_name: null,
           url: null,
           defiance_points: 5,
-          enemies_in_combat: 1,
           friendlies_in_combat: 1,
-          bosses: null,
+          bosses: [],
           t1: false,
           options: [
               5, 4, 3, 2, 1, 0
           ],
-          all_bosses: [
+          boss_opts: [
               'Lucifron', 'Magmadar', 'Gehennas', 'Garr',
-              'Baron Geddon', 'Shazzrah', 'Golemagg the Incinerator',
-              'Majordomo Executus', 'Ragnaros', 'Onyxia'
+              'Baron Geddon', 'Shazzrah', 'Sulfuron Harbinger', 'Golemagg the Incinerator',
+              'Majordomo Executus', 'Ragnaros', 'Razorgore the Untamed', 'Vaelastrasz the Corrupt',
+              'Broodlord Lashlayer', 'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus',
+              'Nefarian', 'Onyxia'
+
+          ],
+          raids: [
+            {
+              name: 'Molten Core',
+              bosses: [
+                'Lucifron', 'Magmadar', 'Gehennas', 'Garr',
+                'Baron Geddon', 'Shazzrah', 'Sulfuron Harbinger', 'Golemagg the Incinerator',
+                'Majordomo Executus', 'Ragnaros'
+              ],
+            },
+            {
+              name: 'Blackwing Lair',
+              bosses: [
+                'Razorgore the Untamed', 'Vaelastrasz the Corrupt',
+                'Broodlord Lashlayer', 'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus',
+                'Nefarian'
+              ],
+            },
+            {
+              name: 'Onyxia\'s Lair',
+              bosses: ['Onyxia'],
+            },
           ],
           api_status: null,
           results: null,
@@ -195,6 +206,9 @@ export default {
   },
 
   methods: {
+    selected(value) {
+      return this.bosses.includes(value);
+    },
     submit() {
         this.errorState = false;
         this.errorMsg = null;
@@ -207,7 +221,6 @@ export default {
           defiance_points: this.defiance_points,
           bosses: this.bosses || [],
           friendlies_in_combat: this.friendlies_in_combat,
-          enemies_in_combat: this.enemies_in_combat,
           t1_set: this.t1,
         })
         .then(response => {

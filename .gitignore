@@ -6,4 +6,5 @@ dist
 .env.development
 .env.production
 .env
-scripts
+scripts.vscode
+*.rdb

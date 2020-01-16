@@ -98,7 +98,13 @@ import taunt from './assets/taunt.png';
 import cleave from './assets/cleave.png';
 import tranq from './assets/tranq.png';
 import horde from './assets/horde.png';
-import alliance from './assets/alliance.png'
+import alliance from './assets/alliance.png';
+import hamstring from './assets/hamstring.png';
+import shield_bash from './assets/shield_bash.png';
+import disarm from './assets/disarm.png';
+import zerk_stance from './assets/zerk_stance.png';
+import battle_stance from './assets/battle_stance.png';
+import mb from './assets/mb.png';
 
 export default {
   data() {
@@ -135,6 +141,12 @@ export default {
           'app:cleave': 'img:' + cleave,
           'app:horde': 'img:' + horde,
           'app:alliance': 'img:' + alliance,
+          'app:battle_stance': 'img:' + battle_stance,
+          'app:zerk_stance': 'img:' + zerk_stance,
+          'app:shield_bash': 'img:' + shield_bash,
+          'app:disarm': 'img:' + disarm,
+          'app:hamstring': 'img:' + hamstring,
+          'app:mb': 'img:' + mb,
         },
 
         calculators: [

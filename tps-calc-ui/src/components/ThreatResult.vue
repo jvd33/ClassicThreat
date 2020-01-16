@@ -13,11 +13,11 @@
                 <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:dstance" size="40px" class="q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span>
                 </q-item>
-                <q-item v-if="value.bt_count > 0" class="q-pa-md">
+                <q-item v-if="value.bt_casts > 0" class="q-pa-md">
                 <span class="q-pa-md"><q-icon name="app:bt" class="q-mr-sm" size="40px"/>
-                  Bloodthirst Casts Per Minute: <strong>{{(value.bt_count/(value.time/60)).toPrecision(4)}}</strong></span>
+                  Bloodthirst Casts Per Minute: <strong>{{(value.bt_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
-                <q-item v-else-if="value.shield_slam_count > 0" class="q-pa-md" >
+                <q-item v-else-if="value.shield_slam_casts > 0" class="q-pa-md" >
                     <span class="q-pa-md">
                       <q-icon name="app:ss" size="40px" class="q-mr-sm"/>
                         Shield Slam Casts Per Minute: <strong>{{(value.shield_slam_casts/(value.time/60)).toPrecision(4)}}</strong></span>
@@ -27,10 +27,13 @@
                   Revenge Casts Per Minute: <strong>{{(value.revenge_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
-                  <span class="q-pa-md"><q-icon name="app:sunder" class="q-mr-sm" size="40px"/>Sunder Armor Casts Per Minute: <strong>{{(value.sunder_count/(value.time/60)).toPrecision(4)}}</strong></span>
+                  <span class="q-pa-md"><q-icon name="app:sunder" class="q-mr-sm" size="40px"/>Sunder Armor Casts Per Minute: <strong>{{(value.sunder_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:hs" size="40px" class="q-mr-sm"/>Heroic Strike Casts Per Minute: <strong>{{(value.hs_casts/(value.time/60)).toPrecision(4)}}</strong></span>
+                </q-item>
+                <q-item class="q-pa-md" >
+                  <span class="q-pa-md"><q-icon name="app:cleave" size="40px" class="q-mr-sm"/>Cleave Casts Per Minute: <strong>{{(value.cleave_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:taunt" size="40px" class="q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span>

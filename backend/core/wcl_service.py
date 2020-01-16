@@ -4,7 +4,7 @@ import logging
 
 from fastapi import HTTPException
 
-from .models import BossActivityRequest
+from .models import BossActivityRequest, Spell
 
 logger = logging.getLogger()
 
@@ -36,13 +36,17 @@ class WCLService:
         async with await __request(url, params=query, json=data or '{}', headers=headers) as resp:
             return await resp.content.read()
 
+
     async def get_full_report(self, report_id):
         url = self.base_url + f'report/fights/{report_id}'
         resp = await self._send_scoped_request('GET', url)
         return ujson.loads(resp)
 
     async def get_fight_details(self, req: BossActivityRequest, event):
-        url = self.base_url + f'report/tables/{event}/{req.report_id}'
+        ep = 'events'
+        if event in ['resources-gains', 'healing']:
+            ep = 'tables'
+        url = self.base_url + f'report/{ep}/{event}/{req.report_id}'
         params = {
             'start': req.start_time,
             'end': req.end_time,
@@ -65,4 +69,17 @@ class WCLService:
         resp = await self._send_scoped_request('GET', url, params=params)
         ret = ujson.loads(resp)
         ret.update({'event': event, 'boss_name': req.boss_name, 'boss_id': req.encounter})
+        return ret
+
+    async def get_stance_state(self, req: BossActivityRequest):
+        url = self.base_url + f'report/events/buffs/{req.report_id}'
+        params = {
+            'start': req.start_time,
+            'end': req.end_time,
+            'sourceid': req.player_id
+        }
+            
+        resp = await self._send_scoped_request('GET', url, params=params)
+        ret = ujson.loads(resp)
+        ret.update({'event': 'stance', 'boss_name': req.boss_name, 'boss_id': req.encounter, 'start_time': req.start_time})
         return ret
