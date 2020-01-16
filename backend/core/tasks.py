@@ -104,13 +104,15 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
     results = []
     for fight in future_results:
         resp = {}
-        nostance = []
+        no_d_resp = {}
         for data in fight:
             stance = [stance for stance in stances if stance.get('boss_name') == data.get('boss_name')]
             if data.get('totalTime', None):
                 resp['time'] = data.get('totalTime') / 1000.0
-            dstance, nostance, *args = await process_data_response(data.get('event'))(data, stance)
+            dstance, nostance = await process_data_response(data.get('event'))(data, stance)
+            no_d_resp.update(**dict(nostance), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'), friendlies_in_combat=friendlies)
             resp.update(**dict(dstance), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'))
+        no_d_resp['sunder_hits'] = no_d_resp.get('sunder_casts') - no_d_resp.get('sunder_misses')
         r = WarriorThreatCalculationRequest(**resp,
                                             player_name=player_name,
                                             player_class=player_class,
@@ -118,7 +120,8 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
                                             defiance_points=def_pts,
                                             friendlies_in_combat=friendlies,
                                             t1_bonus=t1,
-                                            stance_dance_events=nostance
+                                            sunder_hits=resp.get('sunder_casts') - resp.get('sunder_misses'),
+                                            no_d_stance = no_d_resp
                                             )
         tps = r.calculate_warrior_threat()
         results.append(tps)
@@ -154,41 +157,40 @@ async def process_damage_done(data, stance_events):
         Spell.Hamstring: 'hamstring_hits',
         Spell.ThunderClap: 'thunderclap_hits',
         Spell.Disarm: 'disarm_hits',
-        Spell.ShieldBash: 'shieldbash_hits'
+        Spell.ShieldBash: 'shieldbash_hits',
+        Spell.Cleave: 'cleave_hits'
 
     }
     add_count = set()
     damage_entries = data.get('events')
     hits = WarriorDamageResponse()
-    no_d_stance = StanceDanceEvent()
+    no_d_stance = WarriorDamageResponse()
     if not damage_entries:
         # Return 0 for damage or set the equivalent, dunno yet haven't gotten that far
         return hits, no_d_stance
-    total = []
+
     stances = stance_events[0] or {}
     
     for entry in damage_entries:
         add_count.add(str(entry.get('targetID')) + ':' + str(entry.get('targetInstance')))
         stance = _get_event_stance(stances, entry, hits, no_d_stance)
+        stance.enemies_in_combat = len(add_count)
+
         guid = entry.get('ability').get('guid')
-        if guid in __flat.keys():
+        if guid in __flat.keys() and entry.get('hitType') not in [7, 8]:
             setattr(stance, __flat[guid], getattr(stance, __flat[guid]) + 1)
-            total.append(entry.get('amount', 0))
+            stance.total_damage += entry.get('amount', 0)
         elif guid == Spell.Execute:
-            setattr(stance, 'execute_damage', getattr(stance, 'execute_damage') + entry.get('amount', 0))
+            stance.execute_dmg += entry.get('amount', 0)
         elif guid == Spell.SunderArmor:
-            setattr(stance, 'sunder_casts', getattr(stance, 'sunder_casts') + 1)
-            if entry.get('hitType', None) == 7:
-                setattr(stance, 'sunder_hits', getattr(stance, 'sunder_hits') + 1)
+            setattr(stance, 'sunder_misses', getattr(stance, 'sunder_misses') + 1)
         else:
-            total.append(entry.get('amount', 0))
-    hits.total_damage = sum(total)
-    hits.enemies_in_combat = len(add_count)
+            stance.total_damage += entry.get('amount')
     return hits, no_d_stance
 
 
 async def process_rage_gains(data, stance_events):
-    rage_gains = data.get('entries', [])
+    rage_gains = data.get('resources', [])
     rage_gain_events = [r.get('gains') for r in rage_gains]
     return {'rage_gains': sum(rage_gain_events)}, StanceDanceEvent()
 
@@ -205,7 +207,7 @@ async def process_casts(data, stance_events):
     cast_entries = data.get('events')
     stances = stance_events[0] or {}
     resp = WarriorCastResponse()
-    no_d_resp = StanceDanceEvent()
+    no_d_resp = WarriorCastResponse()
     if not cast_entries:
         return resp, no_d_resp # All 0 default vals
 
@@ -220,7 +222,7 @@ async def process_casts(data, stance_events):
         Spell.Revenge6: 'revenge_casts',
         Spell.Cleave: 'cleave_casts',
         Spell.Bloodthirst: 'bt_casts',
-        Spell.Cleave: 'cleave_hits',
+        Spell.SunderArmor: 'sunder_casts'
     }
 
     for entry in [e for e in cast_entries if e.get('ability').get('guid') in abilities]:
@@ -228,7 +230,6 @@ async def process_casts(data, stance_events):
         guid = entry.get('ability').get('guid')
         if guid in [Spell.BattleShout6, Spell.BattleShout7]:
             resp.bs_rank = guid
-            print(entry)
         if guid in [Spell.HeroicStrike8, Spell.HeroicStrike9]:
             resp.hs_rank = guid
         if guid in [Spell.Revenge5, Spell.Revenge6]:
@@ -239,13 +240,13 @@ async def process_casts(data, stance_events):
 
 
 async def process_debuffs(data, stance_events):
-    goa_procs = [d for d in data.get('events', []) if d.get('guid') == Spell.GiftOfArthas]
+    goa_procs = [d for d in data.get('events') if d.get('ability').get('guid') == Spell.GiftOfArthas]
     d = defaultdict(int)
     no_d = defaultdict(int)
     stances = stance_events[0] or {}
 
     for proc in goa_procs:
-        if proc.get('type') == 'applybuff':
+        if proc.get('type') == 'applydebuff' or proc.get('type') == 'refreshdebuff':
             stance = _get_event_stance(stances, proc, d, no_d)
             stance['goa_procs'] += 1
     return d, no_d
@@ -260,11 +261,17 @@ async def process_stance_state(data):
         Spell.BerserkerStance: []
     }
     time = data.get('start_time')
+    last_stance = Spell.DefensiveStance
     for e in entries:
         if e.get('type') == 'removebuff':
             windows[e.get('ability').get('guid')].append((time, e.get('timestamp')))
         if e.get('type') == 'applybuff':
+            stance = e.get('ability').get('guid')
             time = e.get('timestamp')
+            last_stance = e.get('ability').get('guid')
+
+    if last_stance:
+        windows[last_stance].append((time, 0))
     return {**windows, 'boss_name': data.get('boss_name')}
 
 
@@ -272,6 +279,6 @@ def _get_event_stance(stance_events, event, dstance_resp, nodstance_resp):
     time = event.get('timestamp')
     for k, rnges in [el for el in stance_events.items() if el[0] != 'boss_name']:
         for rnge in rnges:
-            if rnge[0] <= time <= rnge[1]:
+            if rnge[0] <= time and (time <= rnge[1] if rnge[1] else True):
                 return nodstance_resp if k != Spell.DefensiveStance else dstance_resp
     return dstance_resp

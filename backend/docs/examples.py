@@ -1,45 +1,103 @@
 CALC_RESP_EXAMPLE = {
-  "Gehennas":{
-    "boss_id":18,
-    "boss_name":"Gehennas",
-    "bs_casts":0,
-    "bt_count":5,
-    "cleave_count":20,
-    "defiance_points":5,
-    "demo_casts":0,
-    "enemies_in_combat":1,
-    "execute_dmg":0,
-    "friendlies_in_combat":1,
-    "goa_procs":0,
-    "hp_gains":401.0,
-    "hs_casts":1,
-    "hs_count":1,
-    "player_class":"Warrior",
-    "player_name":"Aemin",
-    "rage_gains":19,
-    "realm":"Skeram",
-    "revenge_casts":5,
-    "revenge_count":3,
-    "shield_slam_casts":0,
-    "shield_slam_count":0,
-    "sunder_casts":7,
-    "sunder_count":4,
-    "t1_set":False,
-    "thunderclap_casts":0,
-    "time":33.226,
-    "total_damage":26098,
-    "total_threat":30527.5,
-    "total_threat_defiance":45196.84,
-    "tps":1369.1789562390898,
-    "unmodified_tps":918.7834828146632
-  }
+    "Magmadar": { 
+        "boss_id":12,
+        "boss_name":"Magmadar",
+        "bs_casts":0,
+        "bs_rank":11551,
+        "bt_casts":10,
+        "cleave_casts":0,
+        "cleave_hits":0,
+        "defiance_points":5,
+        "demo_casts":0,
+        "disarm_hits":0,
+        "enemies_in_combat":1,
+        "execute_dmg":0,
+        "friendlies_in_combat":1,
+        "goa_procs":0,
+        "hamstring_hits":0,
+        "hp_gains":1001.0,
+        "hs_casts":28,
+        "hs_hits":21,
+        "hs_rank":11567,
+        "mockingblow_hits":0,
+        "no_d_stance": { 
+            "total_damage":0,
+            "execute_dmg":0,
+            "sunder_misses":0,
+            "sunder_casts":0,
+            "shield_slam_hits":0,
+            "revenge_hits":0,
+            "hs_hits":0,
+            "time":0,
+            "mockingblow_hits":0,
+            "hamstring_hits":0,
+            "thunderclap_hits":0,
+            "disarm_hits":0,
+            "shieldbash_hits":0,
+            "enemies_in_combat":0,
+            "cleave_hits":0,
+            "boss_name":"Magmadar",
+            "boss_id":12,
+            "friendlies_in_combat":1,
+            "shield_slam_casts":0,
+            "revenge_casts":0,
+            "hs_casts":0,
+            "goa_procs":0,
+            "bs_casts":0,
+            "demo_casts":0,
+            "thunderclap_casts":0,
+            "bt_casts":0,
+            "cleave_casts":0,
+            "bs_rank":11551,
+            "revenge_rank":11601,
+            "hs_rank":11567,
+            "rage_gains":0,
+            "hp_gains":0,
+            "sunder_hits":0
+        },
+        "player_class":"Warrior",
+        "player_name":"Aemin",
+        "rage_gains":53,
+        "realm":"Skeram",
+        "revenge_casts":4,
+        "revenge_hits":3,
+        "revenge_rank":11601,
+        "shield_slam_casts":0,
+        "shield_slam_hits":0,
+        "shieldbash_hits":0,
+        "sunder_casts":21,
+        "sunder_hits":17,
+        "t1_set": False,
+        "thunderclap_hits":0,
+        "time":63.191,
+        "total_damage":27245,
+        "total_threat":35672.0,
+        "total_threat_defiance":53329.63999999999,
+        "tps":856.057666439841,
+        "unmodified_tps":576.6248358152268
+    }
 }
 
-THREAT_RESP_EXAMPLE =[
+THREAT_RESP_EXAMPLE = [
   {
-    "name":"BattleShout",
+    "name":"BattleShout6",
     "threat_type":"Flat",
     "val":56
+  },
+  {
+    "name":"BattleShout7",
+    "threat_type":"Flat",
+    "val":70
+  },
+  {
+    "name":"BattleStance",
+    "threat_type":"Modifier",
+    "val":0.8
+  },
+  {
+    "name":"BerserkerStance",
+    "threat_type":"Modifier",
+    "val":0.8
   },
   {
     "name":"Cleave",
@@ -87,6 +145,11 @@ THREAT_RESP_EXAMPLE =[
     "val":43
   },
   {
+    "name":"Disarm",
+    "threat_type":"Flat",
+    "val":104
+  },
+  {
     "name":"Execute",
     "threat_type":"Flat",
     "val":1
@@ -97,14 +160,29 @@ THREAT_RESP_EXAMPLE =[
     "val":90
   },
   {
+    "name":"Hamstring",
+    "threat_type":"Flat",
+    "val":145
+  },
+  {
     "name":"Healing",
     "threat_type":"Flat",
     "val":0.5
   },
   {
-    "name":"HeroicStrike",
+    "name":"HeroicStrike8",
     "threat_type":"Flat",
     "val":145
+  },
+  {
+    "name":"HeroicStrike9",
+    "threat_type":"Flat",
+    "val":175
+  },
+  {
+    "name":"MockingBlow",
+    "threat_type":"Flat",
+    "val":250
   },
   {
     "name":"RageGain",
@@ -112,9 +190,19 @@ THREAT_RESP_EXAMPLE =[
     "val":5
   },
   {
-    "name":"Revenge",
+    "name":"Revenge5",
     "threat_type":"Flat",
     "val":315
+  },
+  {
+    "name":"Revenge6",
+    "threat_type":"Flat",
+    "val":355
+  },
+  {
+    "name":"ShieldBash",
+    "threat_type":"Flat",
+    "val":180
   },
   {
     "name":"ShieldSlam",
@@ -129,7 +217,7 @@ THREAT_RESP_EXAMPLE =[
   {
     "name":"ThunderClap",
     "threat_type":"Flat",
-    "val":104.0
+    "val":130
   },
   {
     "name":"Tier1Bonus",

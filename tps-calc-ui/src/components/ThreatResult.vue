@@ -33,6 +33,9 @@
                   <span class="q-pa-md"><q-icon name="app:hs" size="40px" class="q-mr-sm"/>Heroic Strike Casts Per Minute: <strong>{{(value.hs_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
+                  <span class="q-pa-md"><q-icon name="app:cleave" size="40px" class="q-mr-sm"/>Cleave Casts Per Minute: <strong>{{(value.cleave_casts/(value.time/60)).toPrecision(4)}}</strong></span>
+                </q-item>
+                <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:taunt" size="40px" class="q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span>
                 </q-item>
               </q-list>

@@ -43,23 +43,30 @@ export default {
   methods: {
     getIcon(ability) {
       if (ability.includes('Defiance')) return 'app:defiance';
+      if (ability.includes('Battle Shout')) return 'app:bs';
+      if (ability.includes('Heroic Strike')) return 'app:hs';
+      if (ability.includes('Revenge')) return 'app:revenge';
+
       switch(ability) {
         case 'Bloodthirst': return 'app:bt';
         case 'Shield Slam': return 'app:ss';
-        case 'Heroic Strike': return 'app:hs';
         case 'Defensive Stance': return 'app:dstance';
         case 'Sunder Armor': return 'app:sunder';
-        case 'Demo Shout': return 'app:demo';
-        case 'Battle Shout': return 'app:bs';
         case 'Rage Gain': return 'app:rage';
         case 'Thunder Clap': return 'app:tc';
         case 'Execute': return 'app:execute';
         case 'Gift Of Arthas': return 'app:goa';
         case 'Healing': return 'app:heals';
         case 'Tier1 Bonus': return 'app:t1';
-        case 'Revenge': return 'app:revenge';
         case 'Damage': return 'app:taunt';
         case 'Cleave': return 'app:cleave';
+        case 'Demo Shout': return 'app:demo';
+        case 'Battle Stance': return 'app:battle_stance';
+        case 'Berserker Stance': return 'app:zerk_stance';
+        case 'Shield Bash': return 'app:shield_bash';
+        case 'Disarm': return 'app:disarm';
+        case 'Hamstring': return 'app:hamstring';
+        case 'Mocking Blow': return 'app:mb';
         default: return ability;
       };
     },

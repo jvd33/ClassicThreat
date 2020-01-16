@@ -23,9 +23,9 @@ class Spell:
     Cleave = 20569
     DefensiveStance = 71
     SunderArmor = 11597
-    GiftOfArthas = 11371
+    GiftOfArthas = 11374
     RageGain = 101 # Cause WCL says so
-    Execute = 20662
+    Execute = 20647
     BattleShout6 = 11551
     BattleShout7 = 25289
     ShieldBash = 1672
@@ -70,7 +70,7 @@ class WarriorThreatValues:
     Execute = {'threat': {'threat_type': 'Flat', 'val': 1}, 'guid': Spell.Execute}
     Cleave = {'threat': {'threat_type': 'Flat', 'val': 100}, 'guid': Spell.Cleave}
     ShieldBash = {'threat': {'threat_type': 'Flat', 'val': 180}, 'guid': Spell.ShieldBash}
-    Hamstring = {'threat': {'threat_type': 'Flat', 'val': 141}, 'guid': Spell.Hamstring}
+    Hamstring = {'threat': {'threat_type': 'Flat', 'val': 145}, 'guid': Spell.Hamstring}
     MockingBlow = {'threat': {'threat_type': 'Flat', 'val': 250}, 'guid': Spell.MockingBlow} # From libthreat 2, is it really 250?
     Disarm = {'threat': {'threat_type': 'Flat', 'val': 104}, 'guid': Spell.Disarm}
 

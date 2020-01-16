@@ -1,5 +1,6 @@
 from pydantic import BaseModel, AnyUrl, validator
-from typing import List, Any
+from typing import List, Any, Dict
+from collections import defaultdict
 
 from .constants import WarriorThreatValues, Spell
 
@@ -31,20 +32,9 @@ class WCLDataRequest(BaseModel):
 
 
 class StanceDanceEvent(BaseModel):
-    shield_slam_hits: int = 0
-    hs_hits: int = 0
-    sunder_hits: int = 0
     rage_gains: int = 0
-    total_damage: int = 0
-    cleave_hits: int = 0
-    bs_casts: int = 0
-    demo_casts: int = 0
-    thunderclap_hits: int = 0
     hp_gains: float = 0
-    hamstring_hits: int = 0
-    shieldbash_hits: int = 0
-    mockingblow_hits: int = 0
-    bt_casts: int = 0
+
 
 class BossActivityRequest(BaseModel):
     player_id: int
@@ -92,7 +82,7 @@ class WarriorThreatCalculationRequest(BaseModel):
     mockingblow_hits: int = 0
     revenge_rank: int = None
     realm: str = None
-    stance_dance_events: Any = None
+    no_d_stance: Dict = None
 
     @property
     def __modifiers(self):
@@ -105,7 +95,7 @@ class WarriorThreatCalculationRequest(BaseModel):
             'goa_procs': lambda x, __t=__t: x * __t.GiftOfArthas,
             'rage_gains': lambda x, __t=__t: x * __t.RageGain,
             'hp_gains': lambda x, n, __t=__t: x * __t.Healing / n, # Split
-            'demo_casts': lambda x, n, __t=__t: x * __t.DemoShout / n,
+            'demo_casts': lambda x, n, __t=__t: x * __t.DemoShout * n,
             'thunderclap_hits': lambda x, __t=__t: x * __t.ThunderClap,
             'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),  # N = friendlies, c = enemies
             'cleave_hits': lambda x, __t=__t: x * __t.Cleave,
@@ -119,35 +109,47 @@ class WarriorThreatCalculationRequest(BaseModel):
 
         }
 
-    def calculate_warrior_threat(self, stance=Spell.DefensiveStance):
-        exclude = {'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_casts',
-                   'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'thunderclap_hits', 'boss_name',
-                   '__modifiers', 'defiance_key', '__t', 'boss_id', 'rage_gains', 'hp_gains', 'shield_slam_casts', 
-                   'revenge_casts', 'hs_casts', 'sunder_casts', 'bs_rank', 'hs_rank', 'revenge_rank', 'cleave_casts', 'stance_dance_events'}
+    def calculate_warrior_threat(self):
+        exclude = {
+            'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_casts',
+            'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'boss_name', 'no_d_stance',
+            '__modifiers', 'defiance_key', '__t', 'boss_id', 'rage_gains', 'hp_gains', 'shield_slam_casts', 
+            'revenge_casts', 'hs_casts', 'sunder_casts', 'bs_rank', 'hs_rank', 'revenge_rank', 'cleave_casts',
+        }
 
-        print(self.stance_dance_events)
-        unmodified_threat = self.total_damage
-        for name, val in self.copy(exclude=exclude):
-            if name == 'sunder_hits':
-                unmodified_threat += self.__modifiers.get(name)(val, self.t1_set)
-            elif name == 'bs_casts':
-                # TODO Haven't checked, but I could probably parse out the # of targets actually affected by this Battle Shout
-                unmodified_threat += self.__modifiers.get(name)(val, self.friendlies_in_combat, self.enemies_in_combat)
-            elif name == 'demo_casts':
-                unmodified_threat += self.__modifiers.get(name)(val, self.enemies_in_combat)
-            else:
-                unmodified_threat += self.__modifiers.get(name)(val)
+        no_d_stance = WarriorThreatCalculationRequest(**self.no_d_stance)
 
-        tc_threat = self.__modifiers.get('thunderclap_hits')(self.thunderclap_hits)
+        def __calculate(req, stance):
+            unmodified_threat = req.total_damage
+            for name, val in req.copy(exclude=exclude):
+                if name == 'sunder_hits':
+                    unmodified_threat += self.__modifiers.get(name)(val, self.t1_set)
+                elif name == 'bs_casts':
+                    # TODO Haven't checked, but I could probably parse out the # of targets actually affected by this Battle Shout
+                    unmodified_threat += self.__modifiers.get(name)(val, self.friendlies_in_combat, self.enemies_in_combat)
+                elif name == 'demo_casts':
+                    unmodified_threat += self.__modifiers.get(name)(val, self.enemies_in_combat)
+                else:
+                    unmodified_threat += self.__modifiers.get(name)(val)
+            
+            modified_threat = self.__modifiers.get(stance)(unmodified_threat, self.defiance_points)
+            unmodified_threat = unmodified_threat + req.execute_dmg
+            return modified_threat, unmodified_threat
+
+        
         rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains)
         healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains, self.enemies_in_combat)
-        
-        modified_threat = self.__modifiers.get(stance)(unmodified_threat, self.defiance_points)
+        calc_self = __calculate(self, Spell.DefensiveStance)
+        calc_no_d = __calculate(no_d_stance, Spell.BattleStance) 
+        unmodified_threat = sum([calc_self[1], calc_no_d[1]])
+        modified_threat = sum([calc_self[0], calc_no_d[0]])
 
-        unmodified_threat = unmodified_threat + tc_threat + rage_threat + healing_threat + self.execute_dmg
-        unmodified_tps = unmodified_threat/self.time
-        tps = (modified_threat + tc_threat + rage_threat + healing_threat + self.execute_dmg)/self.time
-        self.stance_dance_events = dict(self.stance_dance_events)
+        unmodified_tps = (unmodified_threat + rage_threat + healing_threat)/self.time
+        tps = (modified_threat + rage_threat + healing_threat)/self.time
+        for name, val in dict(self).items():
+            if '_casts' in name or '_hits' in name or '_dmg' in name or '_damage' in name:
+                setattr(self, name, getattr(self, name) + self.no_d_stance.get(name, 0))
+
         return dict(WarriorThreatResult(
             **dict(self),
             total_threat=unmodified_threat,
@@ -173,16 +175,16 @@ class WarriorCastResponse(BaseModel):
     thunderclap_casts: int = 0
     bt_casts: int = 0
     cleave_casts: int = 0
-    cleave_hits: int = 0
     bs_rank: int = Spell.BattleShout6
     revenge_rank: int = Spell.Revenge5
     hs_rank: int = Spell.HeroicStrike8
+    sunder_casts: int = 0
 
 
 class WarriorDamageResponse(BaseModel):
     total_damage: int = 0
     execute_dmg: int = 0
-    sunder_hits: int = 0
+    sunder_misses: int = 0
     sunder_casts: int = 0
     shield_slam_hits: int = 0
     revenge_hits: int = 0
@@ -193,4 +195,5 @@ class WarriorDamageResponse(BaseModel):
     thunderclap_hits: int = 0
     disarm_hits: int = 0
     shieldbash_hits: int = 0
-    enemies_in_combat: int = 1
+    enemies_in_combat: int = 0
+    cleave_hits: int = 0
