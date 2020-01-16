@@ -193,4 +193,4 @@ class WarriorDamageResponse(BaseModel):
     thunderclap_hits: int = 0
     disarm_hits: int = 0
     shieldbash_hits: int = 0
-    enemies_in_combat: int = 0
+    enemies_in_combat: int = 1
