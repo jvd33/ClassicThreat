@@ -109,7 +109,7 @@ class WarriorThreatCalculationRequest(BaseModel):
 
         }
 
-    def calculate_warrior_threat(self):
+    def calculate_warrior_threat(self, cached=False):
         exclude = {
             'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_casts',
             'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'boss_name', 'no_d_stance',
@@ -146,9 +146,10 @@ class WarriorThreatCalculationRequest(BaseModel):
 
         unmodified_tps = (unmodified_threat + rage_threat + healing_threat)/self.time
         tps = (modified_threat + rage_threat + healing_threat)/self.time
-        for name, val in dict(self).items():
-            if '_casts' in name or '_hits' in name or '_dmg' in name or '_damage' in name:
-                setattr(self, name, getattr(self, name) + self.no_d_stance.get(name, 0))
+        if not cached:
+            for name, val in dict(self).items():
+                if '_casts' in name or '_hits' in name or '_dmg' in name or '_damage' in name:
+                    setattr(self, name, getattr(self, name) + self.no_d_stance.get(name, 0))
 
         return dict(WarriorThreatResult(
             **dict(self),

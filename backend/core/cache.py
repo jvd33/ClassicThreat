@@ -14,7 +14,9 @@ class RedisClient:
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=0))
         keys = await __redis.keys(key, encoding='utf-8')                                  
         cached_data = [dict(await __redis.hgetall(key, encoding='utf-8')) for key in keys]
-        return {d.get('boss_name'): d for d in cached_data}
+        resp = {d.get('boss_name'): d for d in cached_data}
+        return resp
+    
 
     async def save_results(self, report_id: str, character: str, data):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=0))
@@ -22,6 +24,7 @@ class RedisClient:
         for k, v in data.items():
             key = f'{report_id}:{character}:{k}'
             v['t1_set'] = str(v.get('t1_set'))
+            v['no_d_stance'] = ujson.dumps(v.get('no_d_stance'))
             r = await __redis.hmset_dict(key, v)
             d.append(r)
         __redis.close()
