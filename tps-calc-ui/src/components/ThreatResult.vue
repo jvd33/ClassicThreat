@@ -98,7 +98,9 @@ export default {
     getTableCols(data) {
       let ret = [];
       for (const prop in data) {
-        ret.push({'name': prop, 'value': data[prop]});
+        if (prop !== 'no_d_stance') {
+          ret.push({'name': prop, 'value': data[prop]});
+        };
       }
       return ret;
     },
