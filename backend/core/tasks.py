@@ -113,6 +113,8 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
             no_d_resp.update(**dict(nostance), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'), friendlies_in_combat=friendlies)
             resp.update(**dict(dstance), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'))
         no_d_resp['sunder_hits'] = no_d_resp.get('sunder_casts') - no_d_resp.get('sunder_misses')
+        resp['enemies_in_combat'] = resp.get('enemies_in_combat', 0) or 1
+        no_d_resp['enemies_in_combat'] = no_d_resp.get('enemies_in_combat', 0) or 1
         r = WarriorThreatCalculationRequest(**resp,
                                             player_name=player_name,
                                             player_class=player_class,
