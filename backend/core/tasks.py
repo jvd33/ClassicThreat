@@ -26,10 +26,10 @@ async def get_log_data(req: WCLDataRequest, session):
     async def __recalculate_opts(data, req=req):
         data['defiance_points'] = req.defiance_points
         data['t1_set'] = req.t1_set
-        data['enemies_in_combat'] = req.enemies_in_combat
         data['friendlies_in_combat'] = req.friendlies_in_combat
+        data['no_d_stance'] = ujson.loads(data['no_d_stance'])
         r = WarriorThreatCalculationRequest(**data)
-        return r.calculate_warrior_threat()
+        return r.calculate_warrior_threat(cached=True)
 
     logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
 
