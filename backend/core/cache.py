@@ -75,8 +75,8 @@ class RedisClient:
         await __redis.set('last_updated', ujson.dumps(datetime.datetime.now()))
         for b in bosses:
             data_db = 0 if db == 2 else 1
-            keys = await self._get_rank_keys(b, data_db)
-            vals = await self._get_tps_values(keys, data_db)
+            keys = await self._get_rank_keys(b, db=data_db)
+            vals = await self._get_tps_values(keys, db=data_db)
             ranks = {k: v for k, v in sorted(vals.items(), key=lambda v: v[1], reverse=True)}
             raw_vals = [v for k, v in ranks.items()]
             ret = {
