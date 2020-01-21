@@ -1,33 +1,78 @@
 <template>
-  <q-page class="q-pa-md row">
-    <q-table
-      title="Threat Calculation Values"
-      :data="data"
-      separator="vertical"
-      :columns="columns"
-      row-key="name"
-      dense
-      dark
-      color="amber"
-      hide-bottom
-      :pagination.sync="pagination"
-      class="col"
-      no-data-label="Failed to load threat values. Please try again later or file a bug report if it persists."
-    >
-      <template v-slot:body-cell-name="props" >
-        <q-td>
-          <q-icon
-            :name="getIcon(props.value)"
-            size="32px"
-            :label="props.value"
-	          class="q-ma-sm"
-            title=""
-          />
-	        <span class="text-right sortable">{{props.value}}</span>
-        </q-td>
-      </template>
+  <q-page class="q-pa-md">
+   <q-tabs
+    v-model="tab"
+    dense
+    align="justify"
+    no-caps
+    class="text-white shadow-2 rounded-borders"
+    active-bg-color="primary"
+  >
+    <q-tab name="warrior" icon="app:warr" label="Warrior" />
+    <q-tab name="druid" icon="app:druid" label="Druid" />
+  </q-tabs>
+  <q-tab-panels v-model="tab" animated class="shadow-2 rounded-borders row" transition-prev="fade" transition-next="fade">
+    <q-tab-panel name="warrior" icon="app:warr">
+      <q-table
+        title="Warrior Threat Calculation Values"
+        :data="warr_data"
+        separator="vertical"
+        :columns="columns"
+        row-key="name"
+        dense
+        dark
+        color="amber"
+        hide-bottom
+        :pagination.sync="pagination"
+        class="col"
+        no-data-label="Failed to load threat values. Please try again later or file a bug report if it persists."
+      >
+        <template v-slot:body-cell-name="props" >
+          <q-td>
+            <q-icon
+              :name="getIcon(props.value)"
+              size="32px"
+              :label="props.value"
+              class="q-ma-sm"
+              title=""
+            />
+            <span class="text-right sortable">{{props.value}}</span>
+          </q-td>
+        </template>
 
-    </q-table>
+      </q-table>
+    </q-tab-panel>
+    <q-tab-panel name="druid" icon="app:druid">
+      <q-table
+        title="Druid Threat Calculation Values"
+        :data="druid_data"
+        separator="vertical"
+        :columns="columns"
+        row-key="name"
+        dense
+        dark
+        color="amber"
+        hide-bottom
+        :pagination.sync="pagination"
+        class="col"
+        no-data-label="Failed to load threat values. Please try again later or file a bug report if it persists."
+      >
+        <template v-slot:body-cell-name="props" >
+          <q-td>
+            <q-icon
+              :name="getIcon(props.value)"
+              size="32px"
+              :label="props.value"
+              class="q-ma-sm"
+              title=""
+            />
+            <span class="text-right sortable">{{props.value}}</span>
+          </q-td>
+        </template>
+
+      </q-table>
+    </q-tab-panel>
+</q-tab-panels>
 
   </q-page>
 </template>
@@ -43,6 +88,7 @@ export default {
   methods: {
     getIcon(ability) {
       if (ability.includes('Defiance')) return 'app:defiance';
+      if (ability.includes('Feral Instinct')) return 'app:fi';
       if (ability.includes('Battle Shout')) return 'app:bs';
       if (ability.includes('Heroic Strike')) return 'app:hs';
       if (ability.includes('Revenge')) return 'app:revenge';
@@ -67,6 +113,14 @@ export default {
         case 'Disarm': return 'app:disarm';
         case 'Hamstring': return 'app:hamstring';
         case 'Mocking Blow': return 'app:mb';
+        case 'Maul': return 'app:maul';
+        case 'Swipe': return 'app:swipe';
+        case 'Cower': return 'app:cower';
+        case 'Faerie Fire': return 'app:ff';
+        case 'Faerie Fire Feral': return 'app:ff';
+        case 'Bear Form': return 'app:bear';
+        case 'Cat Form': return 'app:cat';
+        case 'Demo Roar': return 'app:demoRoar';
         default: return ability;
       };
     },
@@ -76,6 +130,7 @@ export default {
       name: 'CalculationDetails',
       loading: true,
       errorState: false,
+      tab: 'warrior',
       errorMsg: null,
       pagination: {
         rowsPerPage: 0,
@@ -110,14 +165,27 @@ export default {
         },
       ]
     ,
-    data: [],
+    warr_data: [],
+    druid_data: [],
     }
   },
   mounted() {
     axios
-    .get(process.env.VUE_APP_API_URL + '/api/v1/threat_values')
+    .get(process.env.VUE_APP_API_URL + '/api/v1/threat_values?player_class=Warrior')
     .then(response => {
-      this.data = response.data;
+      this.warr_data = response.data;
+      this.loading = false;
+    })
+    .catch(error => {
+        this.errorState = true;
+        this.errorMsg = error.response ?
+          error.response.data.details : 'Unexpected error. Try again later.';
+    })
+
+    axios
+    .get(process.env.VUE_APP_API_URL + '/api/v1/threat_values?player_class=Druid')
+    .then(response => {
+      this.druid_data = response.data;
       this.loading = false;
     })
     .catch(error => {

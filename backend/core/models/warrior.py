@@ -2,48 +2,12 @@ from pydantic import BaseModel, AnyUrl, validator
 from typing import List, Any, Dict
 from collections import defaultdict
 
-from .constants import WarriorThreatValues, Spell
-
-class ClassDPS(BaseModel):
-    class_name: str
-    dps: float = 0.0
-
-
-class WCLDataRequest(BaseModel):
-    url: AnyUrl
-    player_name: str
-    defiance_points: int = 5
-    bosses: List[str] = []
-    friendlies_in_combat: int = 1
-    enemies_in_combat: int = 1
-    t1_set: bool = False
-
-    @validator('url')
-    def check_url(cls, v):
-        assert v.host == 'classic.warcraftlogs.com' and v.path and len(v.path) > 1 and 'reports' in v.path, \
-        "Invalid Log URL."
-        return v
-
-
-    @validator('defiance_points')
-    def check_defiance(cls, v):
-        assert v in [0, 1, 2, 3, 4, 5], "0 through 5."
-        return v
+from ..constants import WarriorThreatValues, Spell
 
 
 class StanceDanceEvent(BaseModel):
     rage_gains: int = 0
     hp_gains: float = 0
-
-
-class BossActivityRequest(BaseModel):
-    player_id: int
-    start_time: int
-    end_time: int
-    encounter: int
-    report_id: str
-    boss_name: str
-
 
 class WarriorThreatCalculationRequest(BaseModel):
     shield_slam_hits: int = 0
@@ -159,6 +123,7 @@ class WarriorThreatCalculationRequest(BaseModel):
             tps=tps,
         ))
 
+
 class WarriorThreatResult(WarriorThreatCalculationRequest):
     total_threat: float = 0
     total_threat_defiance: float = 0
@@ -198,9 +163,3 @@ class WarriorDamageResponse(BaseModel):
     shieldbash_hits: int = 0
     enemies_in_combat: int = 0
     cleave_hits: int = 0
-
-class Rank(BaseModel):
-    name: str
-    encounter: str
-    report_id: str
-    tps: str
