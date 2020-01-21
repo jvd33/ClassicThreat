@@ -1,7 +1,7 @@
 <template>
   <q-page>
     <q-list bordered class="rounded-borders border-primary q-mb-lg" v-for="(value, name) in results" :key="name">
-      <q-expansion-item :caption="getRowTitle(name, value)">
+      <q-expansion-item :label="getRowTitle(name, value)" :caption="getCaption(name, value)">
         <q-card class="qa-pa-md">
           <q-card-section class="q-pa-sm row justify-around">
             <span class="text-h4 text-weight-bold text-center text-primary q-pa-md col-12 col-sm-12">
@@ -106,6 +106,9 @@ export default {
     },
     getRowTitle(name, val) {
       return `${name}: ${val.tps.toPrecision(5)} Estimated TPS`
+    },
+    getCaption(name, val) {
+      return `Rank: ${val.rank.toPrecision(3)}%`
     },
     downloadJson(filename, dl){
       const url = window.URL.createObjectURL(new Blob([JSON.stringify(dl, null, 2)]))

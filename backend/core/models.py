@@ -198,3 +198,9 @@ class WarriorDamageResponse(BaseModel):
     shieldbash_hits: int = 0
     enemies_in_combat: int = 0
     cleave_hits: int = 0
+
+class Rank(BaseModel):
+    name: str
+    encounter: str
+    report_id: str
+    tps: str
