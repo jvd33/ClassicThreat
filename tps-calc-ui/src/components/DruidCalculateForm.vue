@@ -3,13 +3,13 @@
     <q-toolbar-title
       class="text-primary text-h3 text-weight-bold q-pb-lg col-auto col-sm shadow-2 wrap-auto text-h6-sm"
     >
-      Warrior Threat Estimator
+      Druid Threat Estimator
     </q-toolbar-title>
 
     <q-form
       @submit="submit"
       class="q-gutter-md row-6 bordered rounded-borders"
-      title="Warrior Threat Estimator"
+      title="Druid Threat Estimator"
     >
       <q-input
         filled
@@ -40,18 +40,18 @@
 
       <q-select
         filled
-        v-model="defiance_points"
-        label="Points in Defiance"
+        v-model="feral_instinct_points"
+        label="Points in Feral Instinct"
         :options="options"
         lazy-rules
         dense
         title=""
         :rules="[
-          val => (!isNaN(val) && 0 <= val <= 5) || 'Invalid number of defiance points. 0 through 5, bro'
+          val => (!isNaN(val) && 0 <= val <= 5) || 'Invalid number of Feral Instinct points. 0 through 5, bro'
         ]"
       >
         <template v-slot:prepend>
-          <q-icon name="app:defiance" title="" />
+          <q-icon name="app:fi" title="" />
         </template>
       </q-select>
 
@@ -74,34 +74,6 @@
         @clear="(value) => this.bosses = []"
       >
       </q-select>
-     <div class="row">
-        <q-input
-          filled
-          class="col-5 col-sm-5 q-ma-sm"
-          v-model="friendlies_in_combat"
-          label="(Optional) Friendlies Nearby/In Combat"
-          lazy-rules
-          title=""
-          hint="Friendlies nearby for splitting threat"
-          dense
-          :rules="[
-            val => (val && !isNaN(val && val <= 10 && val > 0) ) || 'Be reasonable. 1-10.'
-          ]"
-        >
-          <template v-slot:prepend>
-            <q-icon name="app:bs" title="" size="20px"/>
-          </template>
-        </q-input>
-        <q-toggle
-          class="col-2 col-sm-1 q-ma-sm"
-          v-model="t1"
-          label="(Optional) Tier 1 Set Bonus?"
-          lazy-rules
-          title=""
-          dense
-        >
-        </q-toggle>
-      </div>
 
 
       <div class="q-pt-lg q-mt-lg col-12 col-12-sm">
@@ -123,7 +95,7 @@
           <span class="h6 text-accent">
             To contribute, report bugs, or propose features, see <router-link :to="'About'" class="text-accent text-weight-bold">about</router-link>
     </span>
-    <warr-threat-result class="q-mt-sm q-mb-sm" v-if="this.results" :results="this.results"/>
+    <druid-threat-result class="q-mt-sm q-mb-sm" v-if="this.results" :results="this.results"/>
     <q-expansion-item
       caption="Instructions"
       :default-opened="false"
@@ -133,8 +105,6 @@
           Enter your character's name exactly as it appears on the logs.<br/>
           Provide a URL to your raid log. <br/>
           Full raid logs provided will be broken down per-encounter. <br/><br/>
-          The tool captures Stance change events and calculates threat accordingly.
-          <br/> DPS Warriors coming soon.<br/><br/>
           Note: For encounters with multiple enemies, the calculation does not differentiate between them (yet) so threat values are not representative of TPS for the actual named boss. <br/>
           Instead, it represents total TPS for <strong>every</strong> enemy fought during the same time window as the boss. Damage done to non-NPC targets (e.g., Mind Control) is not counted.
         </q-card-section>
@@ -154,13 +124,13 @@
 import axios from 'axios';
 
 export default {
-  name: 'WarriorCalculateForm',
+  name: 'DruidCalculateForm',
   loading: true,
   data: () => {
       return {
           player_name: null,
           url: null,
-          defiance_points: 5,
+          feral_instinct_points: 5,
           friendlies_in_combat: 1,
           bosses: [],
           t1: false,
@@ -217,10 +187,10 @@ export default {
         this.results = null;
         this.is_loading = true;
         axios
-        .post(process.env.VUE_APP_API_URL + '/api/v1/calculate_warrior', {
+        .post(process.env.VUE_APP_API_URL + '/api/v1/calculate_druid', {
           url: this.url,
           player_name: this.player_name,
-          defiance_points: this.defiance_points,
+          feral_instinct_points: this.feral_instinct_points,
           bosses: this.bosses || [],
           friendlies_in_combat: this.friendlies_in_combat,
           t1_set: this.t1,

@@ -5,7 +5,8 @@ import random
 
 from fastapi import HTTPException
 
-from .models import BossActivityRequest, Spell
+from .models.common import BossActivityRequest 
+from .constants import Spell
 
 logger = logging.getLogger()
 

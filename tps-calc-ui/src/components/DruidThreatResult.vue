@@ -11,29 +11,14 @@
             </span>
               <q-list dark bordered separator dense class="q-ma-sm col-auto">
                 <q-item class="q-pa-md" >
-                  <span class="q-pa-md"><q-icon name="app:dstance" size="40px" class="q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_defiance.toPrecision(8)}}</strong></span>
-                </q-item>
-                <q-item v-if="value.bt_casts > 0" class="q-pa-md">
-                <span class="q-pa-md"><q-icon name="app:bt" class="q-mr-sm" size="40px"/>
-                  Bloodthirst Casts Per Minute: <strong>{{(value.bt_casts/(value.time/60)).toPrecision(4)}}</strong></span>
-                </q-item>
-                <q-item v-else-if="value.shield_slam_casts > 0" class="q-pa-md" >
-                    <span class="q-pa-md">
-                      <q-icon name="app:ss" size="40px" class="q-mr-sm"/>
-                        Shield Slam Casts Per Minute: <strong>{{(value.shield_slam_casts/(value.time/60)).toPrecision(4)}}</strong></span>
+                  <span class="q-pa-md"><q-icon name="app:bear" size="40px" class="q-mr-sm"/>Total Threat (estimated): <strong>{{value.total_threat_feral_instinct.toPrecision(8)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
-                <span class="q-pa-md"><q-icon name="app:revenge" size="40px" class="q-mr-sm"/>
-                  Revenge Casts Per Minute: <strong>{{(value.revenge_casts/(value.time/60)).toPrecision(4)}}</strong></span>
+                <span class="q-pa-md"><q-icon name="app:maul" size="40px" class="q-mr-sm"/>
+                  Maul Casts Per Minute: <strong>{{(value.maul_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
-                  <span class="q-pa-md"><q-icon name="app:sunder" class="q-mr-sm" size="40px"/>Sunder Armor Casts Per Minute: <strong>{{(value.sunder_casts/(value.time/60)).toPrecision(4)}}</strong></span>
-                </q-item>
-                <q-item class="q-pa-md" >
-                  <span class="q-pa-md"><q-icon name="app:hs" size="40px" class="q-mr-sm"/>Heroic Strike Casts Per Minute: <strong>{{(value.hs_casts/(value.time/60)).toPrecision(4)}}</strong></span>
-                </q-item>
-                <q-item class="q-pa-md" >
-                  <span class="q-pa-md"><q-icon name="app:cleave" size="40px" class="q-mr-sm"/>Cleave Casts Per Minute: <strong>{{(value.cleave_casts/(value.time/60)).toPrecision(4)}}</strong></span>
+                  <span class="q-pa-md"><q-icon name="app:swipe" class="q-mr-sm" size="40px"/>Swipe Casts Per Minute: <strong>{{(value.swipe_casts/(value.time/60)).toPrecision(4)}}</strong></span>
                 </q-item>
                 <q-item class="q-pa-md" >
                   <span class="q-pa-md"><q-icon name="app:taunt" size="40px" class="q-mr-sm"/>Damage per Second: <strong>{{(value.total_damage/value.time).toPrecision(4)}}</strong></span>
@@ -65,25 +50,22 @@
 </template>
 <script>
 export default {
-  name: 'ThreatResult',
+  name: 'DruidThreatResult',
   props: ['results'],
   methods: {
     getIcon(ability) {
-      if (ability.includes('Defiance')) return 'app:defiance';
+      if (ability.includes('FeralInstinct')) return 'app:fi';
       switch(ability) {
-        case 'Bloodthirst': return 'app:bt';
-        case 'Shield Slam': return 'app:ss';
-        case 'Heroic Strike': return 'app:hs';
-        case 'Defensive Stance': return 'app:dstance';
-        case 'Sunder Armor': return 'app:sunder';
-        case 'Demo Shout': return 'app:demo';
-        case 'Battle Shout': return 'app:bs';
+        case 'Maul': return 'app:maul';
+        case 'Swipe': return 'app:swipe';
+        case 'Cower': return 'app:cower';
+        case 'Faerie Fire': return 'app:ff';
+        case 'Faerie Fire Feral': return 'app:ff';
+        case 'Bear Form': return 'app:bear';
+        case 'Demo Roar': return 'app:demoRoar';
         case 'Rage Gain': return 'app:rage';
-        case 'Thunder Clap': return 'app:tc';
-        case 'Execute': return 'app:execute';
         case 'Gift Of Arthas': return 'app:goa';
         case 'Healing': return 'app:heals';
-        case 'Tier1 Bonus': return 'app:t1';
         case 'Revenge': return 'app:revenge';
         case 'Warrior': return 'app:warr';
         case 'Mage': return 'app:mage';
@@ -91,14 +73,13 @@ export default {
         case 'Rogue': return 'app:rogue';
         case 'Druid': return 'app:druid';
         case 'Hunter': return 'app:hunter';
-        case 'Cleave': return 'app:cleave';
         default: return ability;
       };
     },
     getTableCols(data) {
       let ret = [];
       for (const prop in data) {
-        if (prop !== 'no_d_stance') {
+        if (prop !== 'no_bear') {
           ret.push({'name': prop, 'value': data[prop]});
         };
       }
@@ -108,6 +89,9 @@ export default {
       return `${name}: ${val.tps.toPrecision(5)} Estimated TPS`
     },
     getCaption(name, val) {
+      if (!val.rank) {
+        return 'Error loading rankings';
+      }
       return `Rank: ${val.rank.toPrecision(3)}%`
     },
     downloadJson(filename, dl){
