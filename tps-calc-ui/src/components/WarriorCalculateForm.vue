@@ -117,6 +117,8 @@
     </q-form>
     <span class="h5 text-warning row">
             THIS IS A WORK IN PROGRESS. THESE RESULTS ARE ESTIMATIONS. <br/>
+            Percentile rankings are calculated only against logs that have been processed by ClassicThreat and are not entirely accurate (yet)<br/>
+            Give more logs to make the percentiles more accurate!<br/>
           </span><br/>
           <span class="h6 text-accent">
             To contribute, report bugs, or propose features, see <router-link :to="'About'" class="text-accent text-weight-bold">about</router-link>
