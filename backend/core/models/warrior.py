@@ -2,48 +2,12 @@ from pydantic import BaseModel, AnyUrl, validator
 from typing import List, Any, Dict
 from collections import defaultdict
 
-from .constants import WarriorThreatValues, Spell
-
-class ClassDPS(BaseModel):
-    class_name: str
-    dps: float = 0.0
-
-
-class WCLDataRequest(BaseModel):
-    url: AnyUrl
-    player_name: str
-    defiance_points: int = 5
-    bosses: List[str] = []
-    friendlies_in_combat: int = 1
-    enemies_in_combat: int = 1
-    t1_set: bool = False
-
-    @validator('url')
-    def check_url(cls, v):
-        assert v.host == 'classic.warcraftlogs.com' and v.path and len(v.path) > 1 and 'reports' in v.path, \
-        "Invalid Log URL."
-        return v
-
-
-    @validator('defiance_points')
-    def check_defiance(cls, v):
-        assert v in [0, 1, 2, 3, 4, 5], "0 through 5."
-        return v
+from ..constants import WarriorThreatValues, Spell
 
 
 class StanceDanceEvent(BaseModel):
     rage_gains: int = 0
     hp_gains: float = 0
-
-
-class BossActivityRequest(BaseModel):
-    player_id: int
-    start_time: int
-    end_time: int
-    encounter: int
-    report_id: str
-    boss_name: str
-
 
 class WarriorThreatCalculationRequest(BaseModel):
     shield_slam_hits: int = 0
@@ -132,20 +96,22 @@ class WarriorThreatCalculationRequest(BaseModel):
                 else:
                     unmodified_threat += self.__modifiers.get(name)(val)
             
-            modified_threat = self.__modifiers.get(stance)(unmodified_threat, self.defiance_points)
+            modified_threat = self.__modifiers.get(stance)(unmodified_threat, self.defiance_points) + req.execute_dmg
             unmodified_threat = unmodified_threat + req.execute_dmg
             return modified_threat, unmodified_threat
 
         
-        rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains)
-        healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains, self.enemies_in_combat)
+        rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains + no_d_stance.rage_gains)
+        healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains + no_d_stance.hp_gains, self.enemies_in_combat)
         calc_self = __calculate(self, Spell.DefensiveStance)
         calc_no_d = __calculate(no_d_stance, Spell.BattleStance) 
-        unmodified_threat = sum([calc_self[1], calc_no_d[1]])
-        modified_threat = sum([calc_self[0], calc_no_d[0]])
+        print(calc_self)
+        print(calc_no_d)
+        unmodified_threat = sum([calc_self[1], calc_no_d[1]]) + rage_threat + healing_threat
+        modified_threat = sum([calc_self[0], calc_no_d[0]]) + rage_threat + healing_threat
 
-        unmodified_tps = (unmodified_threat + rage_threat + healing_threat)/self.time
-        tps = (modified_threat + rage_threat + healing_threat)/self.time
+        unmodified_tps = unmodified_threat/self.time
+        tps = modified_threat/self.time
         if not cached:
             for name, val in dict(self).items():
                 if '_casts' in name or '_hits' in name or '_dmg' in name or '_damage' in name:
@@ -158,6 +124,7 @@ class WarriorThreatCalculationRequest(BaseModel):
             unmodified_tps=unmodified_tps,
             tps=tps,
         ))
+
 
 class WarriorThreatResult(WarriorThreatCalculationRequest):
     total_threat: float = 0
@@ -198,9 +165,3 @@ class WarriorDamageResponse(BaseModel):
     shieldbash_hits: int = 0
     enemies_in_combat: int = 0
     cleave_hits: int = 0
-
-class Rank(BaseModel):
-    name: str
-    encounter: str
-    report_id: str
-    tps: str

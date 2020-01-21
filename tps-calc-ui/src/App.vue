@@ -105,6 +105,14 @@ import disarm from './assets/disarm.png';
 import zerk_stance from './assets/zerk_stance.png';
 import battle_stance from './assets/battle_stance.png';
 import mb from './assets/mb.png';
+import maul from './assets/maul.png';
+import swipe from './assets/swipe.png';
+import cower from './assets/cower.png';
+import demoRoar from './assets/demoRoar.png';
+import cat from './assets/cat.png';
+import bear from './assets/bear.png';
+import ff from './assets/ff.png';
+import fi from './assets/fi.png';
 
 export default {
   data() {
@@ -147,14 +155,28 @@ export default {
           'app:disarm': 'img:' + disarm,
           'app:hamstring': 'img:' + hamstring,
           'app:mb': 'img:' + mb,
+          'app:ff': 'img:' + ff,
+          'app:bear': 'img:' + bear,
+          'app:cat': 'img:' + cat,
+          'app:maul': 'img:' + maul,
+          'app:swipe': 'img:' + swipe,
+          'app:cower': 'img:' + cower,
+          'app:demoRoar': 'img:' + demoRoar,
+          'app:fi': 'img:' + fi,
         },
 
         calculators: [
-            {
+          {
             icon: 'app:warr',
             label: 'Warrior',
             separator: true,
             path: '/warrior'
+          },
+          {
+            icon: 'app:druid',
+            label: 'Druid',
+            separator: true,
+            path: '/druid'
           },
         ],
 

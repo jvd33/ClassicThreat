@@ -37,6 +37,14 @@ class Spell:
     BerserkerStance = 2458
     BattleStance = 2457
     Bloodthirst = 23894
+    BearForm = 9634
+    CatForm = 768
+    DemoRoar = 9898
+    Cower = 9892
+    FaerieFire = 9907
+    FaerieFireFeral = 17392
+    Swipe = 9908
+    Maul = 9881
 
 
 class WarriorThreatValues:
@@ -90,3 +98,37 @@ class WarriorThreatValues:
     def items():
         return [{'name': attr, 'val': getattr(WarriorThreatValues, attr).get('threat')} for attr in dir(WarriorThreatValues)
                 if not callable(getattr(WarriorThreatValues, attr)) and not attr.startswith("__")]
+
+
+class DruidThreatValues:
+
+    BearForm = {'threat': {'threat_type': 'Modifier', 'val': 1.3}, 'guid': Spell.BearForm}
+    CatForm = {'threat': {'threat_type': 'Modifier', 'val': .71}, 'guid': Spell.CatForm}
+    Cower = {'threat': {'threat_type': 'Flat', 'val': -600}, 'guid': Spell.Cower}
+    FaerieFire = {'threat': {'threat_type': 'Flat', 'val': 108}, 'guid': Spell.FaerieFire}
+    FaerieFireFeral = {'threat': {'threat_type': 'Flat', 'val': 108}, 'guid': Spell.FaerieFireFeral}
+    Swipe = {'threat': {'threat_type': 'Modifier', 'val': 1.75}, 'guid': Spell.Swipe}
+    Maul = {'threat': {'threat_type': 'Modifier', 'val': 1.75}, 'guid': Spell.Maul}
+
+    GiftOfArthas = {'threat': {'threat_type': 'Flat', 'val': 90}, 'guid': Spell.GiftOfArthas}
+    RageGain = {'threat': {'threat_type': 'Flat', 'val': 5}, 'guid': Spell.RageGain}
+    FeralInstinct0 = {'threat': {'threat_type': 'Modifier', 'val': 0.0}, 'guid': None}
+    FeralInstinct1 = {'threat': {'threat_type': 'Modifier', 'val': .03}, 'guid': None}
+    FeralInstinct2 = {'threat': {'threat_type': 'Modifier', 'val': .06} ,'guid': None}
+    FeralInstinct3 = {'threat': {'threat_type': 'Modifier', 'val': .09}, 'guid': None}
+    FeralInstinct4 = {'threat': {'threat_type': 'Modifier', 'val': .12} ,'guid': None}
+    FeralInstinct5 = {'threat': {'threat_type': 'Modifier', 'val': .15}, 'guid': None}
+    Healing = {'threat': {'threat_type': 'Flat', 'val': .5}, 'guid': None}
+    DemoRoar = {'threat': {'threat_type': 'Flat', 'val': 39}, 'guid': Spell.DemoRoar}
+    
+
+    @staticmethod
+    def vals():
+        ret = GenericObject(**{attr: getattr(DruidThreatValues, attr).get('threat').get('val') for attr in dir(DruidThreatValues)
+                if not callable(getattr(DruidThreatValues, attr)) and not attr.startswith("__")})
+        return ret
+
+    @staticmethod
+    def items():
+        return [{'name': attr, 'val': getattr(DruidThreatValues, attr).get('threat')} for attr in dir(DruidThreatValues)
+                if not callable(getattr(DruidThreatValues, attr)) and not attr.startswith("__")]
