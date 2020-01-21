@@ -1,6 +1,6 @@
 import ujson
 import aiohttp
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from aiohttp import ClientResponseError
 from starlette.responses import JSONResponse
 
@@ -8,8 +8,13 @@ from .models import WCLDataRequest, WarriorThreatResult
 from .tasks import get_log_data
 from .constants import WarriorThreatValues, Threat
 from docs.examples import CALC_RESP_EXAMPLE, THREAT_RESP_EXAMPLE, HEARTBEAT
+from .cache import RedisClient
 
 api_router = APIRouter()
+
+async def _refresh_cache():
+    r = RedisClient()
+    await r.refresh_rank_data()
 
 async def get_http_session():
     return aiohttp.ClientSession(json_serialize=ujson.dumps, raise_for_status=True)
@@ -52,10 +57,11 @@ async def status():
                                 },
                             },
                 )
-async def calculate(req: WCLDataRequest, session=Depends(get_http_session)):
+async def calculate(req: WCLDataRequest, background_tasks: BackgroundTasks, session=Depends(get_http_session), ):
     try:
         async with session:
             results = await get_log_data(req, session=session)
+            background_tasks.add_task(_refresh_cache)
             return JSONResponse(content=results, status_code=200)
     except ClientResponseError as cexc:
         return JSONResponse(content={'detail': f'Error from Warcraft Logs: {cexc.message}', 'code': cexc.status}, status_code=cexc.status)
@@ -82,3 +88,22 @@ async def get_threat_values():
     ret = [{'name': val.get('name'), **val.get('val')} for val in vals]
     ret.append({'name': 'Damage', 'threat_type': 'Flat', 'val': 1})
     return JSONResponse(content=ret, status_code=200)
+
+
+@api_router.get('/rankings', 
+                tags=['v1'], 
+                responses={
+                            200: {
+                                "description": "Successful response",
+                                "content": {
+                                    "application/json": {
+                                        "example": {}
+                                    }
+                                },
+                            },
+                        },
+                )
+async def get_boss_rankings(boss_name):
+    r = RedisClient()
+    ranks = await r.get_encounter_rankings(boss_name)
+    return JSONResponse(content=ranks, status_code=200)

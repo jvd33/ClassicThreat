@@ -6,6 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv, find_dotenv
 
 from core import routes
+from core.cache import RedisClient
 
 load_dotenv(find_dotenv())
 origins = [

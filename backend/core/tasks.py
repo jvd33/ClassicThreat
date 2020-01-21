@@ -65,7 +65,11 @@ async def get_log_data(req: WCLDataRequest, session):
             logger.error(f'No bosses found in log {report_id} OR cache for player {req.player_name}: {bosses}')
             raise HTTPException(status_code=404,
                                 detail=f'Not found: No boss activity found matching {req.bosses}')
-        return {k: v for k, v in sorted(cache_resp.items(), key=lambda x: x[1].get('boss_id'))}
+        ranks = {k: v for k, v in sorted(cache_resp.items(), key=lambda x: x[1].get('boss_id'))}
+        for k, v in ranks.items():
+            rank = await redis.get_encounter_percentile(k, v.get('tps'))
+            v.update({'rank': rank})
+        return ranks
     
     bosses = list(filter(lambda x: x.get('name') in [*req.bosses, *missing], bosses)) or bosses
     player_info = [p for p in resp.get('friendlies') if p.get('name').casefold() == req.player_name.casefold()]
@@ -90,7 +94,11 @@ async def get_log_data(req: WCLDataRequest, session):
     ) for boss in bosses]
 
     d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.t1_set, session) or {}
-    return {k: v for k, v in sorted({**d, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
+    ranks = {k: v for k, v in sorted({**d, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
+    for k, v in ranks.items():
+        rank = await redis.get_encounter_percentile(k, v.get('tps'))
+        v.update({'rank': rank})
+    return ranks
  
 async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, t1, session):
     if not reqs:
