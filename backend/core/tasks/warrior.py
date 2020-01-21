@@ -271,23 +271,32 @@ async def process_debuffs(data, stance_events):
 async def process_stance_state(data):
     stances = [Spell.DefensiveStance, Spell.BerserkerStance, Spell.BattleStance]
     entries = [e for e in data.get('events') if e.get('ability').get('guid') in stances]
+    zerk_specific = [e for e in data.get('events') if e.get('ability').get('name') in ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']]
+    battle_specific = [e for e in data.get('events') if e.get('ability').get('name') in ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunder Clap']]
+
     windows = {
         Spell.DefensiveStance: [],
         Spell.BattleStance: [],
         Spell.BerserkerStance: []
     }
     time = data.get('start_time')
-    last_stance = Spell.DefensiveStance
+    last_stance = None
     for e in entries:
         if e.get('type') == 'removebuff':
             windows[e.get('ability').get('guid')].append((time, e.get('timestamp')))
         if e.get('type') == 'applybuff':
-            stance = e.get('ability').get('guid')
             time = e.get('timestamp')
             last_stance = e.get('ability').get('guid')
-
-    if last_stance:
-        windows[last_stance].append((time, 0))
+    
+    if not last_stance:
+        if zerk_specific: 
+            last_stance = Spell.BerserkerStance
+        elif battle_specific:
+            last_stance = Spell.BattleStance
+        else:
+            last_stance = Spell.DefensiveStance
+            
+    windows[last_stance].append((time, 0))
     return {**windows, 'boss_name': data.get('boss_name')}
 
 

@@ -96,20 +96,22 @@ class WarriorThreatCalculationRequest(BaseModel):
                 else:
                     unmodified_threat += self.__modifiers.get(name)(val)
             
-            modified_threat = self.__modifiers.get(stance)(unmodified_threat, self.defiance_points)
+            modified_threat = self.__modifiers.get(stance)(unmodified_threat, self.defiance_points) + req.execute_dmg
             unmodified_threat = unmodified_threat + req.execute_dmg
             return modified_threat, unmodified_threat
 
         
-        rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains)
-        healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains, self.enemies_in_combat)
+        rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains + no_d_stance.rage_gains)
+        healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains + no_d_stance.hp_gains, self.enemies_in_combat)
         calc_self = __calculate(self, Spell.DefensiveStance)
         calc_no_d = __calculate(no_d_stance, Spell.BattleStance) 
-        unmodified_threat = sum([calc_self[1], calc_no_d[1]])
-        modified_threat = sum([calc_self[0], calc_no_d[0]])
+        print(calc_self)
+        print(calc_no_d)
+        unmodified_threat = sum([calc_self[1], calc_no_d[1]]) + rage_threat + healing_threat
+        modified_threat = sum([calc_self[0], calc_no_d[0]]) + rage_threat + healing_threat
 
-        unmodified_tps = (unmodified_threat + rage_threat + healing_threat)/self.time
-        tps = (modified_threat + rage_threat + healing_threat)/self.time
+        unmodified_tps = unmodified_threat/self.time
+        tps = modified_threat/self.time
         if not cached:
             for name, val in dict(self).items():
                 if '_casts' in name or '_hits' in name or '_dmg' in name or '_damage' in name:
