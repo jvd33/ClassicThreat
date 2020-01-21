@@ -1,6 +1,7 @@
 import os
 import ujson
 import logging
+import random
 
 from fastapi import HTTPException
 
@@ -13,7 +14,7 @@ class WCLService:
     def __init__(self, session):
         self.base_url = 'https://www.warcraftlogs.com/v1/'
         self.session = session
-        self.wcl_key = os.getenv('WCL_PUB_KEY')
+        self.wcl_keys = os.getenv('WCL_PUB_KEYS').split(',')
 
 
     async def _send_scoped_request(self,
@@ -27,10 +28,11 @@ class WCLService:
         if not __request:
             raise HTTPException(status_code=400, detail="Bad request")
         headers = {'content-type': 'application/json', 'accept-encoding': 'gzip'}
+        api_key = random.choice(self.wcl_keys)
         query = {
             'translate': 'true',   # Turns out WCL breaks if you pass it boolean True LOL
-            'api_key': self.wcl_key
-        } if not params else {**params, 'translate': 'true', 'api_key': self.wcl_key}
+            'api_key': api_key
+        } if not params else {**params, 'translate': 'true', 'api_key': api_key}
 
         logger.error(f'{method}: {url}, {params}, {data}')
         async with await __request(url, params=query, json=data or '{}', headers=headers) as resp:
