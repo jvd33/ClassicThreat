@@ -85,6 +85,11 @@ class WarriorThreatCalculationRequest(BaseModel):
 
         def __calculate(req, stance):
             unmodified_threat = req.total_damage
+            if cached and stance == Spell.DefensiveStance:
+                unmodified_threat = req.total_damage - no_d_stance.total_damage
+                req.sunder_hits -= no_d_stance.sunder_hits
+                req.execute_dmg = 0
+
             for name, val in req.copy(exclude=exclude):
                 if name == 'sunder_hits':
                     unmodified_threat += self.__modifiers.get(name)(val, self.t1_set)
@@ -104,10 +109,9 @@ class WarriorThreatCalculationRequest(BaseModel):
         healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains + no_d_stance.hp_gains, self.enemies_in_combat)
         calc_self = __calculate(self, Spell.DefensiveStance)
         calc_no_d = __calculate(no_d_stance, Spell.BattleStance) 
-        print(calc_self)
-        print(calc_no_d)
         unmodified_threat = sum([calc_self[1], calc_no_d[1]]) + rage_threat + healing_threat
         modified_threat = sum([calc_self[0], calc_no_d[0]]) + rage_threat + healing_threat
+
 
         unmodified_tps = unmodified_threat/self.time
         tps = modified_threat/self.time

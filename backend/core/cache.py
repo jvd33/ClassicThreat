@@ -49,7 +49,8 @@ class RedisClient:
         # DB 0 = Warrior parses
         # DB 1 = Druid parses
         if not boss_names:
-            return {'matches': await self.get_report_results(report_id, character, db=db), 'missing': []}
+            matches = await self.get_report_results(report_id, character, db=db)
+            return {'matches': matches, 'missing': []}
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
                                                             
         cached_data = [dict(await __redis.hgetall(f'{report_id}:{character}:{b}', encoding='utf-8')) for b in boss_names]

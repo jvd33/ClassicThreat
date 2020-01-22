@@ -47,7 +47,7 @@ async def get_log_data(req: WCLDataRequest, session):
     
     try:
         redis = RedisClient()
-        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses) or {}
+        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, db=0) or {}
         if cached_data.get('matches'):
             cache_resp = {k: await __recalculate_opts(v) for k, v in cached_data.get('matches').items()}
         missing = cached_data.get('missing', [])
