@@ -97,7 +97,7 @@ class WarriorThreatCalculationRequest(BaseModel):
                     unmodified_threat += self.__modifiers.get(name)(val)
             
             modified_threat = self.__modifiers.get(stance)(unmodified_threat, self.defiance_points)
-            return modified_threat, unmodified_threat
+            return modified_threat + req.execute_dmg, unmodified_threat + req.execute_dmg
 
         
         rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains + no_d_stance.rage_gains)
@@ -106,8 +106,8 @@ class WarriorThreatCalculationRequest(BaseModel):
         calc_no_d = __calculate(no_d_stance, Spell.BattleStance) 
         print(calc_self)
         print(calc_no_d)
-        unmodified_threat = sum([calc_self[1], calc_no_d[1]]) + rage_threat + healing_threat + self.execute_dmg
-        modified_threat = sum([calc_self[0], calc_no_d[0]]) + rage_threat + healing_threat + self.execute_dmg
+        unmodified_threat = sum([calc_self[1], calc_no_d[1]]) + rage_threat + healing_threat
+        modified_threat = sum([calc_self[0], calc_no_d[0]]) + rage_threat + healing_threat
 
         unmodified_tps = unmodified_threat/self.time
         tps = modified_threat/self.time
