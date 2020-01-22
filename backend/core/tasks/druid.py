@@ -24,7 +24,7 @@ async def get_log_data(req: WCLDataRequest, session):
     the caching logic can definitely be separated out and error handling can be more consistent
     """
     async def __recalculate_opts(data, req=req):
-        data['feral_instinct_points'] = req.defiance_points
+        data['feral_instinct_points'] = req.feral_instinct_points
         data['friendlies_in_combat'] = req.friendlies_in_combat
         data['no_bear'] = ujson.loads(data['no_bear'])
         r = DruidThreatCalculationRequest(**data)
