@@ -112,8 +112,27 @@ class RedisClient:
         return percentileofscore(raw, tps)  
         
     async def get_encounter_rankings(self, boss_name, db=2):
+        data_db = {
+            2: 0,
+            3: 1
+        }.get(db, 2)
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         data = await __redis.hgetall(boss_name, encoding='utf-8')
         ranks = ujson.loads(data.get('ranks'))   
+        for key, threat in ranks.items():
+            data = await self.get_by_key(key, data_db)
+            ranks[key] = {
+                'player': data.get('player_name'),
+                'boss': data.get('boss_name'),
+                'realm': data.get('realm'),
+                'tps': threat,
+                'total_threat': data.get('total_threat_defiance'),
+                'report': key.split(':')[0],
+            }
         __redis.close()
         return ranks  
+
+    async def get_by_key(self, key, db=0):
+        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
+        data = await __redis.hgetall(key, encoding='utf-8')
+        return data
