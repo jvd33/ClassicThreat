@@ -143,7 +143,7 @@ async def get_threat_values(player_class):
                             },
                         },
                 )
-async def get_boss_rankings(boss, class):
+async def get_boss_rankings(boss, player_class):
     db = {
         'Warrior': 2,
         'Druid': 3
@@ -151,5 +151,5 @@ async def get_boss_rankings(boss, class):
     if not db:
         return JSONResponse(content={'detail': 'Invalid Player Class'}, status_code=400)
     r = RedisClient()
-    ranks = await r.get_encounter_rankings(boss_name, db=db)
+    ranks = await r.get_encounter_rankings(boss, db=db)
     return JSONResponse(content=ranks, status_code=200)
