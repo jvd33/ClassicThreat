@@ -1,50 +1,69 @@
 <template>
-  <q-page class="q-pa-md">
-    <q-tabs
-      v-model="boss"
-      dense
-      align="justify"
-      no-caps
-      class="text-white shadow-2 rounded-borders"
-      active-bg-color="primary"
+  <q-page class="q-pa-md col-12">
+    <q-table
+      :title="getTitle()"
+      :data="getData()"
+      :v-model="player_class"
+      separator="horizontal"
+      :columns="columns"
+      row-key="`${name}:${rank}:${report}"
+      dark
+      color="amber"
+      :pagination.sync="boss_pagination"
+      class="col"
+      no-data-label="Failed to load threat rankings. Please try again later or file a bug report if it persists."
     >
-      <q-btn-dropdown auto-close stretch flat label="Bosses..">
-        <q-list highlight separator>
-          <q-item v-for="(boss, index) in bosses" highlight separator  @click="this.boss = boss" :label="boss" />
-          </q-item>
-        </q-list>
-      </q-btn-dropdown>
-    </q-tabs>
-    <q-tab-panel name="rankings" icon="app:warr">
-      <q-table
-        title="`${this.class} Threat Rankings: ${this.boss}`"
-        :data="data"
-        separator="vertical"
-        :columns="columns"
-        row-key="name"
-        dense
-        dark
-        color="amber"
-        hide-bottom
-        :pagination.sync="pagination"
-        class="col"
-        no-data-label="Failed to load threat rankings. Please try again later or file a bug report if it persists."
-      >
-        <template v-slot:body-cell-name="props" >
-          <q-td>
-            <q-icon
-              :name="getIcon(props.value)"
-              size="32px"
-              :label="props.value"
-              class="q-ma-sm"
-              title=""
-            />
-            <span class="text-right sortable">{{props.value}}</span>
-          </q-td>
-        </template>
+      <template v-slot:top>
+        <q-item class="col-12 justify-center">
+          <span class="text-primary text-h4" >{{ getTitle() }}</span>
+        </q-item>
+        <q-item class="col-12 justify-around">
+          <q-select
+            v-model="boss"
+            label="Bosses"
+            lazy-rules
+            :options="bosses"
+            stack-label
+            dense
+            outlined
+            separator
+            highlight
+            class="col-5-sm col-5 border-primary"
+            dark
+            @input = "selected(boss)"
+            :filterMethod="filterTable(filter)"
+          >
 
-      </q-table>
-    </q-tab-panels>
+          </q-select>
+          <q-space/>
+          <q-separator vertical inset class="bg-primary q-ma-lg" ></q-separator>
+          <q-input dense debounce="300" color="primary" v-model="filter" label="Search..." class="col-4 col-4-sm" highlight>
+            <template v-slot:append>
+              <q-icon name="search" ></q-icon>
+            </template>
+          </q-input>
+          <q-space/>
+          <q-separator vertical inset class="bg-primary q-ma-lg" ></q-separator>
+          <q-toggle class="col-2 col-2-sm text-primary" label="Best Parses Only?" dense dark elevated highlight justify-right v-model="best_ranks">
+
+          </q-toggle>
+        </q-item>
+      </template>
+      <template v-slot:body-cell-rank="props">
+        <q-item class="q-table q-tr col-1 col-1-sm" justify-left separator highlight>
+          <q-item-section justify-left class="q-tr">
+            <q-btn type="a" :href="getHref(props.row)" color="primary" name="link" size="10px" icon="link"></q-btn>
+          </q-item-section>
+          <q-item-section class="justify-left">{{props.row.rank}}</q-item-section>
+        </q-item>
+      </template>
+    </q-table>
+    <q-inner-loading :showing="loading">
+      <q-spinner-puff size="250px" class="q-mb-sm" color="primary"/>
+      <span class="text-primary bg-secondary text-weight-bold q-pa-sm rounded-borders">
+        Fetching Rankings...
+      </span>
+    </q-inner-loading>
   </q-page>
 </template>
 
@@ -56,17 +75,81 @@ import axios from 'axios';
 
 
 export default {
+  props: {
+    player_class: null,
+  },
   methods: {
-
+    getHref(row) {
+      return `https://classic.warcraftlogs.com/reports/${row.report}#fight=${row.boss_id}`
+    },
+    getTitle() {
+      return `${this.player_class} Rankings - ${this.boss}`
+    },
+    getData() {
+      if (this.boss_cache[this.player_class][this.boss] !== undefined) {
+        this.loading = false;
+        return this.filterTable(this.filter);
+      }
+      axios
+      .get(`https://classicthreat.com/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
+      .then(response => {
+        this.data = response.data;
+        this.boss_cache[this.player_class][this.boss] = response.data
+        this.loading = false;
+      })
+      .catch(error => {
+          this.errorState = true;
+          this.loading = false;
+          this.errorMsg = error.response ?
+            error.response.data.details : 'Unexpected error. Try again later.';
+          this.data = [];
+      })
+      return this.data;
+    },
+    selected(val) {
+      this.boss = val;
+      this.loading = true;
+      if (this.boss_cache[this.player_class][val] !== undefined) {
+        this.data = this.boss_cache[this.player_class][val];
+        this.loading = false;
+        return;
+      }
+      this.getData();
+      return this.filterTable(this.filter);
+    },
+    filterTable(filter) {
+      if (this.boss_cache[this.player_class][this.boss] === undefined) {
+        return this.data;
+      }
+      let d = this.boss_cache[this.player_class][this.boss].filter((val) => val.player.includes(filter) || val.realm.includes(filter))
+      let seen = []
+      let final = []
+      if (this.best_ranks === true) {
+        d.forEach((x) => {
+          if (!seen.includes(x.player)) {
+            final.push(x);
+            seen.push(x.player);
+          }
+        });
+        d = final;
+      }
+      this.data = d;
+      return d;
+    },
   },
   data () {
     return {
+      filter: '',
+      best_ranks: false,
       name: 'ClassRankings',
       loading: true,
-      class: null,
       errorState: false,
-      tab: 'warrior',
       boss: 'Lucifron',
+      data: [],
+      boss_cache: {
+        'Warrior': {},
+        'Druid': {}
+      },
       bosses: [
         'Lucifron', 'Magmadar', 'Gehennas', 'Garr',
         'Baron Geddon', 'Shazzrah', 'Sulfuron Harbinger', 'Golemagg the Incinerator',
@@ -76,78 +159,67 @@ export default {
       ],
       errorMsg: null,
       boss_pagination: {
-        rowsPerPage: [10, 20, 50],
-        sortBy: 'tps',
-        descending: true
-      }
+        rowsPerPage: 25,
+        recordsPerPage: [0, 10, 25, 50],
+        sortBy: 'rank',
+        descending: false,
+      },
       columns: [
         {
-          name: 'name',
+          name: 'rank',
+          required: true,
+          label: 'Rank',
+          align: 'left',
+          field: row => row.rank,
+          headerClasses: 'bg-primary',
+          style: 'font-weight: 750;max-width:20px;'
+        },
+        {
+          name: 'player',
           required: true,
           label: 'Player',
           align: 'left',
-          field: row => `${row.name} - ${row.realm}`,
-          sortable: true
+          field: row => `${row.player} - ${row.realm}`,
+          classes: 'ellipsis',
+          style: 'max-width: 100px',
+          headerClasses: 'bg-primary',
+          style: 'font-weight: 750'
         },
-        {
-          name: 'realm',
-          required: true,
-          label: 'Realm',
-          align: 'left',
-          field: 'realm',
-        }
         {
           name: 'tps',
-          align: 'center',
+          align: 'left',
           label: 'Threat per Second (TPS)',
           field: 'tps',
-          format: val => `${val.toPrecision(5)}`,
-          sortable: true
-        },
-        {
-          name: 'report',
-          align: 'center',
-          label: 'Threat Calculation Type',
-          field: 'report',
-          format: val => `${val}`,
-          sortable: true
+          format: val => `${val.toPrecision(6)}`,
+          headerClasses: 'bg-primary',
         },
         {
           name: 'total_threat',
-          align: 'center',
-          label: 'Total Threat,
+          align: 'left',
+          label: 'Total Threat',
           field: 'total_threat',
-          format: val => `${val}`,
-          sortable: true
+          format: val => `${parseFloat(val).toPrecision(7)}`,
+          headerClasses: 'bg-primary'
         },
       ],
     }
   },
   mounted() {
+    this.loading = true;
     axios
-    .get(process.env.VUE_APP_API_URL + '/api/v1/threat_values?player_class=Warrior')
-    .then(response => {
-      this.warr_data = response.data;
-      this.loading = false;
-    })
-    .catch(error => {
-        this.errorState = true;
-        this.errorMsg = error.response ?
-          error.response.data.details : 'Unexpected error. Try again later.';
-    })
+      .get(`https://classicthreat.com/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
+      .then(response => {
+        this.data = response.data;
+        this.boss_cache[this.player_class][this.boss] = response.data
+        this.loading = false;
+      })
+      .catch(error => {
+          this.errorState = true;
+          this.errorMsg = error.response ?
+            error.response.data.details : 'Unexpected error. Try again later.';
 
-    axios
-    .get(process.env.VUE_APP_API_URL + '/api/v1/threat_values?player_class=Druid')
-    .then(response => {
-      this.druid_data = response.data;
-      this.loading = false;
-    })
-    .catch(error => {
-        this.errorState = true;
-        this.errorMsg = error.response ?
-          error.response.data.details : 'Unexpected error. Try again later.';
-    })
-    .finally(() => this.is_loading = false);
+          this.data = [];
+      })
   },
 };
 </script>
