@@ -135,4 +135,5 @@ class RedisClient:
     async def get_by_key(self, key, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         data = await __redis.hgetall(key, encoding='utf-8')
+        __redis.close()
         return data
