@@ -22,7 +22,7 @@
     >
 
         <q-list v-for="(menuItem, index) in menuList" :key="index">
-          <q-expansion-item
+        <q-expansion-item
           expand-separator
           :icon=menuItem.icon
           :label=menuItem.label
@@ -44,8 +44,29 @@
               </q-item>
             </q-list>
           </q-expansion-item>
-
-          <q-item :to="menuItem.path" exact v-ripple v-if="menuItem.label !== 'Calculators'">
+        <q-expansion-item
+          expand-separator
+          :icon=menuItem.icon
+          :label=menuItem.label
+          default-opened
+          v-if="menuItem.label === 'Rankings'"
+          group="rankings"
+        >
+            <q-list v-for="(ranking, idx) in rankings" :key="idx">
+              <q-item :to="ranking.path"
+                      exact v-ripple
+                      :inset-level=".5"
+              >
+                <q-item-section avatar>
+                  <q-icon :name="ranking.icon" />
+                </q-item-section>
+                <q-item-section>
+                  {{ ranking.label }}
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-expansion-item>
+          <q-item :to="menuItem.path" exact v-ripple v-if="menuItem.label !== 'Calculators' && menuItem.label !== 'Rankings'">
             <q-item-section avatar>
               <q-icon :name="menuItem.icon" />
             </q-item-section>
@@ -53,6 +74,7 @@
               {{ menuItem.label }}
             </q-item-section>
           </q-item>
+
 
          <q-separator v-if="menuItem.separator" />
 
@@ -179,11 +201,32 @@ export default {
             path: '/druid'
           },
         ],
+        rankings: [
+          {
+            icon: 'app:warr',
+            label: 'Warrior',
+            separator: true,
+            path: '/rankings/warrior',
+            class: 'Warrior',
+          },
+          {
+            icon: 'app:druid',
+            label: 'Druid',
+            separator: true,
+            path: '/rankings/druid',
+            class: 'Druid',
+          },
+        ],
 
         menuList: [
           {
             icon: 'assessment',
             label: 'Calculators',
+            separator: true,
+          },
+          {
+            icon: 'score',
+            label: 'Rankings',
             separator: true,
           },
           {
@@ -196,7 +239,7 @@ export default {
             icon: 'contacts',
             label: 'About',
             separator: true,
-            path: '/about'
+            path: '/about',
 
           },
         ],

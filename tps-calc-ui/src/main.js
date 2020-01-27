@@ -9,6 +9,7 @@ import DruidThreatResult from "./components/DruidThreatResult";
 import DPSThreat from "./components/DPSThreatComponent.vue";
 import About from './components/About.vue';
 import CalculationDetails from './components/CalculationDetails.vue';
+import ClassRankings from './components/ClassRankings.vue'
 
 const routes = [
   {
@@ -28,6 +29,16 @@ const routes = [
     path: '/about',
     component: About,
   },
+  {
+    path: '/rankings/warrior',
+    component: ClassRankings,
+    props: {player_class: 'Warrior'},
+  },
+  {
+    path: '/rankings/druid',
+    component: ClassRankings,
+    props: {player_class: 'Druid'},
+  }
 ];
 
 const router = new VueRouter({
