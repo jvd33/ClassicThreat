@@ -126,8 +126,9 @@ class RedisClient:
                 'boss': data.get('boss_name'),
                 'realm': data.get('realm'),
                 'tps': threat,
-                'total_threat': data.get('total_threat_defiance'),
+                'total_threat': data.get('total_threat_defiance') or data.get('total_threat_feral_instinct'),
                 'report': key.split(':')[0],
+                'boss_id': data.get('boss_id'),
             }
         __redis.close()
         return ranks  
