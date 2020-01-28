@@ -50,7 +50,7 @@
         </q-item>
       </template>
       <template v-slot:body-cell-rank="props">
-        <q-item class="q-table q-tr col-1 col-1-sm" justify-left separator highlight>
+        <q-item justify-left separator highlight>
           <q-item-section justify-left class="q-tr">
             <q-btn type="a" :href="getHref(props.row)" color="primary" name="link" size="10px" icon="link"></q-btn>
           </q-item-section>
