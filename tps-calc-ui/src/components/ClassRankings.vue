@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <q-item>
-      <span class="text-primary text-h4" >{{ getTitle() }}</span>
+      <span class="text-primary text-h4 col-12 col-12-sm" >{{ getTitle() }}</span>
     </q-item>
     <q-table
       :title="getTitle()"
@@ -62,6 +62,7 @@
         Fetching Rankings...
       </span>
     </q-inner-loading>
+    <span class="text-primary text-h6 col-12 col-12-sm">Rankings update once every minute!</span>
   </q-page>
 </template>
 
