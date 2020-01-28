@@ -37,7 +37,7 @@
           </q-select>
           <q-space/>
           <q-separator vertical inset class="bg-primary q-ma-lg" ></q-separator>
-          <q-input dense debounce="300" color="primary" v-model="filter" label="Search..." class="col-4 col-4-sm" highlight>
+          <q-input dense debounce="500" color="primary" v-model="filter" label="Search..." class="col-4 col-4-sm" highlight>
             <template v-slot:append>
               <q-icon name="search" ></q-icon>
             </template>
@@ -91,7 +91,7 @@ export default {
         return this.filterTable(this.filter);
       }
       axios
-      .get(`https://classicthreat.com/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
+      .get(process.env.VUE_APP_API_URL + `/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
       .then(response => {
         this.data = response.data;
         this.boss_cache[this.player_class][this.boss] = response.data
@@ -207,7 +207,7 @@ export default {
   mounted() {
     this.loading = true;
     axios
-      .get(`https://classicthreat.com/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
+      .get(process.env.VUE_APP_API_URL + `/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
       .then(response => {
         this.data = response.data;
         this.boss_cache[this.player_class][this.boss] = response.data
