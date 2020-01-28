@@ -1,5 +1,8 @@
 <template>
-  <q-page class="q-pa-md col-12">
+  <q-page class="q-pa-md">
+    <q-item>
+      <span class="text-primary text-h4" >{{ getTitle() }}</span>
+    </q-item>
     <q-table
       :title="getTitle()"
       :data="getData()"
@@ -10,51 +13,46 @@
       dark
       color="amber"
       :pagination.sync="boss_pagination"
-      class="col"
       no-data-label="Failed to load threat rankings. Please try again later or file a bug report if it persists."
     >
       <template v-slot:top>
-        <q-item class="col-12 justify-center">
-          <span class="text-primary text-h4" >{{ getTitle() }}</span>
-        </q-item>
-        <q-item class="col-12 justify-around">
-          <q-select
-            v-model="boss"
-            label="Bosses"
-            lazy-rules
-            :options="bosses"
-            stack-label
-            dense
-            outlined
-            separator
-            highlight
-            class="col-5-sm col-5 border-primary"
-            dark
-            @input = "selected(boss)"
-            :filterMethod="filterTable(filter)"
-          >
+          <q-item-section>
+            <q-select
+              v-model="boss"
+              label="Bosses"
+              lazy-rules
+              :options="bosses"
+              stack-label
+              dense
+              outlined
+              separator
+              highlight
+              class="border-primary col-5-sm col-5"
+              dark
+              @input = "selected(boss)"
+              :filterMethod="filterTable(filter)"
+            >
 
-          </q-select>
-          <q-space/>
-          <q-separator vertical inset class="bg-primary q-ma-lg" ></q-separator>
-          <q-input dense debounce="500" color="primary" v-model="filter" label="Search..." class="col-4 col-4-sm" highlight>
-            <template v-slot:append>
-              <q-icon name="search" ></q-icon>
-            </template>
-          </q-input>
-          <q-space/>
-          <q-separator vertical inset class="bg-primary q-ma-lg" ></q-separator>
-          <q-toggle class="col-2 col-2-sm text-primary" label="Best Parses Only?" dense dark elevated highlight justify-right v-model="best_ranks">
+            </q-select>
+            <q-space/>
+            <q-separator vertical inset class="bg-primary q-ma-lg" ></q-separator>
+            <q-input dense debounce="500" color="primary" v-model="filter" label="Search..." class="col-5 col-5-sm" highlight>
+              <template v-slot:append>
+                <q-icon name="search" ></q-icon>
+              </template>
+            </q-input>
+            <q-space/>
+            <q-separator vertical inset class="bg-primary q-ma-lg" ></q-separator>
+            <q-toggle class="text-primary col-2 col-2-sm" label="Best Parses Only?" dense dark elevated highlight justify-right v-model="best_ranks">
 
-          </q-toggle>
-        </q-item>
+            </q-toggle>
+          </q-item-section>
       </template>
       <template v-slot:body-cell-rank="props">
         <q-item justify-left separator highlight>
           <q-item-section justify-left class="q-tr">
-            <q-btn type="a" :href="getHref(props.row)" color="primary" name="link" size="10px" icon="link"></q-btn>
+            <q-btn type="a" :href="getHref(props.row)" name="link" style="width:100%" icon="link" :label="props.row.rank"></q-btn>
           </q-item-section>
-          <q-item-section class="justify-left">{{props.row.rank}}</q-item-section>
         </q-item>
       </template>
     </q-table>
