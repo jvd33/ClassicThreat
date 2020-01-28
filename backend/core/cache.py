@@ -65,7 +65,7 @@ class RedisClient:
         # DB 3 = Druid ranks
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         last_updated = await __redis.get('last_updated', encoding='utf-8')
-        if last_updated and (datetime.datetime.now() - datetime.datetime.fromtimestamp(int(last_updated))).total_seconds() <= (3600 * 6): 
+        if last_updated and (datetime.datetime.now() - datetime.datetime.fromtimestamp(int(last_updated))).total_seconds() <= 60: 
             __redis.close()
             return 
         bosses = [
