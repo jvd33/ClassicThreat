@@ -13,6 +13,7 @@ from ..models.druid import DruidThreatCalculationRequest, DruidThreatResult, Dru
 from ..constants import Spell
 from ..wcl_service import WCLService
 from ..cache import RedisClient
+from ..utils import flatten
 
 EVENTS = ['damage-done', 'casts', 'resources-gains', 'healing', 'debuffs']
 
@@ -31,16 +32,7 @@ async def get_log_data(req: WCLDataRequest, session):
         return r.calculate_druid_threat(cached=True)
 
     logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
-
-    url_segments = urlparse(req.url)
-    seg = url_segments.path.split('/')
-    report_index = next((i for i, s  in enumerate(seg) if s == 'reports'), None)
-    if not report_index or len(url_segments) <= report_index:
-        logger.error(f'400: Bad log url: {req.url} --- {report_index}')
-        raise HTTPException(status_code=400,
-                            detail=f'Bad log URL. Try the format /reports/<report_id>')
-    report_id = seg[report_index + 1]
-
+    report_id = req.report_id
     missing = req.bosses
     cache_resp = {}
     
@@ -95,7 +87,7 @@ async def get_log_data(req: WCLDataRequest, session):
         report_id=report_id,
     ) for boss in bosses]
 
-    d = await get_player_activity(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session) or {}
+    d, events = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.t1_set, session) or {}
     ranks = {k: v for k, v in sorted({**d, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
     for k, v in ranks.items():
         try:
@@ -115,10 +107,13 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
     futures = [asyncio.gather(*[wcl.get_fight_details(req, event) for event in EVENTS]) for req in reqs]
     future_results = await asyncio.gather(*futures)
     results = []
+    all_events = defaultdict(list)
+
     for fight in future_results:
         resp = {}
         no_bear_resp = {}
         for data in fight:
+            all_events[data.get('boss_name')].append(data.get('events'))
             form = [shift for shift in shifts if shift.get('boss_name') == data.get('boss_name')]
             if data.get('totalTime', None):
                 resp['time'] = data.get('totalTime') / 1000.0
@@ -138,12 +133,14 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
         tps = r.calculate_druid_threat()
         results.append(tps)
     ret_json = {result.get('boss_name'): {k: v for k, v in sorted(result.items(), key=lambda x: x[0])} for result in results}
+    print(all_events)
     try:
         redis = RedisClient()
         await redis.save_druid_results(report_id, player_name, ret_json)
+        await redis.save_events(report_id, player_name, all_events)
     except Exception as exc:
         logger.error(f'Failed to write to cache {exc}')
-    return ret_json
+    return ret_json, all_events
 
 
 def process_data_response(request_type):

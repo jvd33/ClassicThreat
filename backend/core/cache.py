@@ -138,3 +138,24 @@ class RedisClient:
         data = await __redis.hgetall(key, encoding='utf-8')
         __redis.close()
         return data
+
+    async def save_events(self, report_id, player_name, all_events):
+        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=4))
+        for k, v in all_events.items():
+            key = f'{report_id}:{player_name}:{k}'
+            await __redis.hmset_dict(key, ujson.dumps(v))
+        __redis.close()
+
+    async def get_events(self, report_id, player_name, bosses=None):
+        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=4))
+        d = []
+        keys = [f'{report_id}:{player_name}:{boss}' for boss in bosses]
+        if not bosses:
+            key = f'{report_id}:{player_name}:*'
+            keys = await __redis.keys(key, encoding='utf-8')
+
+        for key in keys:
+            r = await __redis.hgetall(key, encoding='utf-8')
+            d.append(ujson.loads(r))
+        __redis.close()
+        return d

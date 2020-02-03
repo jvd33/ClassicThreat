@@ -113,8 +113,8 @@ class WarriorThreatCalculationRequest(BaseModel):
         modified_threat = sum([calc_self[0], calc_no_d[0]]) + rage_threat + healing_threat
 
 
-        unmodified_tps = unmodified_threat/self.time
-        tps = modified_threat/self.time
+        unmodified_tps = unmodified_threat/(self.time or 1)
+        tps = modified_threat/(self.time or 1)
         if not cached:
             for name, val in dict(self).items():
                 if '_casts' in name or '_hits' in name or '_dmg' in name or '_damage' in name:
