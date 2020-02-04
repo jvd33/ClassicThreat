@@ -3,11 +3,8 @@ from typing import List, Any, Dict
 from collections import defaultdict
 
 from ..constants import WarriorThreatValues, Spell
+from .common import FightLog, ThreatEvent
 
-
-class StanceDanceEvent(BaseModel):
-    rage_gains: int = 0
-    hp_gains: float = 0
 
 class WarriorThreatCalculationRequest(BaseModel):
     shield_slam_hits: int = 0
@@ -38,19 +35,16 @@ class WarriorThreatCalculationRequest(BaseModel):
     player_class: str = None
     boss_name: str = None
     boss_id: int = None
-    hs_rank: int = None
-    bs_rank: int = None
     disarm_hits: int = 0
     hamstring_hits: int = 0
     shieldbash_hits: int = 0
     mockingblow_hits: int = 0
-    revenge_rank: int = None
     realm: str = None
-    no_d_stance: Dict = None
+    dps_threat: list = list()
 
     @property
     def __modifiers(self):
-        __t = WarriorThreatValues.vals(self.hs_rank, self.revenge_rank, self.bs_rank)
+        __t = WarriorThreatValues.vals()
         return {
             'sunder_hits': lambda x, t1, __t=__t: x * __t.SunderArmor if not t1 else x * __t.SunderArmor * __t.Tier1Bonus,
             'shield_slam_hits': lambda x, __t=__t: x * __t.ShieldSlam,
@@ -128,43 +122,126 @@ class WarriorThreatCalculationRequest(BaseModel):
             tps=tps,
         ))
 
+    def process_events(self, events: List[ThreatEvent]):
+        mapper = defaultdict(int)
+        metrics = {
+            Spell.SunderArmor: 'sunder_casts',
+            Spell.HeroicStrike8: 'hs_casts',
+            Spell.HeroicStrike9: 'hs_casts',
+            Spell.Revenge5: 'revenge_casts',
+            Spell.Revenge6: 'revenge_casts',
+            Spell.Cleave: 'cleave_casts',
+            Spell.Bloodthirst: 'bt_casts',
+            Spell.ShieldSlam: 'shield_slam_casts',
+            Spell.GiftOfArthas: 'goa_procs',
+        }
+
+        hits = {
+            Spell.SunderArmor: 'sunder_hits',
+            Spell.HeroicStrike8: 'hs_hits',
+            Spell.HeroicStrike9: 'hs_hits',
+            Spell.Revenge5: 'revenge_hits',
+            Spell.Revenge6: 'revenge_hits',
+            Spell.Cleave: 'cleave_hits',
+            Spell.Disarm: 'disarm_hits',
+            Spell.ShieldSlam: 'shield_slam_hits',
+            Spell.ShieldBash: 'shieldbash_hits',
+            Spell.MockingBlow: 'mockingblow_hits',
+            Spell.GiftOfArthas: 'goa_procs',
+            Spell.Hamstring: 'hamstring_hits',
+            Spell.ThunderClap: 'thunderclap_hits',
+        }
+
+        for event in events:
+            if event.event_type == 'cast':
+                cast_metric = metrics.get(event.guid)
+                if not cast_metric:
+                    continue
+                setattr(self, cast_metric, getattr(self, cast_metric, 0) + 1)
+                if event.guid == Spell.SunderArmor:
+                    self.sunder_hits += 1
+
+            if event.event_type == 'damage':
+                hit_metric = hits.get(event.guid)
+                if not hit_metric:
+                    continue
+                if event.hit_type in [7, 8]:
+                    setattr(self, hit_metric, getattr(self, hit_metric, 0) - 1)
+                else:
+                    setattr(self, hit_metric, getattr(self, hit_metric, 0) + 1)
+
+            if event.guid == Spell.GiftOfArthas:
+                self.goa_procs += 1
+
+        return mapper
+
+    @staticmethod
+    def from_event_log(log: FightLog):
+        resp = WarriorThreatCalculationRequest(
+            boss_name=log.boss_name,
+            boss_id=log.boss_id,
+            player_class=log.player_class,
+            player_name=log.player_name,
+            time=log.total_time / 1000.00,
+            realm=log.realm,
+            defiance_points=log.defiance_points,
+            friendlies_in_combat=log.friendlies_in_combat,
+            
+        )
+        total_threat, total_threat_defiance, unmodified_tps, tps = [0, 0, 0, 0]
+
+        for event in log.events:
+            if event.event_type not in ['removedebuff']:
+                modified, raw = resp._process_event(event)
+                total_threat_defiance += modified
+                total_threat += raw
+
+        unmodified_tps = total_threat / resp.time
+        tps = total_threat_defiance / resp.time
+        event_data = resp.process_events(log.events)
+        return WarriorThreatResult(
+            **dict(resp),
+            **event_data,
+            total_threat=total_threat,
+            total_threat_defiance=total_threat_defiance,
+            unmodified_tps=unmodified_tps,
+            tps=tps,
+        )
+
+        
+    def _process_event(self, event: ThreatEvent):
+        def __dummy(event: ThreatEvent):
+            return 0, 0
+
+        return {
+            'damage': self._process_damage,
+            'cast': self._process_cast,
+            'energize': self._process_rage,
+            'heal': self._process_healing,
+            'applydebuff': self._process_debuff,
+        }.get(event.event_type, __dummy)(event)
+
+    def _process_damage(self, event: ThreatEvent):
+        self.total_damage += event.amount
+        return event.calculate_threat(self.player_class, self.defiance_points, self.t1_set)
+
+    def _process_cast(self, event: ThreatEvent):
+        return event.calculate_threat(self.player_class, self.defiance_points, self.t1_set)
+
+    def _process_rage(self, event: ThreatEvent):
+        self.rage_gains += event.amount
+        return event.calculate_threat(self.player_class, self.defiance_points, self.t1_set)
+
+    def _process_healing(self, event: ThreatEvent):
+        self.hp_gains += event.amount
+        return event.calculate_threat(self.player_class, self.defiance_points, self.t1_set)
+
+    def _process_debuff(self, event: ThreatEvent):
+        return event.calculate_threat(self.player_class, self.defiance_points, self.t1_set)
+
 
 class WarriorThreatResult(WarriorThreatCalculationRequest):
     total_threat: float = 0
     total_threat_defiance: float = 0
     unmodified_tps: float = 0.0
     tps: float = 0.0
-
-
-class WarriorCastResponse(BaseModel):
-    shield_slam_casts: int = 0
-    revenge_casts: int = 0
-    hs_casts: int = 0
-    goa_procs: int = 0
-    bs_casts: int = 0
-    demo_casts: int = 0
-    thunderclap_casts: int = 0
-    bt_casts: int = 0
-    cleave_casts: int = 0
-    bs_rank: int = Spell.BattleShout6
-    revenge_rank: int = Spell.Revenge5
-    hs_rank: int = Spell.HeroicStrike8
-    sunder_casts: int = 0
-
-
-class WarriorDamageResponse(BaseModel):
-    total_damage: int = 0
-    execute_dmg: int = 0
-    sunder_misses: int = 0
-    sunder_casts: int = 0
-    shield_slam_hits: int = 0
-    revenge_hits: int = 0
-    hs_hits: int = 0
-    time: int = 0
-    mockingblow_hits: int = 0
-    hamstring_hits: int = 0
-    thunderclap_hits: int = 0
-    disarm_hits: int = 0
-    shieldbash_hits: int = 0
-    enemies_in_combat: int = 0
-    cleave_hits: int = 0

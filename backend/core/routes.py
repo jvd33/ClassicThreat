@@ -1,6 +1,6 @@
 import ujson
 import aiohttp
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Query
 from typing import List
 from aiohttp import ClientResponseError
 from starlette.responses import JSONResponse
@@ -109,7 +109,7 @@ async def calculate_druid(req: WCLDataRequest, background_tasks: BackgroundTasks
                 dependencies=[Depends(get_http_session)], 
 
                 )
-async def get_event_timeline(report_id, player_name, player_class, session=Depends(get_http_session), bosses=None):
+async def get_event_timeline(report_id, player_name, player_class, session=Depends(get_http_session), boss: List[str]=Query(None)):
     func = {
         'druid': druid_get_log_data,
         'warrior': warr_get_log_data
@@ -120,7 +120,7 @@ async def get_event_timeline(report_id, player_name, player_class, session=Depen
         events = None
         r = RedisClient()
         try:
-            events = await r.get_events(report_id, player_name, bosses=bosses)
+            events = await r.get_events(report_id, player_name, bosses=boss)
         except ConnectionRefusedError:
             pass
         if not events:
@@ -130,7 +130,7 @@ async def get_event_timeline(report_id, player_name, player_class, session=Depen
                     player_name=player_name,
                     defiance_points=5,
                     feral_instinct_points=5,
-                    bosses=bosses or [],
+                    bosses=boss or [],
                 )
                 _, events = await func(req, session=session)
         return JSONResponse(content={k: e.dict() for k, e in events.items()}, status_code=200)

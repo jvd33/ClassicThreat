@@ -87,7 +87,8 @@ async def get_log_data(req: WCLDataRequest, session):
         report_id=report_id,
     ) for boss in bosses]
 
-    d, events = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.t1_set, session) or {}
+    d = await get_player_activity(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session) or {}
+    events = await get_events(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session)
     ranks = {k: v for k, v in sorted({**d, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
     for k, v in ranks.items():
         try:
@@ -95,7 +96,7 @@ async def get_log_data(req: WCLDataRequest, session):
             v.update({'rank': rank})
         except Exception as exc:
             logger.error(f'Failed to write to read from cache {exc}')
-    return ranks
+    return ranks, events
  
 async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], fi_pts, friendlies, session):
     if not reqs:
@@ -107,13 +108,11 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
     futures = [asyncio.gather(*[wcl.get_fight_details(req, event) for event in EVENTS]) for req in reqs]
     future_results = await asyncio.gather(*futures)
     results = []
-    all_events = defaultdict(list)
 
     for fight in future_results:
         resp = {}
         no_bear_resp = {}
         for data in fight:
-            all_events[data.get('boss_name')].append(data.get('events'))
             form = [shift for shift in shifts if shift.get('boss_name') == data.get('boss_name')]
             if data.get('totalTime', None):
                 resp['time'] = data.get('totalTime') / 1000.0
@@ -133,15 +132,42 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
         tps = r.calculate_druid_threat()
         results.append(tps)
     ret_json = {result.get('boss_name'): {k: v for k, v in sorted(result.items(), key=lambda x: x[0])} for result in results}
-    print(all_events)
     try:
         redis = RedisClient()
         await redis.save_druid_results(report_id, player_name, ret_json)
+    except Exception as exc:
+        logger.error(f'Failed to write to cache {exc}')
+    return ret_json
+
+
+async def get_events(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, t1, session):
+    if not reqs:
+        return []
+    wcl = WCLService(session=session)
+    report_id = reqs[0].report_id if reqs[0] else None
+    stance_events = await asyncio.gather(*[wcl.get_stance_state(req) for req in reqs])
+    stances = [await process_stance_state(e) for e in stance_events]
+    futures = [asyncio.gather(*[wcl.get_fight_details(req, event) for event in EVENTS]) for req in reqs]
+    future_results = await asyncio.gather(*futures)
+    all_events = defaultdict(str, defaultdict(str))
+    for fight in future_results:
+        for data in fight:
+            all_events[data.get('boss_name')].get('events', []).extend(data.get('events'))
+            all_events[data.get('boss_name')]['total_time'] = data.get('total_time')
+            stance = [stance for stance in stances if stance.get('boss_name') == data.get('boss_name')]
+
+            dstance, nostance = await process_data_response(data.get('event'))(data, stance)
+
+    try:
+        redis = RedisClient()
         await redis.save_events(report_id, player_name, all_events)
     except Exception as exc:
         logger.error(f'Failed to write to cache {exc}')
-    return ret_json, all_events
-
+    all_events = {
+        k: FightLog.from_response(v.get('events'), report_id, player_name, k, v.get('total_time')) 
+        for k, v in all_events.items()
+    }
+    return all_events
 
 def process_data_response(request_type):
     return {
