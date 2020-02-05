@@ -102,7 +102,7 @@ name: 'DPSThreat',
 
     getThreatTableData(tps, faction) {
       let top_fury = this.results ?
-        this.results.dps_threat.reduce((max, player) => max.total_dmg > player.total_dmg ? max : player) :
+        JSON.parse(this.results.dps_threat).reduce((max, player) => max.total_dmg > player.total_dmg ? max : player) :
         {
           player_name: 'Warrior',
           hs_cpm: 20,
