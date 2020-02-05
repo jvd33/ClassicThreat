@@ -168,11 +168,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
                 
             })
         all_events.append(boss)
-    try:
-        redis = RedisClient()
-        await redis.save_events(report_id, player_name, all_events)
-    except Exception as exc:
-        logger.error(f'Failed to write to cache {exc}')
+ 
     all_events = {
         e.get('boss_name'): {
             'events': e.get('events'),
@@ -184,6 +180,8 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             'gear': e.get('gear')
         } for e in all_events
     }
+
+
     all_events = {
         k: FightLog.from_response(
             resp=v.get('events'), 
@@ -203,6 +201,13 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
         ) 
         for k, v in sorted(all_events.items(), key=lambda x: x[1].get('start_time'))
     }
+
+    try:
+        redis = RedisClient()
+        await redis.save_events(report_id, player_name, all_events)
+    except Exception as exc:
+        logger.error(f'Failed to write to cache {exc}')
+
     return all_events
 
 
