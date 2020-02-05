@@ -5,7 +5,10 @@
     >
       Druid Threat Estimator
     </q-toolbar-title>
-
+    <span class="text-primary q-pb-lg col-auto col-sm wrap-auto text-h6-sm text-italic">
+    More accurate as of February 5th, 2020! Threat is now calculated via sequential event parsing.
+    <a href="https://github.com/jvd33/ClassicThreat/compare/V1.2...V1.3" class="text-primary">View the change</a>
+    </span>
     <q-form
       @submit="submit"
       class="q-gutter-md row-6 bordered rounded-borders"

@@ -27,8 +27,8 @@ async def get_log_data(req: WCLDataRequest, session):
         log['defiance_points'] = req.defiance_points
         log['t1_set'] = req.t1_set
         log['friendlies_in_combat'] = req.friendlies_in_combat
-        log['dps_threat'] = ujson.loads(log.get('dps_threat'))
-        log['gear'] = ujson.loads(log.get('gear'))
+        log['dps_threat'] = log.get('dps_threat')
+        log['gear'] = log.get('gear')
         return WarriorThreatCalculationRequest.from_event_log(FightLog(**log))
 
     logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
@@ -55,7 +55,7 @@ async def get_log_data(req: WCLDataRequest, session):
     resp = await wcl.get_full_report(report_id)
     missing = set(req.bosses) - set(cache_resp.keys()) if req.bosses else \
                     set([v.get('name') for v in resp.get('fights') if v.get('boss') != 0 and v.get('kill') == True]) - set(cache_resp.keys()) 
-    bosses = [v for v in resp.get('fights') if v.get('name') in missing and v.get('boss') != 0]
+    bosses = [v for v in resp.get('fights') if v.get('name') in missing and v.get('boss') != 0 and v.get('kill') == True]
     
     if not bosses:
         if not cache_resp:
@@ -123,9 +123,8 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
         return []
     wcl = WCLService(session=session)
     report_id = reqs[0].report_id if reqs[0] else None
-    stance_events = await asyncio.gather(*[wcl.get_stance_state(req) for req in reqs])
-    stances = [await process_stance_state(e) for e in stance_events]
     future_results = await asyncio.gather(*[wcl.get_fight_details(req) for req in reqs])
+    stances = [await process_stance_state(e) for e in future_results]
     all_events = []
     dps = await asyncio.gather(*[wcl.get_dps_details(req) for req in reqs])
     for fight in future_results:
@@ -136,19 +135,21 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             'start_time': 0,
             'end_time': 0,
         }
+        dps_results = [x for x in dps if x[0] and x[0].get('boss_name') == fight.get('boss_name')]
+        for b in dps_results:
+            for d in b: 
+                if d.get('gear'):
+                    del d['gear']
+
         player_gear = []
         for data in fight.get('events'):
-            if data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize', 'refreshdebuff']:
+            if data.get('type') == 'combatantinfo':
+                player_gear = data.get('gear')
+                continue 
+
+            elif data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize', 'refreshdebuff']:
                 continue
-
-            dps_results = [x for x in dps if x[0] and x[0].get('boss_name') == data.get('boss_name')]
-            for b in dps_results:
-                for d in b: 
-                    if d.get('player_name') == player_name:
-                        player_gear = d.get('gear')
-                    elif d.get('gear'):
-                        del d['gear']
-
+                
             for item in player_gear:
                 try:
                     del item['itemLevel']
@@ -162,7 +163,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
                 'boss_name': fight.get('boss_name'),
                 'start_time': fight.get('start_time'),
                 'end_time': data.get('end_time'),
-                'dps_threat': flatten(dps_results),
+                'dps_threat': dps_results[0],
                 'boss_id': fight.get('boss_id'),
                 'gear': player_gear,
                 
@@ -180,7 +181,6 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             'gear': e.get('gear')
         } for e in all_events
     }
-
 
     all_events = {
         k: FightLog.from_response(
@@ -213,13 +213,16 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
 
 async def process_stance_state(data):
     stances = [Spell.DefensiveStance, Spell.BerserkerStance, Spell.BattleStance]
-    entries = [e for e in data.get('events') if e.get('ability').get('guid') in stances]
+    events = [e for e in data.get('events') if e.get('type') != 'combatantinfo']
+    if not events:
+        return windows
+    entries = [e for e in events if e.get('ability').get('guid') in stances]
     zerk_specific = [
-        e for e in data.get('events') if e.get('ability').get('name') in 
+        e for e in events if e.get('ability').get('name') in 
         ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']
     ]
     battle_specific = [
-        e for e in data.get('events') if e.get('ability').get('name') in 
+        e for e in events if e.get('ability').get('name') in 
         ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunder Clap']
     ]
 

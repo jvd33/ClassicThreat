@@ -109,7 +109,9 @@ class ThreatEvent(BaseModel):
             
 
         elif self.event_type == 'damage':
-            if self.guid in DAMAGE and self.hit_type not in [7, 8]:
+            if self.guid in [Spell.Maul, Spell.Swipe]:
+                raw = mods.get(self.guid, mods.get('noop'))(self.amount)
+            elif self.guid in DAMAGE and self.hit_type not in [7, 8]:
                 raw = mods.get(self.guid, mods.get('noop')) + self.amount
             elif self.guid == Spell.SunderArmor and self.hit_type in [7, 8]:
                 raw = mods.get(self.guid, mods.get('noop'))(t1) * -1
@@ -120,11 +122,13 @@ class ThreatEvent(BaseModel):
             raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
         elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS]:
-            print(self)
             raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'energize':
             raw = mods.get(Spell.RageGain)(self.amount)
+
+        else:
+            raw = 0
 
         if self.event_type != 'energize':
             return mods.get(self.class_modifier)(raw, talent_pts), raw
@@ -165,18 +169,19 @@ class ThreatEvent(BaseModel):
     def __druid_modifiers(self):
         __t = DruidThreatValues.vals()
         return {
-            Spell.GiftOfArthas: lambda x, __t=__t: x * __t.GiftOfArthas,
+            Spell.GiftOfArthas: __t.GiftOfArthas,
             Spell.RageGain: lambda x, __t=__t: x * __t.RageGain,
             'heal': lambda x, n, __t=__t: x * __t.Healing / n, # Split
-            Spell.DemoRoar: lambda x, n, __t=__t: x * __t.DemoRoar * n,
+            Spell.DemoRoar: __t.DemoRoar,
             Spell.BearForm: lambda x, d, __t=__t: x * (__t.BearForm + getattr(__t, f'FeralInstinct{d}')),
             Spell.CatForm: lambda x, d, __t=__t: x * __t.CatForm,
             Spell.Swipe: lambda x, __t=__t: x * __t.Swipe,
             Spell.Maul: lambda x, __t=__t: x * __t.Maul,
-            Spell.FaerieFire: lambda x, __t=__t: x * __t.FaerieFire,
-            Spell.FaerieFireFeral: lambda x, __t=__t: x * __t.FaerieFire,
-            Spell.Cower: lambda x, __t=__t: x * __t.Cower,
-            'noop': lambda x, n=None, d=None, __t=__t: 0
+            Spell.FaerieFire: __t.FaerieFire,
+            Spell.FaerieFireFeral: __t.FaerieFire,
+            Spell.Cower: __t.Cower,
+            Spell.HumanoidForm: lambda x, d: x * 1,
+            'noop': 0
         }
 
 
@@ -210,6 +215,7 @@ class FightLog(BaseModel):
                       t1=False,
                       talent_pts=5,
                       friendlies=1):
+        
         f = FightLog(
             boss_name=boss_name,
             player_name=player_name,

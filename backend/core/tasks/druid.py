@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from collections import defaultdict
 
 from ..models.common import WCLDataRequest, BossActivityRequest, FightLog, ThreatEvent
-from ..models.druid import DruidThreatCalculationRequest, DruidThreatResult, DruidDamageResponse, DruidCastResponse, ShapeshiftEvent
+from ..models.druid import DruidThreatCalculationRequest, DruidThreatResult
 from ..constants import Spell
 from ..wcl_service import WCLService
 from ..cache import RedisClient
@@ -25,12 +25,11 @@ async def get_log_data(req: WCLDataRequest, session):
     the caching logic can definitely be separated out and error handling can be more consistent
     """
     async def __recalculate_opts(log, req=req):
-        log['defiance_points'] = req.defiance_points
-        log['t1_set'] = req.t1_set
+        log['feral_instinct_points'] = req.feral_instinct_points
         log['friendlies_in_combat'] = req.friendlies_in_combat
-        log['dps_threat'] = ujson.loads(log.get('dps_threat'))
-        log['gear'] = ujson.loads(log.get('gear'))
-        return WarriorThreatCalculationRequest.from_event_log(FightLog(**log))
+        log['dps_threat'] = log.get('dps_threat')
+        log['gear'] = log.get('gear')
+        return DruidThreatCalculationRequest.from_event_log(FightLog(**log))
 
     logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
     report_id = req.report_id
@@ -56,7 +55,7 @@ async def get_log_data(req: WCLDataRequest, session):
     resp = await wcl.get_full_report(report_id)
     missing = set(req.bosses) - set(cache_resp.keys()) if req.bosses else \
                     set([v.get('name') for v in resp.get('fights') if v.get('boss') != 0 and v.get('kill') == True]) - set(cache_resp.keys()) 
-    bosses = [v for v in resp.get('fights') if v.get('name') in missing and v.get('boss') != 0]
+    bosses = [v for v in resp.get('fights') if v.get('name') in missing and v.get('boss') != 0 and v.get('kill') == True]
     
     if not bosses:
         if not cache_resp:
@@ -92,7 +91,7 @@ async def get_log_data(req: WCLDataRequest, session):
         encounter=boss.get('id'),
         boss_name=boss.get('name'),
         report_id=report_id,
-    ) for boss in bosses]
+    ) for boss in bosses if boss.get('start_time') and boss.get('end_time')]
 
     events = await get_events(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session)
 
@@ -123,12 +122,14 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
         return []
     wcl = WCLService(session=session)
     report_id = reqs[0].report_id if reqs[0] else None
-    stance_events = await asyncio.gather(*[wcl.get_stance_state(req) for req in reqs])
-    stances = [await process_shapeshifts(e) for e in stance_events]
     future_results = await asyncio.gather(*[wcl.get_fight_details(req) for req in reqs])
+    stances = [await process_shapeshifts(e) for e in future_results]
+
     all_events = []
     dps = await asyncio.gather(*[wcl.get_dps_details(req) for req in reqs])
     for fight in future_results:
+        if not fight.get('events'):
+            continue
         boss = {
             'events': [],
             'total_time': 0,
@@ -137,18 +138,20 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             'end_time': 0,
         }
         player_gear = []
+        dps_results = [x for x in dps if x[0] and x[0].get('boss_name') == fight.get('boss_name')]
+
         for data in fight.get('events'):
-            if data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize']:
+            if data.get('type') == 'combatantinfo':
+                player_gear = data.get('gear')
+
+            if data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize', 'refreshdebuff']:
                 continue
 
-            dps_results = [x for x in dps if x[0] and x[0].get('boss_name') == data.get('boss_name')]
             for b in dps_results:
                 for d in b: 
-                    if d.get('player_name') == player_name:
-                        player_gear = d.get('gear')
-                    elif d.get('gear'):
+                    if d.get('gear'):
                         del d['gear']
-
+                
             for item in player_gear:
                 try:
                     del item['itemLevel']
@@ -162,7 +165,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
                 'boss_name': fight.get('boss_name'),
                 'start_time': fight.get('start_time'),
                 'end_time': data.get('end_time'),
-                'dps_threat': flatten(dps_results),
+                'dps_threat': dps_results[0],
                 'boss_id': fight.get('boss_id'),
                 'gear': player_gear,
                 
@@ -180,7 +183,6 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             'gear': e.get('gear')
         } for e in all_events
     }
-
 
     all_events = {
         k: FightLog.from_response(
@@ -209,122 +211,50 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
 
     return all_events
 
-def process_data_response(request_type):
-    return {
-        'damage-done': process_damage_done,
-        'casts': process_casts,
-        'resources-gains': process_rage_gains,
-        'healing': process_healing_done,
-        'debuffs': process_debuffs,
-        'stance': process_shapeshifts,
-    }.get(request_type)
-
-
-async def process_damage_done(data, shapeshift_events):
-
-    __flat = {
-        Spell.Maul: 'maul_hits',
-        Spell.Swipe: 'swipe_hits',
-    }
-    add_count = set()
-    damage_entries = data.get('events')
-    hits = DruidDamageResponse()
-    no_bear = DruidDamageResponse()
-    if not damage_entries:
-        # Return 0 for damage or set the equivalent, dunno yet haven't gotten that far
-        return hits, no_bear
-
-    shifts = shapeshift_events[0] or {}
-    for entry in damage_entries:
-        add_count.add(str(entry.get('targetID')) + ':' + str(entry.get('targetInstance')))
-        form = _get_event_stance(shifts, entry, hits, no_bear)
-        form.enemies_in_combat = len(add_count)
-
-        guid = entry.get('ability').get('guid')
-        if guid == Spell.Maul and entry.get('hitType') not in [7, 8]:
-            form.maul_dmg += (entry.get('amount', 0) + entry.get('absorbed', 0))
-        elif guid == Spell.Swipe and entry.get('hitType') not in [7, 8]:
-            form.swipe_dmg += (entry.get('amount', 0) + entry.get('absorbed', 0))
-        elif guid in __flat.keys() and entry.get('hitType') not in [7, 8]:
-            setattr(form, __flat[guid], getattr(form, __flat[guid]) + 1)
-            form.total_damage += (entry.get('amount', 0) + entry.get('absorbed', 0))
-        else:
-            form.total_damage += (entry.get('amount') + entry.get('absorbed', 0))
-    return hits, no_bear
-
-
-async def process_rage_gains(data, shapeshift_events):
-    rage_gains = data.get('resources', [])
-    rage_gain_events = [r.get('gains') for r in rage_gains]
-    return {'rage_gains': sum(rage_gain_events)}, ShapeshiftEvent()
-
-
-async def process_healing_done(data, shapeshift_events):
-    healing_entries = data.get('entries')
-    if not healing_entries:
-        return {'hp_gains': 0}, ShapeshiftEvent()
-    healing_events = [event.get('total') for event in healing_entries]
-    return {'hp_gains': sum(healing_events)}, ShapeshiftEvent()
-
-
-async def process_casts(data, shift_events):
-    cast_entries = data.get('events')
-    shapeshifts = shift_events[0] or {}
-    resp = DruidCastResponse()
-    no_bear = DruidCastResponse()
-    if not cast_entries:
-        return resp, no_bear # All 0 default vals
-
-    abilities = {
-        Spell.DemoRoar: 'demo_casts',
-        Spell.Maul: 'maul_casts',
-        Spell.Swipe: 'swipe_casts',
-        Spell.Cower: 'cower_casts',
-        Spell.FaerieFireFeral: 'ff_hits',
-        Spell.FaerieFire: 'ff_hits'
-    }
-
-    for entry in [e for e in cast_entries if e.get('ability').get('guid') in abilities]:
-        form = _get_event_stance(shapeshifts, entry, resp, no_bear)
-        guid = entry.get('ability').get('guid')
-        resp_attr = abilities.get(guid)
-        setattr(form, resp_attr, getattr(form, resp_attr) + 1)
-    return resp, no_bear
-
-
-async def process_debuffs(data, shapeshift_events):
-    goa_procs = [d for d in data.get('events') if d.get('ability').get('guid') == Spell.GiftOfArthas]
-    bear = defaultdict(int)
-    no_bear = defaultdict(int)
-    shapeshifts = shapeshift_events[0] or {}
-
-    for proc in goa_procs:
-        if proc.get('type') == 'applydebuff' or proc.get('type') == 'refreshdebuff':
-            form = _get_event_stance(shapeshifts, proc, bear, no_bear)
-            form['goa_procs'] += 1
-    return bear, no_bear
-
 
 async def process_shapeshifts(data):
-    forms = [Spell.CatForm, Spell.BearForm]
-    entries = [e for e in data.get('events') if e.get('ability').get('guid') in forms]
     windows = {
         Spell.BearForm: [],
         Spell.CatForm: [],
-        0: []
+        Spell.HumanoidForm: []
     }
+    events = [e for e in data.get('events') if e.get('type') != 'combatantinfo']
+    if not events:
+        return windows
+    forms = [Spell.CatForm, Spell.BearForm]
+    entries = [e for e in events if e.get('ability').get('guid') in forms]
+
+
+    bear_specific = [
+        e for e in events if e.get('ability').get('name') in 
+        ['Swipe', 'Maul', 'Demoralizing Roar', 'Frenzied Regeneration',]
+    ]
+    cat_specific = [
+        e for e in events if e.get('ability').get('name') in 
+        ['Shred', 'Rake', 'Cower', 'Ferocious Bite']
+    ]
+    caster_specific = [
+        e for e in events if e.get('ability').get('name') in 
+        ['Regrowth', 'Rejuvenation', 'Faerie Fire', 'Healing Touch']
+    ]
+
     time = data.get('start_time')
-    last_form = Spell.BearForm
+    last_form = None
     for e in entries:
-        guid = e.get('ability').get('guid')
-        window = windows[guid] or windows[0]
         if e.get('type') == 'removebuff':
-            window.append((time, e.get('timestamp')))
+            windows[e.get('ability').get('guid')].append((time, e.get('timestamp')))
         if e.get('type') == 'applybuff':
             time = e.get('timestamp')
             last_form = e.get('ability').get('guid')
+    
+    if not last_form:
+        if bear_specific: 
+            last_form = Spell.BearForm
+        elif cat_specific:
+            last_form = Spell.CatForm
+        elif caster_specific:
+            last_form = Spell.HumanoidForm
 
-    if last_form:
-        windows[last_form].append((time, 0))
+    windows[last_form].append((time, 0))
+
     return {**windows, 'boss_name': data.get('boss_name')}
-

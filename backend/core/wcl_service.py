@@ -56,6 +56,8 @@ class WCLService:
 
             
         resp = await self._send_scoped_request('GET', url, params=params)
+        if not resp:
+            return {}
         ret = ujson.loads(resp)
         ret.update({
             'boss_name': req.boss_name, 
@@ -74,7 +76,7 @@ class WCLService:
             'end': req.end_time,
             'sourceid': req.player_id
         }
-            
+
         resp = await self._send_scoped_request('GET', url, params=params)
         ret = ujson.loads(resp)
         ret.update({'event': 'stance', 'boss_name': req.boss_name, 'boss_id': req.encounter, 'start_time': req.start_time})
@@ -87,7 +89,6 @@ class WCLService:
         params = {
             'start': req.start_time,
             'end': req.end_time,
-            'sourceclass': 'warrior'
         }
 
         damage_resp = await self._send_scoped_request('GET', url, params=params)
@@ -96,14 +97,15 @@ class WCLService:
         data = []
         from .utils import flatten
         for player in damage.get('entries'):
-            data.append({
-                'player_name': player.get('name'),
-                'damage': player.get('abilities'),
-                'boss_name': req.boss_name,
-                'total': player.get('total'),
-                'casts': flatten([e.get('abilities') for e in casts.get('entries') if e.get('name') == player.get('name')]),
-                'gear': player.get('gear')
-            })
+            if player.get('type').casefold() in ['warrior', 'druid']:
+                data.append({
+                    'player_name': player.get('name'),
+                    'damage': player.get('abilities'),
+                    'boss_name': req.boss_name,
+                    'total': player.get('total'),
+                    'casts': flatten([e.get('abilities') for e in casts.get('entries') if e.get('name') == player.get('name')]),
+                    'gear': player.get('gear')
+                })
         ret = []
         for r in data:
             dmg = r.get('damage')
@@ -120,33 +122,4 @@ class WCLService:
                 'gear': r.get('gear')
             }
             ret.append(d)
-        return ret
-
-    async def get_fight_details_depr(self, req: BossActivityRequest, event):
-        ep = 'events'
-        if event in ['resources-gains', 'healing']:
-            ep = 'tables'
-        url = self.base_url + f'report/{ep}/{event}/{req.report_id}'
-        params = {
-            'start': req.start_time,
-            'end': req.end_time,
-            'sourceid': req.player_id
-        }
-        if event == 'resources-gains':
-            #  I really like this one. WCL counts specific resource types as "abilities" with arbitrary IDs
-            #  No idea where these id came from, but rage is 101. lol 'abilityid' param mega jank
-            params.update({
-                'by': 'ability',
-                'abilityid': 101
-            })
-        if event == 'debuffs':
-            del params['sourceid']
-            params.update({
-                'hostility': 1,
-                'targetid': req.player_id
-            })
-            
-        resp = await self._send_scoped_request('GET', url, params=params)
-        ret = ujson.loads(resp)
-        ret.update({'event': event, 'boss_name': req.boss_name, 'boss_id': req.encounter})
         return ret

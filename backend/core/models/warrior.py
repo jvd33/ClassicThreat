@@ -99,7 +99,6 @@ class WarriorThreatCalculationRequest(BaseModel):
                         setattr(self, 'sunder_hits', getattr(self, 'sunder_hits', 0) - 1)
 
             if event.guid == Spell.GiftOfArthas:
-                print(event)
                 self.goa_procs += 1
 
         return mapper
@@ -115,7 +114,8 @@ class WarriorThreatCalculationRequest(BaseModel):
             realm=log.realm,
             defiance_points=log.defiance_points,
             friendlies_in_combat=log.friendlies_in_combat,
-            gear=log.gear
+            gear=log.gear,
+            dps_threat=log.dps_threat
             
         )
         total_threat, total_threat_defiance, unmodified_tps, tps = [0, 0, 0, 0]

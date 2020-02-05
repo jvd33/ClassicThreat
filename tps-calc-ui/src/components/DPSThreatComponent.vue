@@ -96,26 +96,34 @@ name: 'DPSThreat',
         case 'Rogue': return 'app:rogue';
         case 'Druid': return 'app:druid';
         case 'Ranged (no reduction)': return 'app:hunter';
-        default: return cls;
+        default: return 'app:warr';
       };
     },
+
     getThreatTableData(tps, faction) {
+      let top_fury = this.results ?
+        this.results.dps_threat.reduce((max, player) => max.total_dmg > player.total_dmg ? max : player) :
+        {
+          player_name: 'Warrior',
+          hs_cpm: 20,
+          execute_percent: .2,
+        };
+
+      let name = top_fury.player_name || 'Warrior';
       let classes = {
-        'Warrior': {
-          mod: () => {
-            // Will take these as args when I'm not sick of building UI components, for now deal with 20 CPM 20% execute
-            let hs_cps = (20/60); // 15 casts per minute, on the conservative side
-            let execute_percent = .2;
-            return tps/((((tps - (hs_cps * 145 * .8)) * 1.1/.8) * (1 - execute_percent))
-            + (execute_percent * (tps + (hs_cps * 145 * .8) * 1.1))) // quick maths
-          },
-          rip_at: 1
-          },
         'Mage': {mod: () => .7, rip_at: 1.3},
         'Warlock (with imp)': {mod: () => .8, rip_at: 1.3},
         'Rogue': {mod: () => .71, rip_at: 1.1},
         'Druid': {mod: () => .71, rip_at: 1.1},
         'Ranged (no reduction)': {mod: () => 1, rip_at: 1.3},
+      };
+
+      classes[name] = {
+          mod: () => {
+            return tps/((((tps - ((top_fury.hs_cpm/60) * 145 * .8)) * 1.1/.8) * (1 - (top_fury.execute_percent/100)))
+            + ((top_fury.execute_percent/100) * (tps + ((top_fury.hs_cpm/60) * 145 * .8) * 1.1))) // quick maths
+          },
+          rip_at: 1
       };
 
       let ret = [];
