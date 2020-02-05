@@ -48,9 +48,6 @@ class Spell:
 
 
 class WarriorThreatValues:
-    def __init__(self, hs_rank=11567, revenge_rank=11601):
-        pass
-
     DefensiveStance = {'threat': {'threat_type': 'Modifier', 'val': 1.3}, 'guid': Spell.DefensiveStance}
     BerserkerStance = {'threat': {'threat_type': 'Modifier', 'val': .8}, 'guid': Spell.BerserkerStance}
     BattleStance = {'threat': {'threat_type': 'Modifier', 'val': .8}, 'guid': Spell.BattleStance}
@@ -83,15 +80,9 @@ class WarriorThreatValues:
     Disarm = {'threat': {'threat_type': 'Flat', 'val': 104}, 'guid': Spell.Disarm}
 
     @staticmethod
-    def vals(hs_rank=Spell.HeroicStrike8, revenge_rank=Spell.Revenge5, battleshout_rank=Spell.BattleShout6):
+    def vals():
         ret = GenericObject(**{attr: getattr(WarriorThreatValues, attr).get('threat').get('val') for attr in dir(WarriorThreatValues)
                 if not callable(getattr(WarriorThreatValues, attr)) and not attr.startswith("__")})
-        ret.HeroicStrike = WarriorThreatValues.HeroicStrike8.get('threat').get('val') if hs_rank == Spell.HeroicStrike8 \
-                                else WarriorThreatValues.HeroicStrike9.get('threat').get('val')
-        ret.BattleShout = WarriorThreatValues.BattleShout6.get('threat').get('val') if battleshout_rank == Spell.BattleShout6 \
-                                else WarriorThreatValues.BattleShout7.get('threat').get('val')
-        ret.Revenge = WarriorThreatValues.Revenge5.get('threat').get('val') if revenge_rank == Spell.Revenge5 \
-                                else WarriorThreatValues.Revenge6.get('threat').get('val')
         return ret
 
     @staticmethod

@@ -8,13 +8,13 @@ from typing import List
 from fastapi import HTTPException
 from collections import defaultdict
 
-from ..models.common import WCLDataRequest, BossActivityRequest
-from ..models.warrior import WarriorCastResponse, WarriorDamageResponse, WarriorThreatCalculationRequest, StanceDanceEvent
+from ..models.common import WCLDataRequest, BossActivityRequest, FightLog
+from ..models.warrior import WarriorThreatCalculationRequest
 from ..constants import Spell
 from ..wcl_service import WCLService
 from ..cache import RedisClient
+from ..utils import flatten
 
-EVENTS = ['damage-done', 'casts', 'resources-gains', 'healing', 'debuffs']
 
 logger = logging.getLogger()
 
@@ -23,25 +23,16 @@ async def get_log_data(req: WCLDataRequest, session):
     this is a prototype that got out of hand
     the caching logic can definitely be separated out and error handling can be more consistent
     """
-    async def __recalculate_opts(data, req=req):
-        data['defiance_points'] = req.defiance_points
-        data['t1_set'] = req.t1_set
-        data['friendlies_in_combat'] = req.friendlies_in_combat
-        data['no_d_stance'] = ujson.loads(data['no_d_stance'])
-        r = WarriorThreatCalculationRequest(**data)
-        return r.calculate_warrior_threat(cached=True)
+    async def __recalculate_opts(log, req=req):
+        log['defiance_points'] = req.defiance_points
+        log['t1_set'] = req.t1_set
+        log['friendlies_in_combat'] = req.friendlies_in_combat
+        log['dps_threat'] = ujson.loads(log.get('dps_threat'))
+        log['gear'] = ujson.loads(log.get('gear'))
+        return WarriorThreatCalculationRequest.from_event_log(FightLog(**log))
 
     logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
-
-    url_segments = urlparse(req.url)
-    seg = url_segments.path.split('/')
-    report_index = next((i for i, s  in enumerate(seg) if s == 'reports'), None)
-    if not report_index or len(url_segments) <= report_index:
-        logger.error(f'400: Bad log url: {req.url} --- {report_index}')
-        raise HTTPException(status_code=400,
-                            detail=f'Bad log URL. Try the format /reports/<report_id>')
-    report_id = seg[report_index + 1]
-
+    report_id = req.report_id
     missing = req.bosses
     cache_resp = {}
     
@@ -49,7 +40,13 @@ async def get_log_data(req: WCLDataRequest, session):
         redis = RedisClient()
         cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, db=0) or {}
         if cached_data.get('matches'):
-            cache_resp = {k: await __recalculate_opts(v) for k, v in cached_data.get('matches').items()}
+            cache_resp = {}
+            for k, v in cached_data.get('matches').items():
+                log = await redis.get_events(report_id, req.player_name, bosses=[k])
+                if log:
+                    result = await __recalculate_opts(log, req=req)
+                    cache_resp[k] = result
+                    redis.save_warr_results(report_id, req.player_name, result)
         missing = cached_data.get('missing', [])
     except Exception as exc:
         logger.error(f'Failed to read from cache {exc}')
@@ -96,183 +93,130 @@ async def get_log_data(req: WCLDataRequest, session):
         report_id=report_id,
     ) for boss in bosses]
 
-    d = await get_player_activity(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.t1_set, session) or {}
-    ranks = {k: v for k, v in sorted({**d, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
+    events = await get_events(player_name, player_cls, realm, reqs, req.defiance_points, req.friendlies_in_combat, req.t1_set, session)
+
+    r = [WarriorThreatCalculationRequest.from_event_log(log) for boss, log in events.items()]
+
+    r = {
+        a.boss_name: a.dict() for a in r
+    }
+
+    try:
+        redis = RedisClient()
+        await redis.save_warr_results(report_id, player_name, r)
+    except Exception as exc:
+        logger.error(f'Failed to write to cache {exc}')
+
+    ranks = {k: v for k, v in sorted({**r, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
+
     for k, v in ranks.items():
         try:
             rank = await redis.get_encounter_percentile(k, v.get('tps'))
             v.update({'rank': rank})
         except Exception as exc:
             logger.error(f'Failed to write to read from cache {exc}')
-    return ranks
+    return ranks, events
  
-async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, t1, session):
+
+async def get_events(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, t1, session):
     if not reqs:
         return []
     wcl = WCLService(session=session)
     report_id = reqs[0].report_id if reqs[0] else None
     stance_events = await asyncio.gather(*[wcl.get_stance_state(req) for req in reqs])
     stances = [await process_stance_state(e) for e in stance_events]
-    futures = [asyncio.gather(*[wcl.get_fight_details(req, event) for event in EVENTS]) for req in reqs]
-    future_results = await asyncio.gather(*futures)
-    results = []
+    future_results = await asyncio.gather(*[wcl.get_fight_details(req) for req in reqs])
+    all_events = []
+    dps = await asyncio.gather(*[wcl.get_dps_details(req) for req in reqs])
     for fight in future_results:
-        resp = {}
-        no_d_resp = {}
-        for data in fight:
-            stance = [stance for stance in stances if stance.get('boss_name') == data.get('boss_name')]
-            if data.get('totalTime', None):
-                resp['time'] = data.get('totalTime') / 1000.0
-            dstance, nostance = await process_data_response(data.get('event'))(data, stance)
-            no_d_resp.update(**dict(nostance), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'), friendlies_in_combat=friendlies)
-            resp.update(**dict(dstance), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'))
-        no_d_resp['sunder_hits'] = no_d_resp.get('sunder_casts') - no_d_resp.get('sunder_misses')
-        resp['enemies_in_combat'] = resp.get('enemies_in_combat', 0) or 1
-        no_d_resp['enemies_in_combat'] = no_d_resp.get('enemies_in_combat', 0) or 1
-        r = WarriorThreatCalculationRequest(**resp,
-                                            player_name=player_name,
-                                            player_class=player_class,
-                                            realm=realm,
-                                            defiance_points=def_pts,
-                                            friendlies_in_combat=friendlies,
-                                            t1_bonus=t1,
-                                            sunder_hits=resp.get('sunder_casts') - resp.get('sunder_misses'),
-                                            no_d_stance = no_d_resp
-                                            )
-        tps = r.calculate_warrior_threat()
-        results.append(tps)
-    ret_json = {result.get('boss_name'): {k: v for k, v in sorted(result.items(), key=lambda x: x[0])} for result in results}
+        boss = {
+            'events': [],
+            'total_time': 0,
+            'boss_name': '',
+            'start_time': 0,
+            'end_time': 0,
+        }
+        player_gear = []
+        for data in fight.get('events'):
+            if data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize']:
+                continue
+
+            dps_results = [x for x in dps if x[0] and x[0].get('boss_name') == data.get('boss_name')]
+            for b in dps_results:
+                for d in b: 
+                    if d.get('player_name') == player_name:
+                        player_gear = d.get('gear')
+                    elif d.get('gear'):
+                        del d['gear']
+
+            for item in player_gear:
+                try:
+                    del item['itemLevel']
+                    del item['icon']
+                    del item['quality']
+                except KeyError:
+                    continue
+            boss.update(**{
+                'events': [data, *boss['events']],
+                'total_time': fight.get('total_time'),
+                'boss_name': fight.get('boss_name'),
+                'start_time': fight.get('start_time'),
+                'end_time': data.get('end_time'),
+                'dps_threat': flatten(dps_results),
+                'boss_id': fight.get('boss_id'),
+                'gear': player_gear,
+                
+            })
+        all_events.append(boss)
     try:
         redis = RedisClient()
-        await redis.save_warr_results(report_id, player_name, ret_json)
+        await redis.save_events(report_id, player_name, all_events)
     except Exception as exc:
         logger.error(f'Failed to write to cache {exc}')
-    return ret_json
-
-
-def process_data_response(request_type):
-    return {
-        'damage-done': process_damage_done,
-        'casts': process_casts,
-        'resources-gains': process_rage_gains,
-        'healing': process_healing_done,
-        'debuffs': process_debuffs,
-        'stance': process_stance_state,
-    }.get(request_type)
-
-
-async def process_damage_done(data, stance_events):
-
-    __flat = {
-        Spell.ShieldSlam: 'shield_slam_hits',
-        Spell.Revenge5: 'revenge_hits', 
-        Spell.Revenge6: 'revenge_hits',
-        Spell.HeroicStrike8: 'hs_hits',
-        Spell.HeroicStrike9: 'hs_hits',
-        Spell.MockingBlow: 'mockingblow_hits',
-        Spell.Hamstring: 'hamstring_hits',
-        Spell.ThunderClap: 'thunderclap_hits',
-        Spell.Disarm: 'disarm_hits',
-        Spell.ShieldBash: 'shieldbash_hits',
-        Spell.Cleave: 'cleave_hits'
-
+    all_events = {
+        e.get('boss_name'): {
+            'events': e.get('events'),
+            'total_time': e.get('total_time'),
+            'start_time': e.get('start_time'),
+            'end_time': e.get('end_time'),
+            'dps_threat': e.get('dps_threat'),
+            'boss_id': e.get('boss_id'),
+            'gear': e.get('gear')
+        } for e in all_events
     }
-    add_count = set()
-    damage_entries = data.get('events')
-    hits = WarriorDamageResponse()
-    no_d_stance = WarriorDamageResponse()
-    if not damage_entries:
-        # Return 0 for damage or set the equivalent, dunno yet haven't gotten that far
-        return hits, no_d_stance
-
-    stances = stance_events[0] or {}
-    
-    for entry in damage_entries:
-        add_count.add(str(entry.get('targetID')) + ':' + str(entry.get('targetInstance')))
-        stance = _get_event_stance(stances, entry, hits, no_d_stance)
-        stance.enemies_in_combat = len(add_count)
-
-        guid = entry.get('ability').get('guid')
-        if guid in __flat.keys() and entry.get('hitType') not in [7, 8]:
-            setattr(stance, __flat[guid], getattr(stance, __flat[guid]) + 1)
-            stance.total_damage += (entry.get('amount', 0) + entry.get('absorbed', 0))
-        elif guid == Spell.Execute:
-            stance.execute_dmg += (entry.get('amount', 0) + entry.get('absorbed', 0))
-        elif guid == Spell.SunderArmor:
-            setattr(stance, 'sunder_misses', getattr(stance, 'sunder_misses') + 1)
-        else:
-            stance.total_damage += (entry.get('amount') + entry.get('absorbed', 0))
-    return hits, no_d_stance
-
-
-async def process_rage_gains(data, stance_events):
-    rage_gains = data.get('resources', [])
-    rage_gain_events = [r.get('gains') for r in rage_gains]
-    return {'rage_gains': sum(rage_gain_events)}, StanceDanceEvent()
-
-
-async def process_healing_done(data, stance_events):
-    healing_entries = data.get('entries')
-    if not healing_entries:
-        return {'hp_gains': 0}, StanceDanceEvent()
-    healing_events = [event.get('total') for event in healing_entries]
-    return {'hp_gains': sum(healing_events)}, StanceDanceEvent()
-
-
-async def process_casts(data, stance_events):
-    cast_entries = data.get('events')
-    stances = stance_events[0] or {}
-    resp = WarriorCastResponse()
-    no_d_resp = WarriorCastResponse()
-    if not cast_entries:
-        return resp, no_d_resp # All 0 default vals
-
-    abilities = {
-        Spell.DemoShout: 'demo_casts',
-        Spell.BattleShout6: 'bs_casts',
-        Spell.BattleShout7: 'bs_casts',
-        Spell.ShieldSlam: 'shield_slam_casts',
-        Spell.HeroicStrike8: 'hs_casts',
-        Spell.HeroicStrike9: 'hs_casts',
-        Spell.Revenge5: 'revenge_casts',
-        Spell.Revenge6: 'revenge_casts',
-        Spell.Cleave: 'cleave_casts',
-        Spell.Bloodthirst: 'bt_casts',
-        Spell.SunderArmor: 'sunder_casts'
+    all_events = {
+        k: FightLog.from_response(
+            resp=v.get('events'), 
+            report_id=report_id, 
+            player_name=player_name, 
+            boss_name=k, 
+            boss_id=v.get('boss_id'),
+            total_time=v.get('total_time'), 
+            player_class=player_class,
+            modifier_events=stances,
+            dps_threat=v.get('dps_threat'),
+            realm=realm,
+            t1=t1,
+            gear=v.get('gear'),
+            talent_pts=def_pts,
+            friendlies=friendlies
+        ) 
+        for k, v in sorted(all_events.items(), key=lambda x: x[1].get('start_time'))
     }
-
-    for entry in [e for e in cast_entries if e.get('ability').get('guid') in abilities]:
-        stance = _get_event_stance(stances, entry, resp, no_d_resp)
-        guid = entry.get('ability').get('guid')
-        if guid in [Spell.BattleShout6, Spell.BattleShout7]:
-            resp.bs_rank = guid
-        if guid in [Spell.HeroicStrike8, Spell.HeroicStrike9]:
-            resp.hs_rank = guid
-        if guid in [Spell.Revenge5, Spell.Revenge6]:
-            resp.revenge_rank = guid
-        resp_attr = abilities.get(guid)
-        setattr(stance, resp_attr, getattr(stance, resp_attr) + 1)
-    return resp, no_d_resp
-
-
-async def process_debuffs(data, stance_events):
-    goa_procs = [d for d in data.get('events') if d.get('ability').get('guid') == Spell.GiftOfArthas]
-    d = defaultdict(int)
-    no_d = defaultdict(int)
-    stances = stance_events[0] or {}
-
-    for proc in goa_procs:
-        if proc.get('type') == 'applydebuff' or proc.get('type') == 'refreshdebuff':
-            stance = _get_event_stance(stances, proc, d, no_d)
-            stance['goa_procs'] += 1
-    return d, no_d
+    return all_events
 
 
 async def process_stance_state(data):
     stances = [Spell.DefensiveStance, Spell.BerserkerStance, Spell.BattleStance]
     entries = [e for e in data.get('events') if e.get('ability').get('guid') in stances]
-    zerk_specific = [e for e in data.get('events') if e.get('ability').get('name') in ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']]
-    battle_specific = [e for e in data.get('events') if e.get('ability').get('name') in ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunder Clap']]
+    zerk_specific = [
+        e for e in data.get('events') if e.get('ability').get('name') in 
+        ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']
+    ]
+    battle_specific = [
+        e for e in data.get('events') if e.get('ability').get('name') in 
+        ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunder Clap']
+    ]
 
     windows = {
         Spell.DefensiveStance: [],

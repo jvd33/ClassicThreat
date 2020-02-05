@@ -1,10 +1,11 @@
 import ujson
 import aiohttp
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Query
+from typing import List
 from aiohttp import ClientResponseError
 from starlette.responses import JSONResponse
 
-from .models.common import WCLDataRequest
+from .models.common import WCLDataRequest, FightLog
 from .models.warrior import WarriorThreatResult
 from .models.druid import DruidThreatResult
 from .tasks.warrior import get_log_data as warr_get_log_data
@@ -63,7 +64,7 @@ async def status():
 async def calculate_warrior(req: WCLDataRequest, background_tasks: BackgroundTasks, session=Depends(get_http_session), ):
     try:
         async with session:
-            results = await warr_get_log_data(req, session=session)
+            results, _ = await warr_get_log_data(req, session=session)
             background_tasks.add_task(_refresh_cache, 2)
             return JSONResponse(content=results, status_code=200)
     except ClientResponseError as cexc:
@@ -95,7 +96,7 @@ async def calculate_warrior(req: WCLDataRequest, background_tasks: BackgroundTas
 async def calculate_druid(req: WCLDataRequest, background_tasks: BackgroundTasks, session=Depends(get_http_session), ):
     try:
         async with session:
-            results = await druid_get_log_data(req, session=session)
+            results, _ = await druid_get_log_data(req, session=session)
             background_tasks.add_task(_refresh_cache, 3)
             return JSONResponse(content=results, status_code=200)
     except ClientResponseError as cexc:
@@ -103,7 +104,46 @@ async def calculate_druid(req: WCLDataRequest, background_tasks: BackgroundTasks
     except HTTPException as hexc:
         raise hexc
 
+@api_router.get('/events/{report_id}/{player_name}',
+                tags=['v1'],
+                dependencies=[Depends(get_http_session)], 
 
+                )
+async def get_event_timeline(report_id, player_name, player_class, session=Depends(get_http_session), boss: List[str]=Query(None)):
+    func = {
+        'druid': druid_get_log_data,
+        'warrior': warr_get_log_data
+    }.get(player_class.casefold(), None)
+    if not func:
+        return JSONResponse(content={'detail': f'Bad Player Class, {player_class} is not supported', 'code': 500}, status_code=500)
+    try:
+        events = None
+        r = RedisClient()
+        try:
+            events = await r.get_events(report_id, player_name, bosses=boss)
+        except ConnectionRefusedError:
+            pass
+        if not events:
+            async with session:
+                req = WCLDataRequest(
+                    url=f'https://classic.warcraftlogs.com/reports/{report_id}',
+                    player_name=player_name,
+                    defiance_points=5,
+                    feral_instinct_points=5,
+                    bosses=boss or [],
+                )
+                _, events = await func(req, session=session)
+
+        return JSONResponse(content={k: e.dict() for k, e in events.items()}, status_code=200)
+
+    except ClientResponseError as cexc:
+        return JSONResponse(content={'detail': f'Error from Warcraft Logs: {cexc.message}', 'code': cexc.status}, status_code=cexc.status)
+    except HTTPException as hexc:
+        raise hexc
+    finally:
+        await session.close()
+
+    
 @api_router.get('/threat_values', 
                 tags=['v1'], 
                 response_model=Threat,
