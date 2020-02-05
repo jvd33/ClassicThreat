@@ -143,7 +143,7 @@ class RedisClient:
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=4))
         for k, v in all_events.items():
             key = f'{report_id}:{player_name}:{k}'
-            await __redis.hmset_dict(key, ujson.dumps(v))
+            await __redis.hmset_dict(key, v)
         __redis.close()
 
     async def get_events(self, report_id, player_name, bosses=None):
@@ -156,6 +156,6 @@ class RedisClient:
 
         for key in keys:
             r = await __redis.hgetall(key, encoding='utf-8')
-            d.append(ujson.loads(r))
+            d.append(r)
         __redis.close()
         return d
