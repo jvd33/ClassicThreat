@@ -119,7 +119,8 @@ class ThreatEvent(BaseModel):
         elif self.event_type == 'heal':
             raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
-        elif self.event_type == 'applydebuff' and self.guid != Spell.SunderArmor:
+        elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS]:
+            print(self)
             raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'energize':

@@ -8,7 +8,7 @@ from typing import List
 from fastapi import HTTPException
 from collections import defaultdict
 
-from ..models.common import WCLDataRequest, BossActivityRequest
+from ..models.common import WCLDataRequest, BossActivityRequest, FightLog, ThreatEvent
 from ..models.druid import DruidThreatCalculationRequest, DruidThreatResult, DruidDamageResponse, DruidCastResponse, ShapeshiftEvent
 from ..constants import Spell
 from ..wcl_service import WCLService
@@ -24,12 +24,13 @@ async def get_log_data(req: WCLDataRequest, session):
     this is a prototype that got out of hand
     the caching logic can definitely be separated out and error handling can be more consistent
     """
-    async def __recalculate_opts(data, req=req):
-        data['feral_instinct_points'] = req.feral_instinct_points
-        data['friendlies_in_combat'] = req.friendlies_in_combat
-        data['no_bear'] = ujson.loads(data['no_bear'])
-        r = DruidThreatCalculationRequest(**data)
-        return r.calculate_druid_threat(cached=True)
+    async def __recalculate_opts(log, req=req):
+        log['defiance_points'] = req.defiance_points
+        log['t1_set'] = req.t1_set
+        log['friendlies_in_combat'] = req.friendlies_in_combat
+        log['dps_threat'] = ujson.loads(log.get('dps_threat'))
+        log['gear'] = ujson.loads(log.get('gear'))
+        return WarriorThreatCalculationRequest.from_event_log(FightLog(**log))
 
     logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
     report_id = req.report_id
@@ -38,9 +39,15 @@ async def get_log_data(req: WCLDataRequest, session):
     
     try:
         redis = RedisClient()
-        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, db=1) or {}
+        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, db=0) or {}
         if cached_data.get('matches'):
-            cache_resp = {k: await __recalculate_opts(v) for k, v in cached_data.get('matches').items()}
+            cache_resp = {}
+            for k, v in cached_data.get('matches').items():
+                log = await redis.get_events(report_id, req.player_name, bosses=[k])
+                if log:
+                    result = await __recalculate_opts(log, req=req)
+                    cache_resp[k] = result
+                    redis.save_warr_results(report_id, req.player_name, result)
         missing = cached_data.get('missing', [])
     except Exception as exc:
         logger.error(f'Failed to read from cache {exc}')
@@ -59,7 +66,7 @@ async def get_log_data(req: WCLDataRequest, session):
         ranks = {k: v for k, v in sorted(cache_resp.items(), key=lambda x: x[1].get('boss_id'))}
         for k, v in ranks.items():
             try:
-                rank = await redis.get_encounter_percentile(k, v.get('tps'), db=3)
+                rank = await redis.get_encounter_percentile(k, v.get('tps'))
                 v.update({'rank': rank})
             except Exception as exc:
                 logger.error(f'Failed to write to read from cache {exc}')
@@ -87,86 +94,119 @@ async def get_log_data(req: WCLDataRequest, session):
         report_id=report_id,
     ) for boss in bosses]
 
-    d = await get_player_activity(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session) or {}
-    events = {} # await get_events(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session)
-    ranks = {k: v for k, v in sorted({**d, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
-    for k, v in ranks.items():
-        try:
-            rank = await redis.get_encounter_percentile(k, v.get('tps'), db=3)
-            v.update({'rank': rank})
-        except Exception as exc:
-            logger.error(f'Failed to write to read from cache {exc}')
-    return ranks, events
- 
-async def get_player_activity(player_name, player_class, realm, reqs: List[BossActivityRequest], fi_pts, friendlies, session):
-    if not reqs:
-        return []
-    wcl = WCLService(session=session)
-    report_id = reqs[0].report_id if reqs[0] else None
-    shift_events = await asyncio.gather(*[wcl.get_stance_state(req) for req in reqs])
-    shifts = [await process_shapeshifts(e) for e in shift_events]
-    futures = [asyncio.gather(*[wcl.get_fight_details_depr(req, event) for event in EVENTS]) for req in reqs]
-    future_results = await asyncio.gather(*futures)
-    results = []
+    events = await get_events(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session)
 
-    for fight in future_results:
-        resp = {}
-        no_bear_resp = {}
-        for data in fight:
-            form = [shift for shift in shifts if shift.get('boss_name') == data.get('boss_name')]
-            if data.get('totalTime', None):
-                resp['time'] = data.get('totalTime') / 1000.0
-            bear, nobear = await process_data_response(data.get('event'))(data, form)
-            no_bear_resp.update(**dict(nobear), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'), friendlies_in_combat=friendlies)
-            resp.update(**dict(bear), boss_name=data.get('boss_name'), boss_id=data.get('boss_id'))
-        resp['enemies_in_combat'] = resp.get('enemies_in_combat', 0) or 1
-        nobear['enemies_in_combat'] = nobear.get('enemies_in_combat', 0) or 1
-        r = DruidThreatCalculationRequest(**resp,
-                                            player_name=player_name,
-                                            player_class=player_class,
-                                            realm=realm,
-                                            feral_instinct_points=fi_pts,
-                                            friendlies_in_combat=friendlies,
-                                            no_bear=no_bear_resp
-                                            )
-        tps = r.calculate_druid_threat()
-        results.append(tps)
-    ret_json = {result.get('boss_name'): {k: v for k, v in sorted(result.items(), key=lambda x: x[0])} for result in results}
+    r = [DruidThreatCalculationRequest.from_event_log(log) for boss, log in events.items()]
+
+    r = {
+        a.boss_name: a.dict() for a in r
+    }
+
     try:
         redis = RedisClient()
-        await redis.save_druid_results(report_id, player_name, ret_json)
+        await redis.save_druid_results(report_id, player_name, r)
     except Exception as exc:
         logger.error(f'Failed to write to cache {exc}')
-    return ret_json
 
+    ranks = {k: v for k, v in sorted({**r, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
 
-async def get_events(player_name, player_class, realm, reqs: List[BossActivityRequest], def_pts, friendlies, t1, session):
+    for k, v in ranks.items():
+        try:
+            rank = await redis.get_encounter_percentile(k, v.get('tps'))
+            v.update({'rank': rank})
+        except Exception as exc:
+            logger.error(f'Failed to read from cache {exc}')
+    return ranks, events
+ 
+async def get_events(player_name, player_class, realm, reqs: List[BossActivityRequest], fi_pts, friendlies, session):
     if not reqs:
         return []
     wcl = WCLService(session=session)
     report_id = reqs[0].report_id if reqs[0] else None
     stance_events = await asyncio.gather(*[wcl.get_stance_state(req) for req in reqs])
-    stances = [await process_stance_state(e) for e in stance_events]
-    futures = [asyncio.gather(*[wcl.get_fight_details(req, event) for event in EVENTS]) for req in reqs]
-    future_results = await asyncio.gather(*futures)
-    all_events = defaultdict(str, defaultdict(str))
+    stances = [await process_shapeshifts(e) for e in stance_events]
+    future_results = await asyncio.gather(*[wcl.get_fight_details(req) for req in reqs])
+    all_events = []
+    dps = await asyncio.gather(*[wcl.get_dps_details(req) for req in reqs])
     for fight in future_results:
-        for data in fight:
-            all_events[data.get('boss_name')].get('events', []).extend(data.get('events'))
-            all_events[data.get('boss_name')]['total_time'] = data.get('total_time')
-            stance = [stance for stance in stances if stance.get('boss_name') == data.get('boss_name')]
+        boss = {
+            'events': [],
+            'total_time': 0,
+            'boss_name': '',
+            'start_time': 0,
+            'end_time': 0,
+        }
+        player_gear = []
+        for data in fight.get('events'):
+            if data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize']:
+                continue
 
-            dstance, nostance = await process_data_response(data.get('event'))(data, stance)
+            dps_results = [x for x in dps if x[0] and x[0].get('boss_name') == data.get('boss_name')]
+            for b in dps_results:
+                for d in b: 
+                    if d.get('player_name') == player_name:
+                        player_gear = d.get('gear')
+                    elif d.get('gear'):
+                        del d['gear']
+
+            for item in player_gear:
+                try:
+                    del item['itemLevel']
+                    del item['icon']
+                    del item['quality']
+                except KeyError:
+                    continue
+            boss.update(**{
+                'events': [data, *boss['events']],
+                'total_time': fight.get('total_time'),
+                'boss_name': fight.get('boss_name'),
+                'start_time': fight.get('start_time'),
+                'end_time': data.get('end_time'),
+                'dps_threat': flatten(dps_results),
+                'boss_id': fight.get('boss_id'),
+                'gear': player_gear,
+                
+            })
+        all_events.append(boss)
+ 
+    all_events = {
+        e.get('boss_name'): {
+            'events': e.get('events'),
+            'total_time': e.get('total_time'),
+            'start_time': e.get('start_time'),
+            'end_time': e.get('end_time'),
+            'dps_threat': e.get('dps_threat'),
+            'boss_id': e.get('boss_id'),
+            'gear': e.get('gear')
+        } for e in all_events
+    }
+
+
+    all_events = {
+        k: FightLog.from_response(
+            resp=v.get('events'), 
+            report_id=report_id, 
+            player_name=player_name, 
+            boss_name=k, 
+            boss_id=v.get('boss_id'),
+            total_time=v.get('total_time'), 
+            player_class=player_class,
+            modifier_events=stances,
+            dps_threat=v.get('dps_threat'),
+            realm=realm,
+            gear=v.get('gear'),
+            talent_pts=fi_pts,
+            friendlies=friendlies
+        ) 
+        for k, v in sorted(all_events.items(), key=lambda x: x[1].get('start_time'))
+    }
 
     try:
         redis = RedisClient()
         await redis.save_events(report_id, player_name, all_events)
     except Exception as exc:
         logger.error(f'Failed to write to cache {exc}')
-    all_events = {
-        k: FightLog.from_response(v.get('events'), report_id, player_name, k, v.get('total_time')) 
-        for k, v in all_events.items()
-    }
+
     return all_events
 
 def process_data_response(request_type):
@@ -270,13 +310,16 @@ async def process_shapeshifts(data):
     entries = [e for e in data.get('events') if e.get('ability').get('guid') in forms]
     windows = {
         Spell.BearForm: [],
-        Spell.CatForm: []
+        Spell.CatForm: [],
+        0: []
     }
     time = data.get('start_time')
     last_form = Spell.BearForm
     for e in entries:
+        guid = e.get('ability').get('guid')
+        window = windows[guid] or windows[0]
         if e.get('type') == 'removebuff':
-            windows[e.get('ability').get('guid')].append((time, e.get('timestamp')))
+            window.append((time, e.get('timestamp')))
         if e.get('type') == 'applybuff':
             time = e.get('timestamp')
             last_form = e.get('ability').get('guid')
@@ -285,11 +328,3 @@ async def process_shapeshifts(data):
         windows[last_form].append((time, 0))
     return {**windows, 'boss_name': data.get('boss_name')}
 
-
-def _get_event_stance(shapeshift_events, event, bear, nobear):
-    time = event.get('timestamp')
-    for k, rnges in [el for el in shapeshift_events.items() if el[0] != 'boss_name']:
-        for rnge in rnges:
-            if rnge[0] <= time and (time <= rnge[1] if rnge[1] else True):
-                return nobear if k != Spell.BearForm else bear
-    return bear

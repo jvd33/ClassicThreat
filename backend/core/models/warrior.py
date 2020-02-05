@@ -99,6 +99,7 @@ class WarriorThreatCalculationRequest(BaseModel):
                         setattr(self, 'sunder_hits', getattr(self, 'sunder_hits', 0) - 1)
 
             if event.guid == Spell.GiftOfArthas:
+                print(event)
                 self.goa_procs += 1
 
         return mapper
@@ -146,6 +147,7 @@ class WarriorThreatCalculationRequest(BaseModel):
             'energize': self._process_rage,
             'heal': self._process_healing,
             'applydebuff': self._process_debuff,
+            'refreshdebuff': self._process_debuff
         }.get(event.event_type, __dummy)(event)
 
     def _process_damage(self, event: ThreatEvent):

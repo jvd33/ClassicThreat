@@ -138,7 +138,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
         }
         player_gear = []
         for data in fight.get('events'):
-            if data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize']:
+            if data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize', 'refreshdebuff']:
                 continue
 
             dps_results = [x for x in dps if x[0] and x[0].get('boss_name') == data.get('boss_name')]
@@ -247,12 +247,3 @@ async def process_stance_state(data):
             
     windows[last_stance].append((time, 0))
     return {**windows, 'boss_name': data.get('boss_name')}
-
-
-def _get_event_stance(stance_events, event, dstance_resp, nodstance_resp):
-    time = event.get('timestamp')
-    for k, rnges in [el for el in stance_events.items() if el[0] != 'boss_name']:
-        for rnge in rnges:
-            if rnge[0] <= time and (time <= rnge[1] if rnge[1] else True):
-                return nodstance_resp if k != Spell.DefensiveStance else dstance_resp
-    return dstance_resp
