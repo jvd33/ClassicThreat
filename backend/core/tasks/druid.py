@@ -105,7 +105,7 @@ async def get_player_activity(player_name, player_class, realm, reqs: List[BossA
     report_id = reqs[0].report_id if reqs[0] else None
     shift_events = await asyncio.gather(*[wcl.get_stance_state(req) for req in reqs])
     shifts = [await process_shapeshifts(e) for e in shift_events]
-    futures = [asyncio.gather(*[wcl.get_fight_details(req, event) for event in EVENTS]) for req in reqs]
+    futures = [asyncio.gather(*[wcl.get_fight_details_depr(req, event) for event in EVENTS]) for req in reqs]
     future_results = await asyncio.gather(*futures)
     results = []
 
