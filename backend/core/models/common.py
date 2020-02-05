@@ -6,7 +6,12 @@ from urllib.parse import urlparse
 from ..utils import flatten
 from ..constants import WarriorThreatValues, Spell, DruidThreatValues
 
-
+FORMS = [Spell.BearForm, Spell.CatForm, Spell.BerserkerStance, Spell.BattleStance, Spell.DefensiveStance]
+DAMAGE = [
+    Spell.HeroicStrike8, Spell.HeroicStrike9, Spell.Revenge6, Spell.Revenge5, Spell.MockingBlow, Spell.ShieldSlam, 
+    Spell.Swipe, Spell.Maul, Spell.FaerieFire, Spell.FaerieFireFeral, Spell.Cleave, Spell.Execute, Spell.ShieldBash,
+    Spell.Hamstring, Spell.ThunderClap,
+]
 
 class WCLDataRequest(BaseModel):
     url: AnyUrl
@@ -80,7 +85,7 @@ class ThreatEvent(BaseModel):
     enemies_in_combat: int = 1
     friendlies_in_combat: int = 1
     hit_type: int = None
-    amount: float = None
+    amount: float = 0
     class_modifier: int = None
 
     def calculate_threat(self, player_class, talent_pts=5, t1=False):
@@ -97,30 +102,30 @@ class ThreatEvent(BaseModel):
         if self.event_type == 'cast':
             if self.guid in [Spell.BattleShout6, Spell.BattleShout7]:
                 raw = mods.get(self.guid, mods.get('noop'))(self.friendlies_in_combat, self.enemies_in_combat)
-            elif self.guid in [Spell.DemoRoar, Spell.DemoShout]:
-                raw = mods.get(self.guid, mods.get('noop'))(self.enemies_in_combat)
             elif self.guid == Spell.SunderArmor:
                 raw = mods.get(self.guid, mods.get('noop'))(t1)
-            else:
+            elif self.guid not in [*DAMAGE, *FORMS]:
                 raw = mods.get(self.guid, mods.get('noop'))
+            
 
         elif self.event_type == 'damage':
-            if self.guid == Spell.SunderArmor and self.hit_type in [7, 8]:
+            if self.guid in DAMAGE and self.hit_type not in [7, 8]:
+                raw = mods.get(self.guid, mods.get('noop')) + self.amount
+            elif self.guid == Spell.SunderArmor and self.hit_type in [7, 8]:
                 raw = mods.get(self.guid, mods.get('noop'))(t1) * -1
-            elif self.hit_type in [7, 8]:
-                raw = mods.get(self.guid, mods.get('noop')) * -1
             else:
                 raw = self.amount
 
         elif self.event_type == 'heal':
             raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
-        elif self.event_type == 'applydebuff' and self.guid not in [Spell.SunderArmor, Spell.DemoRoar, Spell.DemoShout]:
+        elif self.event_type == 'applydebuff' and self.guid != Spell.SunderArmor:
             raw = mods.get(self.guid, mods.get('noop'))
+
         elif self.event_type == 'energize':
             raw = mods.get(Spell.RageGain)(self.amount)
-        
-        if self.class_modifier and self.event_type != 'energize' and self.event_type != 'heal':
+
+        if self.event_type != 'energize':
             return mods.get(self.class_modifier)(raw, talent_pts), raw
 
         return raw, raw
@@ -139,7 +144,7 @@ class ThreatEvent(BaseModel):
             Spell.HeroicStrike9: __t.HeroicStrike9,
             Spell.GiftOfArthas: __t.GiftOfArthas,
             Spell.RageGain: lambda x, __t=__t: x * __t.RageGain,
-            Spell.DemoShout: lambda n, __t=__t: __t.DemoShout * n,
+            Spell.DemoShout: __t.DemoShout,
             Spell.ThunderClap: __t.ThunderClap,
             Spell.BattleShout6: lambda n, c, __t=__t: (__t.BattleShout6)/(n/c),  # N = friendlies, c = enemies
             Spell.BattleShout7: lambda n, c, __t=__t: (__t.BattleShout6)/(n/c),  # N = friendlies, c = enemies
@@ -187,6 +192,7 @@ class FightLog(BaseModel):
     defiance_points: int = None
     feral_instinct_points: int = None
     friendlies_in_combat: int = 1
+    gear: List = None
 
     @staticmethod
     def from_response(resp, 
@@ -198,6 +204,7 @@ class FightLog(BaseModel):
                       player_class, 
                       modifier_events, 
                       dps_threat, 
+                      gear,
                       realm, 
                       t1=False,
                       talent_pts=5,
@@ -210,6 +217,7 @@ class FightLog(BaseModel):
             total_time=total_time,
             player_class=player_class,
             realm=realm,
+            gear=gear,
             defiance_points=talent_pts,
             feral_instinct_points=talent_pts,
             friendlies_in_combat=friendlies,
@@ -220,15 +228,18 @@ class FightLog(BaseModel):
         elif player_class == 'Warrior':
             f.feral_instinct_points = None
 
+        modifier_event = [i for i in modifier_events if i.get('boss_name') == boss_name]
         for event in resp:
+            if event.get('type') == 'damage' and event.get('targetIsFriendly', False):
+                continue
             e = ThreatEvent(
                 name=event.get('ability', {}).get('name', ''),
                 guid=event.get('ability', {}).get('guid', 0),
                 event_type=event.get('type'),
                 timestamp=event.get('timestamp'),
                 hit_type=event.get('hitType', None),
-                amount=event.get('amount') or event.get('resourceChange') or 0,
-                class_modifier=FightLog._get_event_modifier(modifier_events, event, player_class),
+                amount=event.get('amount') or (event.get('resourceChange', 0) - event.get('waste', 0)) or 0,
+                class_modifier=FightLog._get_event_modifier(modifier_event, event, player_class),
                 enemies_in_combat=1
             )
             f.events.append(e)

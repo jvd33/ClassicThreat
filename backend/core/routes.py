@@ -133,6 +133,7 @@ async def get_event_timeline(report_id, player_name, player_class, session=Depen
                     bosses=boss or [],
                 )
                 _, events = await func(req, session=session)
+
         return JSONResponse(content={k: e.dict() for k, e in events.items()}, status_code=200)
 
     except ClientResponseError as cexc:

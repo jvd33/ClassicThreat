@@ -98,7 +98,7 @@ export default {
     getTableCols(data) {
       let ret = [];
       for (const prop in data) {
-        if (prop !== 'no_d_stance') {
+        if (prop !== 'gear' && prop !== 'dps_threat') {
           ret.push({'name': prop, 'value': data[prop]});
         };
       }

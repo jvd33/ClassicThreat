@@ -27,7 +27,8 @@ class RedisClient:
         for k, v in data.items():
             key = f'{report_id}:{character}:{k}'
             v['t1_set'] = str(v.get('t1_set'))
-            v['no_d_stance'] = ujson.dumps(v.get('no_d_stance'))
+            v['gear'] = ujson.dumps(v.get('gear'))
+            v['dps_threat'] = ujson.dumps(v.get('dps_threat'))
             r = await __redis.hmset_dict(key, v)
             d.append(r)
         __redis.close()
@@ -39,7 +40,6 @@ class RedisClient:
         d = []
         for k, v in data.items():
             key = f'{report_id}:{character}:{k}'
-            v['no_bear'] = ujson.dumps(v.get('no_bear'))
             r = await __redis.hmset_dict(key, v)
             d.append(r)
         __redis.close()

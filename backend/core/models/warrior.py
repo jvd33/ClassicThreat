@@ -40,87 +40,9 @@ class WarriorThreatCalculationRequest(BaseModel):
     shieldbash_hits: int = 0
     mockingblow_hits: int = 0
     realm: str = None
-    dps_threat: list = list()
+    dps_threat: List = list()
+    gear: List = list()
 
-    @property
-    def __modifiers(self):
-        __t = WarriorThreatValues.vals()
-        return {
-            'sunder_hits': lambda x, t1, __t=__t: x * __t.SunderArmor if not t1 else x * __t.SunderArmor * __t.Tier1Bonus,
-            'shield_slam_hits': lambda x, __t=__t: x * __t.ShieldSlam,
-            'revenge_hits': lambda x, __t=__t: x * __t.Revenge,
-            'hs_hits': lambda x, __t=__t: x * __t.HeroicStrike,
-            'goa_procs': lambda x, __t=__t: x * __t.GiftOfArthas,
-            'rage_gains': lambda x, __t=__t: x * __t.RageGain,
-            'hp_gains': lambda x, n, __t=__t: x * __t.Healing / n, # Split
-            'demo_casts': lambda x, n, __t=__t: x * __t.DemoShout * n,
-            'thunderclap_hits': lambda x, __t=__t: x * __t.ThunderClap,
-            'bs_casts': lambda x, n, c, __t=__t: (x * __t.BattleShout)/(n/c),  # N = friendlies, c = enemies
-            'cleave_hits': lambda x, __t=__t: x * __t.Cleave,
-            Spell.DefensiveStance: lambda x, d, __t=__t: x * __t.DefensiveStance * getattr(__t, f'Defiance{d}'),
-            Spell.BattleStance: lambda x, d, __t=__t: x * __t.BattleStance,
-            Spell.BerserkerStance: lambda x, d, __t=__t: x * __t.BerserkerStance,
-            'hamstring_hits': lambda x, __t=__t: x * __t.Hamstring,
-            'disarm_hits': lambda x, __t=__t: x * __t.Disarm,
-            'shieldbash_hits': lambda x, __t=__t: x * __t.ShieldBash,
-            'mockingblow_hits': lambda x, __t=__t: x * __t.MockingBlow,
-
-        }
-
-    def calculate_warrior_threat(self, cached=False):
-        exclude = {
-            'time', 't1_set', 'total_damage', 'execute_dmg', 'player_name', 'player_class', 'realm', 'bt_casts',
-            'defiance_points', 'friendlies_in_combat', 'enemies_in_combat', 'boss_name', 'no_d_stance',
-            '__modifiers', 'defiance_key', '__t', 'boss_id', 'rage_gains', 'hp_gains', 'shield_slam_casts', 
-            'revenge_casts', 'hs_casts', 'sunder_casts', 'bs_rank', 'hs_rank', 'revenge_rank', 'cleave_casts',
-        }
-
-        no_d_stance = WarriorThreatCalculationRequest(**self.no_d_stance)
-
-        def __calculate(req, stance):
-            unmodified_threat = req.total_damage
-            if cached and stance == Spell.DefensiveStance:
-                unmodified_threat = req.total_damage - no_d_stance.total_damage
-                req.sunder_hits -= no_d_stance.sunder_hits
-                req.execute_dmg = 0
-
-            for name, val in req.copy(exclude=exclude):
-                if name == 'sunder_hits':
-                    unmodified_threat += self.__modifiers.get(name)(val, self.t1_set)
-                elif name == 'bs_casts':
-                    # TODO Haven't checked, but I could probably parse out the # of targets actually affected by this Battle Shout
-                    unmodified_threat += self.__modifiers.get(name)(val, self.friendlies_in_combat, self.enemies_in_combat)
-                elif name == 'demo_casts':
-                    unmodified_threat += self.__modifiers.get(name)(val, self.enemies_in_combat)
-                else:
-                    unmodified_threat += self.__modifiers.get(name)(val)
-            
-            modified_threat = self.__modifiers.get(stance)(unmodified_threat, self.defiance_points)
-            return modified_threat + req.execute_dmg, unmodified_threat + req.execute_dmg
-
-        
-        rage_threat = self.__modifiers.get('rage_gains')(self.rage_gains + no_d_stance.rage_gains)
-        healing_threat = self.__modifiers.get('hp_gains')(self.hp_gains + no_d_stance.hp_gains, self.enemies_in_combat)
-        calc_self = __calculate(self, Spell.DefensiveStance)
-        calc_no_d = __calculate(no_d_stance, Spell.BattleStance) 
-        unmodified_threat = sum([calc_self[1], calc_no_d[1]]) + rage_threat + healing_threat
-        modified_threat = sum([calc_self[0], calc_no_d[0]]) + rage_threat + healing_threat
-
-
-        unmodified_tps = unmodified_threat/(self.time or 1)
-        tps = modified_threat/(self.time or 1)
-        if not cached:
-            for name, val in dict(self).items():
-                if '_casts' in name or '_hits' in name or '_dmg' in name or '_damage' in name:
-                    setattr(self, name, getattr(self, name) + self.no_d_stance.get(name, 0))
-
-        return dict(WarriorThreatResult(
-            **dict(self),
-            total_threat=unmodified_threat,
-            total_threat_defiance=modified_threat,
-            unmodified_tps=unmodified_tps,
-            tps=tps,
-        ))
 
     def process_events(self, events: List[ThreatEvent]):
         mapper = defaultdict(int)
@@ -134,6 +56,9 @@ class WarriorThreatCalculationRequest(BaseModel):
             Spell.Bloodthirst: 'bt_casts',
             Spell.ShieldSlam: 'shield_slam_casts',
             Spell.GiftOfArthas: 'goa_procs',
+            Spell.DemoShout: 'demo_casts',
+            Spell.BattleShout6: 'bs_casts',
+            Spell.BattleShout7: 'bs_casts'
         }
 
         hits = {
@@ -153,6 +78,8 @@ class WarriorThreatCalculationRequest(BaseModel):
         }
 
         for event in events:
+            if event.guid == Spell.Execute:
+                self.execute_dmg += event.amount
             if event.event_type == 'cast':
                 cast_metric = metrics.get(event.guid)
                 if not cast_metric:
@@ -165,10 +92,11 @@ class WarriorThreatCalculationRequest(BaseModel):
                 hit_metric = hits.get(event.guid)
                 if not hit_metric:
                     continue
-                if event.hit_type in [7, 8]:
-                    setattr(self, hit_metric, getattr(self, hit_metric, 0) - 1)
-                else:
+                if event.hit_type not in [7, 8]:
                     setattr(self, hit_metric, getattr(self, hit_metric, 0) + 1)
+                else:
+                    if event.guid == Spell.SunderArmor:
+                        setattr(self, 'sunder_hits', getattr(self, 'sunder_hits', 0) - 1)
 
             if event.guid == Spell.GiftOfArthas:
                 self.goa_procs += 1
@@ -186,15 +114,14 @@ class WarriorThreatCalculationRequest(BaseModel):
             realm=log.realm,
             defiance_points=log.defiance_points,
             friendlies_in_combat=log.friendlies_in_combat,
+            gear=log.gear
             
         )
         total_threat, total_threat_defiance, unmodified_tps, tps = [0, 0, 0, 0]
-
         for event in log.events:
-            if event.event_type not in ['removedebuff']:
-                modified, raw = resp._process_event(event)
-                total_threat_defiance += modified
-                total_threat += raw
+            modified, raw = resp._process_event(event)
+            total_threat_defiance += modified
+            total_threat += raw
 
         unmodified_tps = total_threat / resp.time
         tps = total_threat_defiance / resp.time
