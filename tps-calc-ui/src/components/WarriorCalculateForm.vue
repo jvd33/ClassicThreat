@@ -5,7 +5,10 @@
     >
       Warrior Threat Estimator
     </q-toolbar-title>
-
+    <span class="text-primary q-pb-lg col-auto col-sm wrap-auto text-h6-sm text-italic">
+    More accurate as of February 5th, 2020! Warrior threat is now calculated via sequential event parsing.
+    <a href="https://github.com/jvd33/ClassicThreat/commit/26d9f213598cff00e8d3e97bfabf1c0c19526ebb" class="text-primary">View the change</a>
+    </span>
     <q-form
       @submit="submit"
       class="q-gutter-md row-6 bordered rounded-borders"
