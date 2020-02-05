@@ -88,7 +88,7 @@ async def get_log_data(req: WCLDataRequest, session):
     ) for boss in bosses]
 
     d = await get_player_activity(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session) or {}
-    events = await get_events(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session)
+    events = {} # await get_events(player_name, player_cls, realm, reqs, req.feral_instinct_points, req.friendlies_in_combat, session)
     ranks = {k: v for k, v in sorted({**d, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
     for k, v in ranks.items():
         try:
