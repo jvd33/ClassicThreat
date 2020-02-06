@@ -13,6 +13,13 @@ DAMAGE = [
     Spell.Hamstring, Spell.ThunderClap,
 ]
 
+zerk_specific = ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']
+    
+battle_specific = ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunder Clap']
+    
+defensive_specific =  ['Shield Wall', 'Shield Block', 'Revenge']
+    
+
 class WCLDataRequest(BaseModel):
     url: AnyUrl
     player_name: str
@@ -87,6 +94,8 @@ class ThreatEvent(BaseModel):
     class_modifier: int = 0
 
     def calculate_threat(self, player_class, talent_pts=5, t1=False):
+
+        
         mods = {
             'warrior': self.__warr_modifiers,
             'druid': self.__druid_modifiers,
@@ -130,6 +139,8 @@ class ThreatEvent(BaseModel):
             raw = 0
 
         if self.event_type != 'energize':
+            if self.guid == Spell.ShieldSlam:
+                print(self.class_modifier)
             return mods.get(self.class_modifier)(raw, talent_pts), raw
 
         return raw, raw

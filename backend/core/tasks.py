@@ -54,7 +54,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
         if cached_data.get('matches'):
             cache_resp = {}
             for k in cached_data.get('matches'):
-                logs = await redis.get_events(report_id, req.player_name, bosses=[k])
+                logs = {} #await redis.get_events(report_id, req.player_name, bosses=[k])
                 if logs:
                     result = recalc_fn(logs, req=req)
                     cache_resp.update(**{
@@ -139,7 +139,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
     wcl = WCLService(session=session)
     report_id = reqs[0].report_id if reqs[0] else None
     future_results = await asyncio.gather(*[wcl.get_fight_details(req) for req in reqs])
-    stances = [await modifier_fn(e) for e in future_results]
+    stances = [await modifier_fn(e, reqs[0].player_id) for e in future_results]
     all_events = []
     dps = await asyncio.gather(*[wcl.get_dps_details(req) for req in reqs])
     for fight in future_results:
@@ -228,21 +228,24 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
     return all_events
 
 
-async def process_stance_state(data):
+async def process_stance_state(data, player_id):
     stances = [Spell.DefensiveStance, Spell.BerserkerStance, Spell.BattleStance]
-    events = [e for e in data.get('events') if e.get('type') != 'combatantinfo']
+    events = [e for e in data.get('events') if e.get('type') != 'combatantinfo' and e.get('sourceID') == player_id]
     if not events:
         return windows
     entries = [e for e in events if e.get('ability').get('guid') in stances]
     zerk_specific = [
-        e for e in events if e.get('ability').get('name') in 
+        e.get('timestamp') for e in events if e.get('ability').get('name') in 
         ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']
     ]
     battle_specific = [
-        e for e in events if e.get('ability').get('name') in 
+        e.get('timestamp') for e in events if e.get('ability').get('name') in 
         ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunder Clap']
     ]
-
+    defensive_specific = [
+        e.get('timestamp') for e in events if e.get('ability').get('name') in 
+        ['Shield Wall', 'Shield Block', 'Revenge']
+    ]
     windows = {
         Spell.DefensiveStance: [],
         Spell.BattleStance: [],
@@ -251,31 +254,31 @@ async def process_stance_state(data):
     time = data.get('start_time')
     last_stance = None
     for e in entries:
-        if e.get('type') == 'removebuff':
+        if e.get('type') == 'removebuff' and e.get('guid') in stances:
             windows[e.get('ability').get('guid')].append((time, e.get('timestamp')))
-        if e.get('type') == 'applybuff':
+        if e.get('type') == 'applybuff' in stances:
             time = e.get('timestamp')
             last_stance = e.get('ability').get('guid')
     
     if not last_stance:
-        if zerk_specific: 
+        last_timestamp = sorted([*zerk_specific, *battle_specific, *defensive_specific], reverse=True)
+        if last_timestamp and last_timestamp[0] in zerk_specific: 
             last_stance = Spell.BerserkerStance
-        elif battle_specific:
+        elif last_timestamp and last_timestamp[0] in battle_specific:
             last_stance = Spell.BattleStance
         else:
             last_stance = Spell.DefensiveStance
-            
     windows[last_stance].append((time, 0))
     return {**windows, 'boss_name': data.get('boss_name')}
 
 
-async def process_shapeshifts(data):
+async def process_shapeshifts(data, player_id):
     windows = {
         Spell.BearForm: [],
         Spell.CatForm: [],
         Spell.HumanoidForm: []
     }
-    events = [e for e in data.get('events') if e.get('type') != 'combatantinfo']
+    events = [e for e in data.get('events') if e.get('type') != 'combatantinfo' and e.get('sourceID') == player_id]
     if not events:
         return windows
     forms = [Spell.CatForm, Spell.BearForm]
