@@ -6,30 +6,23 @@ import os
 
 from scipy.stats import percentileofscore
 
+from .models.common import FuryDPSThreatResult, ThreatEvent
+
 class RedisClient:
 
     def __init__(self, *args, **kwargs):
         self.redis_host = os.getenv('CACHE_HOST') or '0.0.0.0'
-
-    async def get_report_results(self, report_id: str, character: str, db=0):
-        key = f'{report_id}:{character}*'
-        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
-        keys = await __redis.keys(key, encoding='utf-8')                                  
-        cached_data = [dict(await __redis.hgetall(key, encoding='utf-8')) for key in keys]
-        resp = {d.get('boss_name'): d for d in cached_data}
-        __redis.close()
-        return resp
-    
 
     async def save_warr_results(self, report_id: str, character: str, data):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=0))
         d = []
         for k, v in data.items():
             key = f'{report_id}:{character}:{k}'
-            v['t1_set'] = str(v.get('t1_set'))
-            v['gear'] = ujson.dumps(v.get('gear'))
-            v['dps_threat'] = ujson.dumps(v.get('dps_threat'))
-            r = await __redis.hmset_dict(key, v)
+            resp = dict(v)
+            resp['t1_set'] = str(v.get('t1_set'))
+            resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
+            resp['gear'] = ujson.dumps(v.get('gear'))
+            r = await __redis.hmset_dict(key, resp)
             d.append(r)
         __redis.close()
         return d
@@ -40,9 +33,10 @@ class RedisClient:
         d = []
         for k, v in data.items():
             key = f'{report_id}:{character}:{k}'
-            v['gear'] = ujson.dumps(v.get('gear'))
-            v['dps_threat'] = ujson.dumps(v.get('dps_threat'))
-            r = await __redis.hmset_dict(key, v)
+            resp = dict(v)
+            resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
+            resp['gear'] = ujson.dumps(v.get('gear'))
+            r = await __redis.hmset_dict(key, resp)
             d.append(r)
         __redis.close()
         return d
@@ -51,7 +45,8 @@ class RedisClient:
         # DB 0 = Warrior parses
         # DB 1 = Druid parses
         if not boss_names:
-            matches = await self.get_report_results(report_id, character, db=db)
+            matches = await self.get_events(report_id, character)
+            matches = {d.get('boss_name'): d for d in matches}
             return {'matches': matches, 'missing': []}
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
                                                             
@@ -120,7 +115,7 @@ class RedisClient:
         }.get(db, 2)
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         data = await __redis.hgetall(boss_name, encoding='utf-8')
-        ranks = ujson.loads(data.get('ranks'))   
+        ranks = ujson.loads(data.get('ranks') or '{}')   
         for key, threat in ranks.items():
             data = await self.get_by_key(key, data_db)
             ranks[key] = {
@@ -145,19 +140,32 @@ class RedisClient:
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=4))
         for k, v in all_events.items():
             key = f'{report_id}:{player_name}:{k}'
-            await __redis.hmset_dict(key, v)
+            cache_result = v.dict()
+            cache_result['dps_threat'] = ujson.dumps([d.dict() for d in v.dps_threat])
+            cache_result['events'] = ujson.dumps([d.dict() for d in v.events])
+            cache_result['gear'] = ujson.dumps([dict(d) for d in v.gear])
+
+            await __redis.hmset_dict(key, cache_result)
         __redis.close()
 
     async def get_events(self, report_id, player_name, bosses=None):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=4))
         d = []
-        keys = [f'{report_id}:{player_name}:{boss}' for boss in bosses]
         if not bosses:
             key = f'{report_id}:{player_name}:*'
             keys = await __redis.keys(key, encoding='utf-8')
+        else:
+            keys = [f'{report_id}:{player_name}:{boss}' for boss in bosses]
 
         for key in keys:
             r = await __redis.hgetall(key, encoding='utf-8')
+            if not r:
+                continue
+
+            r['dps_threat'] = [FuryDPSThreatResult(int(r['total_time']), **f) for f in ujson.loads(r['dps_threat'])]
+            r['events'] = [ThreatEvent(**e) for e in ujson.loads(r['events'])]
+            r['gear'] = [i for i in ujson.loads(r['gear'])]
             d.append(r)
         __redis.close()
+        
         return d

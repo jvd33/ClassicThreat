@@ -53,7 +53,6 @@ class WCLService:
             'end': req.end_time,
             'sourceid': req.player_id
         }
-
             
         resp = await self._send_scoped_request('GET', url, params=params)
         if not resp:

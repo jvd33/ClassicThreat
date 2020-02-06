@@ -16,8 +16,7 @@ DAMAGE = [
 class WCLDataRequest(BaseModel):
     url: AnyUrl
     player_name: str
-    defiance_points: int = None
-    feral_instinct_points: int = None
+    talent_pts: int = None
     bosses: List[str] = []
     friendlies_in_combat: int = 1
     enemies_in_combat: int = 1
@@ -30,8 +29,7 @@ class WCLDataRequest(BaseModel):
         return v
 
 
-    @validator('defiance_points', allow_reuse=True)
-    @validator('feral_instinct_points', allow_reuse=True)
+    @validator('talent_pts', allow_reuse=True)
     def check_5pt_talent(cls, v):
         assert v in [0, 1, 2, 3, 4, 5], "0 through 5."
         return v
@@ -58,8 +56,8 @@ class FuryDPSThreatResult(BaseModel):
     hs_casts: int
     execute_dmg: int
     total_dmg: int
-    execute_percent: float = None
-    hs_cpm: float = None
+    execute_percent: float = 0.0
+    hs_cpm: float = 0.0
 
 
 class BossActivityRequest(BaseModel):
@@ -84,15 +82,16 @@ class ThreatEvent(BaseModel):
     timestamp: int
     enemies_in_combat: int = 1
     friendlies_in_combat: int = 1
-    hit_type: int = None
+    hit_type: int = -1
     amount: float = 0
-    class_modifier: int = None
+    class_modifier: int = 0
 
     def calculate_threat(self, player_class, talent_pts=5, t1=False):
         mods = {
             'warrior': self.__warr_modifiers,
             'druid': self.__druid_modifiers,
         }.get(player_class.casefold(), None)
+
         raw = 0
         if not mods:    
             raise KeyError('Invalid Class Specified')
@@ -195,8 +194,8 @@ class FightLog(BaseModel):
     dps_threat: List = list()
     events: List = list()
     realm: str
-    defiance_points: int = None
-    feral_instinct_points: int = None
+    defiance_points: int = 0
+    feral_instinct_points: int = 0
     friendlies_in_combat: int = 1
     gear: List = None
 
@@ -231,9 +230,9 @@ class FightLog(BaseModel):
             dps_threat=[FuryDPSThreatResult(total_time, **d) for d in dps_threat if d.get('player_name') != player_name]
         )
         if player_class == 'Druid':
-            f.defiance_points = None
+            f.defiance_points = 0
         elif player_class == 'Warrior':
-            f.feral_instinct_points = None
+            f.feral_instinct_points = 0
 
         modifier_event = [i for i in modifier_events if i.get('boss_name') == boss_name]
         for event in resp:
@@ -242,11 +241,11 @@ class FightLog(BaseModel):
             e = ThreatEvent(
                 name=event.get('ability', {}).get('name', ''),
                 guid=event.get('ability', {}).get('guid', 0),
-                event_type=event.get('type'),
-                timestamp=event.get('timestamp'),
-                hit_type=event.get('hitType', None),
+                event_type=event.get('type', 0),
+                timestamp=event.get('timestamp', 0),
+                hit_type=event.get('hitType', -1),
                 amount=event.get('amount') or (event.get('resourceChange', 0) - event.get('waste', 0)) or 0,
-                class_modifier=FightLog._get_event_modifier(modifier_event, event, player_class),
+                class_modifier=FightLog._get_event_modifier(modifier_event, event, player_class) or 0,
                 enemies_in_combat=1
             )
             f.events.append(e)

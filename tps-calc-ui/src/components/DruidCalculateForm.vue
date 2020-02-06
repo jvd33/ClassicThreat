@@ -43,7 +43,7 @@
 
       <q-select
         filled
-        v-model="feral_instinct_points"
+        v-model="talent_pts"
         label="Points in Feral Instinct"
         :options="options"
         lazy-rules
@@ -133,7 +133,7 @@ export default {
       return {
           player_name: null,
           url: null,
-          feral_instinct_points: 5,
+          talent_pts: 5,
           friendlies_in_combat: 1,
           bosses: [],
           t1: false,
@@ -193,7 +193,7 @@ export default {
         .post(process.env.VUE_APP_API_URL + '/api/v1/calculate_druid', {
           url: this.url,
           player_name: this.player_name,
-          feral_instinct_points: this.feral_instinct_points,
+          talent_pts: this.talent_pts,
           bosses: this.bosses || [],
           friendlies_in_combat: this.friendlies_in_combat,
           t1_set: this.t1,

@@ -8,8 +8,7 @@ from starlette.responses import JSONResponse
 from .models.common import WCLDataRequest, FightLog
 from .models.warrior import WarriorThreatResult
 from .models.druid import DruidThreatResult
-from .tasks.warrior import get_log_data as warr_get_log_data
-from .tasks.druid import get_log_data as druid_get_log_data
+from .tasks import get_log_data
 from .constants import WarriorThreatValues, Threat, DruidThreatValues
 from docs.examples import CALC_RESP_EXAMPLE, THREAT_RESP_EXAMPLE, HEARTBEAT, CALC_RESP_DRUID_EXAMPLE
 from .cache import RedisClient
@@ -64,7 +63,7 @@ async def status():
 async def calculate_warrior(req: WCLDataRequest, background_tasks: BackgroundTasks, session=Depends(get_http_session), ):
     try:
         async with session:
-            results, _ = await warr_get_log_data(req, session=session)
+            results, _ = await get_log_data(req, session=session, player_class='warrior')
             background_tasks.add_task(_refresh_cache, 2)
             return JSONResponse(content=results, status_code=200)
     except ClientResponseError as cexc:
@@ -96,7 +95,7 @@ async def calculate_warrior(req: WCLDataRequest, background_tasks: BackgroundTas
 async def calculate_druid(req: WCLDataRequest, background_tasks: BackgroundTasks, session=Depends(get_http_session), ):
     try:
         async with session:
-            results, _ = await druid_get_log_data(req, session=session)
+            results, _ = await get_log_data(req, session=session, player_class='druid')
             background_tasks.add_task(_refresh_cache, 3)
             return JSONResponse(content=results, status_code=200)
     except ClientResponseError as cexc:
@@ -128,8 +127,7 @@ async def get_event_timeline(report_id, player_name, player_class, session=Depen
                 req = WCLDataRequest(
                     url=f'https://classic.warcraftlogs.com/reports/{report_id}',
                     player_name=player_name,
-                    defiance_points=5,
-                    feral_instinct_points=5,
+                    talent_pts=5,
                     bosses=boss or [],
                 )
                 _, events = await func(req, session=session)

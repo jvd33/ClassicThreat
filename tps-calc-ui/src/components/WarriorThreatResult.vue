@@ -41,7 +41,6 @@
               </q-list>
               <dps-threat-result :results="value" />
 
-
             <q-expansion-item flat default-closed class="bg-primary q-ma-lg col-8 col-sm-8 justify-center" icon="help" label="Raw Data">
                 <q-table
                   title=""

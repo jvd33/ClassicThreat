@@ -3,7 +3,7 @@ from typing import List, Any, Dict
 from collections import defaultdict
 
 from ..constants import WarriorThreatValues, Spell
-from .common import FightLog, ThreatEvent
+from .common import FightLog, ThreatEvent, FuryDPSThreatResult
 
 
 class WarriorThreatCalculationRequest(BaseModel):
@@ -174,3 +174,5 @@ class WarriorThreatResult(WarriorThreatCalculationRequest):
     total_threat_defiance: float = 0
     unmodified_tps: float = 0.0
     tps: float = 0.0
+    dps_threat: List[FuryDPSThreatResult] = list()
+    gear: List[dict] = list()
