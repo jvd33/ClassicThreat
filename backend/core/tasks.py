@@ -63,7 +63,6 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
                     await getattr(redis, save)(report_id, req.player_name, cache_resp)
         missing = cached_data.get('missing', [])
     except Exception as exc:
-        raise exc
         logger.error(f'Failed to read from cache {exc}')
     
     wcl = WCLService(session=session)
@@ -244,7 +243,7 @@ async def process_stance_state(data, player_id):
     ]
     defensive_specific = [
         e.get('timestamp') for e in events if e.get('ability').get('name') in 
-        ['Shield Wall', 'Shield Block', 'Revenge']
+        ['Shield Wall', 'Shield Block', 'Revenge', 'Taunt', 'Disarm']
     ]
     windows = {
         Spell.DefensiveStance: [],
