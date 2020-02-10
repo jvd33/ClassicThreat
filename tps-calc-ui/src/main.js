@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router'
+import VueAnalytics from 'vue-analytics'
 import App from './App.vue';
 import './quasar';
 import WarriorCalculateForm from './components/WarriorCalculateForm.vue';
@@ -48,6 +49,11 @@ const router = new VueRouter({
 
 Vue.config.productionTip = false;
 Vue.use(VueRouter);
+
+Vue.use(VueAnalytics, {
+  id: 'UA-77837329-2',
+  checkDuplicatedScript: true
+});
 
 Vue.component('warr-threat-result', WarriorThreatResult);
 Vue.component('dps-threat-result', DPSThreat);

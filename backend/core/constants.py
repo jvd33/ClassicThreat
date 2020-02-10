@@ -47,6 +47,31 @@ class Spell:
     Maul = 9881
     Growl = 6795
     HumanoidForm = -1
+    FrenziedRegen = 22896
+    Shred = 9830
+    Rake = 9904
+    FerociousBite = [31018, 22829]
+    Regrowth = [9858, 9857, 9856, 8941, 8940, 8939, 8938, 8936]
+    Rejuvenation = [25299, 774, 1058, 1430, 2090, 2091, 3627, 8910, 9839, 9840, 9841, ] 
+    HealingTouch = [5185, 5186, 5187, 5188, 5189, 6778, 8903, 9758, 9888, 9889, 25297]
+    Moonfire = [8921, 8924, 8925, 8926, 8927, 8928, 8929, 9833, 9834, 9835]
+    Wrath = [5176, 5177, 5178, 5179, 5180, 8905, 9912]
+    Starfire = [2912, 8949, 8950, 8951, 9875, 9876, 25298]
+    BerserkerRage = 18499
+    Intercept = 20617
+    Pummel = 6554
+    Recklessness = 1719
+    Whirlwind = 1680
+    Overpower = 11585
+    Charge = 11578
+    Retaliation = 20230
+    ShieldBlock = 2565
+    ShieldWall = 871
+    Taunt = 355
+            
+
+
+    
 
 
 class WarriorThreatValues:

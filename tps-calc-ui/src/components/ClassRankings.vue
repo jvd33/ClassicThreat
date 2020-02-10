@@ -82,7 +82,7 @@ export default {
       return `https://classic.warcraftlogs.com/reports/${row.report}#fight=${row.boss_id}`
     },
     getTitle() {
-      return `${this.player_class} Rankings - ${this.boss}`
+      return `Top 500 ${this.player_class} Rankings - ${this.boss}`
     },
     getData() {
       if (this.boss_cache[this.player_class][this.boss] !== undefined) {

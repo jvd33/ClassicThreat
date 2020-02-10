@@ -95,6 +95,10 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
     player_info = player_info[0]
     player_name = player_info.get('name')
     player_cls = player_info.get('type')
+    if player_cls.casefold() != player_class.casefold():
+        raise HTTPException(status_code=400,
+                    detail=f'Bad Request: Player {req.player_name} was found in the linked log, \
+                    but is class {player_cls}. Use the correct calculator.')
     realm = player_info.get('server')
     del player_info['fights']
     
@@ -146,10 +150,14 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             continue
         boss = {
             'events': [],
-            'total_time': 0,
-            'boss_name': '',
-            'start_time': 0,
+            'total_time': fight.get('total_time'),
+            'boss_name': fight.get('boss_name'),
+            'start_time': fight.get('start_time'),
             'end_time': 0,
+            'dps_threat': [],
+            'player_gear': [],
+            'boss_id': fight.get('boss_id'),
+            
         }
         dps_results = [x for x in dps if x[0] and x[0].get('boss_name') == fight.get('boss_name')]
         for b in dps_results:
@@ -157,10 +165,11 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
                 if d.get('gear'):
                     del d['gear']
 
+        boss['dps_threat'] = dps_results[0]
         player_gear = []
         for data in fight.get('events'):
             if data.get('type') == 'combatantinfo':
-                player_gear = data.get('gear')
+                boss['gear'] = data.get('gear')
                 continue 
 
             elif data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize', 'refreshdebuff']:
@@ -173,19 +182,13 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
                     del item['quality']
                 except KeyError:
                     continue
+            
             boss.update(**{
                 'events': [data, *boss['events']],
-                'total_time': fight.get('total_time'),
-                'boss_name': fight.get('boss_name'),
-                'start_time': fight.get('start_time'),
                 'end_time': data.get('end_time'),
-                'dps_threat': dps_results[0],
-                'boss_id': fight.get('boss_id'),
-                'gear': player_gear,
-                
             })
         all_events.append(boss)
- 
+    
     all_events = {
         e.get('boss_name'): {
             'events': e.get('events'),
@@ -197,7 +200,6 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             'gear': e.get('gear')
         } for e in all_events
     }
-
     all_events = {
         k: FightLog.from_response(
             resp=v.get('events'), 
@@ -239,16 +241,16 @@ async def process_stance_state(data, player_id):
         return windows
     entries = [e for e in events if e.get('ability').get('guid') in stances]
     zerk_specific = [
-        e.get('timestamp') for e in events if e.get('ability').get('name') in 
-        ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']
+        e.get('timestamp') for e in events if e.get('ability').get('guid') in 
+        [Spell.BerserkerRage, Spell.Intercept, Spell.Pummel, Spell.Recklessness, Spell.Whirlwind]
     ]
     battle_specific = [
-        e.get('timestamp') for e in events if e.get('ability').get('name') in 
-        ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunder Clap']
+        e.get('timestamp') for e in events if e.get('ability').get('guid') in 
+        [Spell.Overpower, Spell.Charge, Spell.Retaliation, Spell.MockingBlow, Spell.ThunderClap]
     ]
     defensive_specific = [
-        e.get('timestamp') for e in events if e.get('ability').get('name') in 
-        ['Shield Wall', 'Shield Block', 'Revenge', 'Taunt', 'Disarm']
+        e.get('timestamp') for e in events if e.get('ability').get('guid') in 
+        [Spell.ShieldWall, Spell.ShieldBlock, Spell.Revenge5, Spell.Revenge6, Spell.Taunt, Spell.Disarm,]
     ]
     time = data.get('start_time')
     last_stance = None
@@ -282,19 +284,19 @@ async def process_shapeshifts(data, player_id):
         return windows
     forms = [Spell.CatForm, Spell.BearForm]
     entries = [e for e in events if e.get('ability').get('guid') in forms]
-
+    
 
     bear_specific = [
-        e for e in events if e.get('ability').get('name') in 
-        ['Swipe', 'Maul', 'Demoralizing Roar', 'Frenzied Regeneration',]
+        e for e in events if e.get('ability').get('guid') in 
+        [Spell.Swipe, Spell.Maul, Spell.DemoRoar, Spell.FrenziedRegen,]
     ]
     cat_specific = [
-        e for e in events if e.get('ability').get('name') in 
-        ['Shred', 'Rake', 'Cower', 'Ferocious Bite']
+        e for e in events if e.get('ability').get('guid') in 
+        [Spell.Shred, Spell.Rake, *Spell.FerociousBite, Spell.Cower]
     ]
     caster_specific = [
-        e for e in events if e.get('ability').get('name') in 
-        ['Regrowth', 'Rejuvenation', 'Faerie Fire', 'Healing Touch']
+        e for e in events if e.get('ability').get('guid') in 
+        [*Spell.Regrowth, *Spell.Rejuvenation, *Spell.HealingTouch, *Spell.Moonfire, *Spell.Starfire, *Spell.Wrath,]
     ]
 
     time = data.get('start_time')

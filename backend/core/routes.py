@@ -109,12 +109,6 @@ async def calculate_druid(req: WCLDataRequest, background_tasks: BackgroundTasks
 
                 )
 async def get_event_timeline(report_id, player_name, player_class, session=Depends(get_http_session), boss: List[str]=Query(None)):
-    func = {
-        'druid': druid_get_log_data,
-        'warrior': warr_get_log_data
-    }.get(player_class.casefold(), None)
-    if not func:
-        return JSONResponse(content={'detail': f'Bad Player Class, {player_class} is not supported', 'code': 500}, status_code=500)
     try:
         events = None
         r = RedisClient()
@@ -130,7 +124,7 @@ async def get_event_timeline(report_id, player_name, player_class, session=Depen
                     talent_pts=5,
                     bosses=boss or [],
                 )
-                _, events = await func(req, session=session)
+                _, events = await get_log_data(req, session=session, player_class=player_class.casefold())
 
         return JSONResponse(content={k: e.dict() for k, e in events.items()}, status_code=200)
 
@@ -191,4 +185,4 @@ async def get_boss_rankings(boss, player_class):
     r = RedisClient()
     ranks = await r.get_encounter_rankings(boss, db=db)
     ranks = [{**v[1], **{'rank': i + 1}} for i, v in enumerate(ranks.items())]
-    return JSONResponse(content=ranks, status_code=200)
+    return JSONResponse(content=ranks[:500], status_code=200)

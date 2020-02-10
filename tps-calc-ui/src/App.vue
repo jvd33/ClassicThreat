@@ -90,8 +90,8 @@
     </q-page-container>
   </q-layout>
 </template>
-
 <script>
+
 import defiance from './assets/defiance.png';
 import bt from './assets/bloodthirst.png';
 import shield_slam from './assets/shield_slam.png';

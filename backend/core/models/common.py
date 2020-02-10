@@ -139,8 +139,6 @@ class ThreatEvent(BaseModel):
             raw = 0
 
         if self.event_type != 'energize':
-            if self.guid == Spell.ShieldSlam:
-                print(self.class_modifier)
             return mods.get(self.class_modifier)(raw, talent_pts), raw
 
         return raw, raw
@@ -225,7 +223,6 @@ class FightLog(BaseModel):
                       t1=False,
                       talent_pts=5,
                       friendlies=1):
-        
         f = FightLog(
             boss_name=boss_name,
             player_name=player_name,

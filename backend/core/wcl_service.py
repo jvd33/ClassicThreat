@@ -23,6 +23,7 @@ class WCLService:
                                    url: str,
                                    data: any = None,
                                    params: any = None,
+                                   translate=True,
                                    **kwargs):
 
         __request = {'GET': self.session.get, 'POST': self.session.post}.get(method, None)
@@ -31,9 +32,10 @@ class WCLService:
         headers = {'content-type': 'application/json', 'accept-encoding': 'gzip'}
         api_key = random.choice(self.wcl_keys)
         query = {
-            'translate': 'true',   # Turns out WCL breaks if you pass it boolean True LOL
             'api_key': api_key
-        } if not params else {**params, 'translate': 'true', 'api_key': api_key}
+        } if not params else {**params, 'api_key': api_key}
+        if translate:
+            query.update({'translate': 'true'})
 
         logger.error(f'{method}: {url}, {params}, {data}')
         async with await __request(url, params=query, json=data or '{}', headers=headers) as resp:
@@ -43,6 +45,9 @@ class WCLService:
     async def get_full_report(self, report_id):
         url = self.base_url + f'report/fights/{report_id}'
         resp = await self._send_scoped_request('GET', url)
+        data = ujson.loads(resp)
+        if not data.get('fights'):
+            resp = await self._send_scoped_request('GET', url, translate=False)
         return ujson.loads(resp)
 
     async def get_fight_details(self, req: BossActivityRequest):
@@ -56,7 +61,7 @@ class WCLService:
             
         resp = await self._send_scoped_request('GET', url, params=params)
         if not resp:
-            return {}
+            resp = await self._send_scoped_request('GET', url, params=params, translate=False) or {}
         ret = ujson.loads(resp)
         ret.update({
             'boss_name': req.boss_name, 
@@ -77,6 +82,8 @@ class WCLService:
         }
 
         resp = await self._send_scoped_request('GET', url, params=params)
+        if not resp:
+            resp = await self._send_scoped_request('GET', url, params=params, translate=False)
         ret = ujson.loads(resp)
         ret.update({'event': 'stance', 'boss_name': req.boss_name, 'boss_id': req.encounter, 'start_time': req.start_time})
         return ret
@@ -92,7 +99,16 @@ class WCLService:
 
         damage_resp = await self._send_scoped_request('GET', url, params=params)
         casts_resp = await self._send_scoped_request('GET', casts, params=params)
-        damage, casts = ujson.loads(damage_resp), ujson.loads(casts_resp)
+
+        try:
+            damage = ujson.loads(damage_resp)
+            casts = ujson.loads(casts_resp)
+        except Exception as e:
+            damage_resp = await self._send_scoped_request('GET', url, params=params, translate=False)
+            casts_resp = await self._send_scoped_request('GET', casts, params=params, translate=False)
+            damage = ujson.loads(damage_resp)
+            casts = ujson.loads(casts_resp)
+
         data = []
         from .utils import flatten
         for player in damage.get('entries'):
