@@ -29,7 +29,7 @@ class RedisClient:
 
 
     async def save_druid_results(self, report_id: str, character: str, data):
-        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=0))
+        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=1))
         d = []
         for k, v in data.items():
             key = f'{report_id}:{character}:{k}'
