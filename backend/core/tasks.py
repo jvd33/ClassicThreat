@@ -228,6 +228,11 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
 
 
 async def process_stance_state(data, player_id):
+    windows = {
+        Spell.DefensiveStance: [],
+        Spell.BattleStance: [],
+        Spell.BerserkerStance: []
+    }
     stances = [Spell.DefensiveStance, Spell.BerserkerStance, Spell.BattleStance]
     events = [e for e in data.get('events') if e.get('type') != 'combatantinfo' and e.get('sourceID') == player_id]
     if not events:
@@ -245,11 +250,6 @@ async def process_stance_state(data, player_id):
         e.get('timestamp') for e in events if e.get('ability').get('name') in 
         ['Shield Wall', 'Shield Block', 'Revenge', 'Taunt', 'Disarm']
     ]
-    windows = {
-        Spell.DefensiveStance: [],
-        Spell.BattleStance: [],
-        Spell.BerserkerStance: []
-    }
     time = data.get('start_time')
     last_stance = None
     for e in entries:
