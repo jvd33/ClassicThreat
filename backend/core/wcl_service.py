@@ -31,8 +31,9 @@ class WCLService:
         headers = {'content-type': 'application/json', 'accept-encoding': 'gzip'}
         api_key = random.choice(self.wcl_keys)
         query = {
+            'translate': 'true',   # Turns out WCL breaks if you pass it boolean True LOL
             'api_key': api_key
-        } if not params else {**params, 'api_key': api_key}
+        } if not params else {**params, 'translate': 'true', 'api_key': api_key}
 
         logger.error(f'{method}: {url}, {params}, {data}')
         async with await __request(url, params=query, json=data or '{}', headers=headers) as resp:
