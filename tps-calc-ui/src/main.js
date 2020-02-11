@@ -45,7 +45,12 @@ const routes = [
     path: '/rankings/druid',
     component: ClassRankings,
     props: {player_class: 'Druid'},
-  }
+  },
+  {
+    path: '/rankings/paladin',
+    component: ClassRankings,
+    props: {player_class: 'Paladin'},
+  },
 ];
 
 const router = new VueRouter({
