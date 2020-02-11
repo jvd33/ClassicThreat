@@ -11,6 +11,7 @@ from collections import defaultdict
 from .models.common import WCLDataRequest, BossActivityRequest, FightLog
 from .models.warrior import WarriorThreatCalculationRequest, WarriorThreatResult
 from .models.druid import DruidThreatCalculationRequest, DruidThreatResult
+from .models.paladin import PaladinThreatCalculationRequest, PaladinThreatResult
 from .constants import Spell
 from .wcl_service import WCLService
 from .cache import RedisClient
@@ -32,11 +33,17 @@ def __druid_recalc_opts(logs, req):
         log['friendlies_in_combat'] = req.friendlies_in_combat
         yield DruidThreatCalculationRequest.from_event_log(FightLog(**log))
 
+def __paladin_recalc_opts(logs, req):
+    for log in logs:
+        log['imp_rf_points'] = req.talent_pts
+        log['friendlies_in_combat'] = req.friendlies_in_combat
+        yield PaladinThreatCalculationRequest.from_event_log(FightLog(**log))
 
 def get_class_opts(player_class):
     return {
-        'warrior': [WarriorThreatCalculationRequest, __warr_recalc_opts, 'save_warr_results', 2],
-        'druid': [DruidThreatCalculationRequest, __druid_recalc_opts, 'save_druid_results', 3],
+        'warrior': [0, WarriorThreatCalculationRequest, __warr_recalc_opts, 'save_warr_results', 2],
+        'druid': [1, DruidThreatCalculationRequest, __druid_recalc_opts, 'save_druid_results', 3],
+        'paladin': [5, PaladinThreatCalculationRequest, __paladin_recalc_opts, 'save_paladin_results', 6]
     }.get(player_class, None)
 
 async def get_log_data(req: WCLDataRequest, session, player_class):
@@ -46,11 +53,11 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
     report_id = req.report_id
     missing = req.bosses
     cache_resp = {}
-    calc_model, recalc_fn, save, rank_db = get_class_opts(player_class)    
+    data_db, calc_model, recalc_fn, save, rank_db = get_class_opts(player_class)    
 
     try:
         redis = RedisClient()
-        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, db=0) or {}
+        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, db=data_db) or {}
         if cached_data.get('matches'):
             cache_resp = {}
             for k in cached_data.get('matches'):
@@ -136,7 +143,14 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
  
 
 async def get_events(player_name, player_class, realm, reqs: List[BossActivityRequest], talent_pts, friendlies, session, t1=False):
-    modifier_fn = process_shapeshifts if player_class.casefold() == 'druid' else process_stance_state
+    modifier_fn = {
+        'druid': process_shapeshifts,
+        'warrior': process_stance_state,
+        'paladin': dummy_process_paladin_state 
+    }.get(player_class.casefold(), None)
+    if not modifier_fn:
+        raise HTTPException(status_code=400,
+                detail=f'Bad Request: {player_class} is invalid.')
     if not reqs:
         return []
     wcl = WCLService(session=session)
@@ -172,7 +186,8 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
                 boss['gear'] = data.get('gear')
                 continue 
 
-            elif data.get('sourceID') != fight.get('player_id') or data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize', 'refreshdebuff']:
+            elif data.get('sourceID') != fight.get('player_id') or \
+                        data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize', 'refreshdebuff', 'applybuff', 'refreshbuff']:
                 continue
                 
             for item in player_gear:
@@ -228,6 +243,24 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
 
     return all_events
 
+async def dummy_process_paladin_state(data, player_id):
+    windows = {
+        Spell.RighteousFury: [],
+    }
+    events = [e for e in data.get('events') if e.get('type') != 'combatantinfo' and e.get('sourceID') == player_id]
+    if not events:
+        return windows
+    entries = [e for e in events if e.get('ability').get('guid') == Spell.RighteousFury]
+
+    time = data.get('start_time')
+    for e in entries:
+        if e.get('type') == 'removebuff':
+            windows[e.get('ability').get('guid')].append((time, e.get('timestamp')))
+        if e.get('type') == 'applybuff':
+            time = e.get('timestamp')
+    
+    windows[Spell.RighteousFury].append((time, 0))
+    return {**windows, 'boss_name': data.get('boss_name')}
 
 async def process_stance_state(data, player_id):
     windows = {

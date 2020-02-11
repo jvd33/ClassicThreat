@@ -135,6 +135,22 @@ import cat from './assets/cat.png';
 import bear from './assets/bear.png';
 import ff from './assets/ff.png';
 import fi from './assets/fi.png';
+import freedom from './assets/freedom.png';
+import holyshield from './assets/holyshield.png';
+import kings from './assets/kings.png';
+import might from './assets/might.png';
+import rf from './assets/rf.png';
+import sac from './assets/sac.png';
+import salv from './assets/salv.png';
+import sealofwisdom from './assets/sealofwisdom.png';
+import sealoflight from './assets/sealoflight.png';
+import bop from './assets/bop.png';
+import righteousness from './assets/righteousness.png';
+import cleanse from './assets/cleanse.png';
+import light from './assets/light.png';
+import sanctuary from './assets/sanctuary.png';
+import holylight from './assets/holylight.png';
+import manapot from './assets/manapot.png';
 
 export default {
   data() {
@@ -185,6 +201,22 @@ export default {
           'app:cower': 'img:' + cower,
           'app:demoRoar': 'img:' + demoRoar,
           'app:fi': 'img:' + fi,
+          'app:bop': 'img:' + bop,
+          'app:cleanse': 'img:' + cleanse,
+          'app:freedom': 'img:' + freedom,
+          'app:holyshield': 'img:' + holyshield,
+          'app:kings': 'img:' + kings,
+          'app:might': 'img:' + might,
+          'app:rf': 'img:' + rf,
+          'app:righteousness': 'img:' + righteousness,
+          'app:sac': 'img:' + sac,
+          'app:salv': 'img:' + salv,
+          'app:sealoflight': 'img:' + sealoflight,
+          'app:sealofwisdom': 'img:' + sealofwisdom,
+          'app:light': 'img:' + light,
+          'app:sanctuary': 'img:' + sanctuary,
+          'app:holylight': 'img:' + holylight,
+          'app:manapot': 'img:' + manapot,
         },
 
         calculators: [
@@ -199,6 +231,12 @@ export default {
             label: 'Druid',
             separator: true,
             path: '/druid'
+          },
+          {
+            icon: 'app:paladin',
+            label: 'Paladin',
+            separator: true,
+            path: '/paladin'
           },
         ],
         rankings: [
@@ -215,6 +253,13 @@ export default {
             separator: true,
             path: '/rankings/druid',
             class: 'Druid',
+          },
+          {
+            icon: 'app:paladin',
+            label: 'Paladin',
+            separator: true,
+            path: '/rankings/paladin',
+            class: 'Paladin',
           },
         ],
 

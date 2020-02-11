@@ -41,9 +41,24 @@ class RedisClient:
         __redis.close()
         return d
 
+
+    async def save_paladin_results(self, report_id: str, character: str, data):
+        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=5))
+        d = []
+        for k, v in data.items():
+            key = f'{report_id}:{character}:{k}'
+            resp = dict(v)
+            resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
+            resp['gear'] = ujson.dumps(v.get('gear'))
+            r = await __redis.hmset_dict(key, resp)
+            d.append(r)
+        __redis.close()
+        return d
+
     async def check_cache(self, report_id: str, character: str, boss_names, db=0):
         # DB 0 = Warrior parses
         # DB 1 = Druid parses
+        # DB 5 = Paladin parses
         if not boss_names:
             matches = await self.get_events(report_id, character)
             matches = {d.get('boss_name'): d for d in matches}
@@ -60,6 +75,7 @@ class RedisClient:
     async def refresh_rank_data(self, db=2):
         # DB 2 = Warrior ranks
         # DB 3 = Druid ranks
+        # DB 6 = Paladin ranks
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         last_updated = await __redis.get('last_updated', encoding='utf-8')
         if last_updated and (datetime.datetime.now() - datetime.datetime.fromtimestamp(int(last_updated))).total_seconds() <= 60: 
@@ -111,7 +127,8 @@ class RedisClient:
     async def get_encounter_rankings(self, boss_name, db=2):
         data_db = {
             2: 0,
-            3: 1
+            3: 1,
+            6: 5,
         }.get(db, 2)
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         data = await __redis.hgetall(boss_name, encoding='utf-8')

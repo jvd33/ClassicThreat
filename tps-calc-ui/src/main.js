@@ -7,6 +7,8 @@ import WarriorCalculateForm from './components/WarriorCalculateForm.vue';
 import DruidCalculateForm from './components/DruidCalculateForm.vue';
 import WarriorThreatResult from "./components/WarriorThreatResult";
 import DruidThreatResult from "./components/DruidThreatResult";
+import PaladinCalculateForm from './components/PaladinCalculateForm.vue';
+import PaladinThreatResult from "./components/PaladinThreatResult";
 import DPSThreat from "./components/DPSThreatComponent.vue";
 import About from './components/About.vue';
 import CalculationDetails from './components/CalculationDetails.vue';
@@ -21,6 +23,10 @@ const routes = [
   {
     path: '/druid',
     component: DruidCalculateForm,
+  },
+  {
+    path: '/paladin',
+    component: PaladinCalculateForm,
   },
   {
     path: '/details',
@@ -57,6 +63,7 @@ Vue.use(VueGtag, {
 Vue.component('warr-threat-result', WarriorThreatResult);
 Vue.component('dps-threat-result', DPSThreat);
 Vue.component('druid-threat-result', DruidThreatResult);
+Vue.component('paladin-threat-result', PaladinThreatResult);
 new Vue({
   router,
   render: h => h(App),
