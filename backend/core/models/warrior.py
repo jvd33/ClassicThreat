@@ -143,18 +143,18 @@ class WarriorThreatCalculationRequest(BaseModel):
 
         return {
             'damage': self._process_damage,
-            'cast': self._process_cast,
+            'cast': self.__process_event,
             'energize': self._process_rage,
             'heal': self._process_healing,
-            'applydebuff': self._process_debuff,
-            'refreshdebuff': self._process_debuff
+            'applydebuff': self.__process_event,
+            'refreshdebuff': self.__process_event
         }.get(event.event_type, __dummy)(event)
 
     def _process_damage(self, event: ThreatEvent):
         self.total_damage += event.amount
         return event.calculate_threat(self.player_class, self.defiance_points, self.t1_set)
 
-    def _process_cast(self, event: ThreatEvent):
+    def __process_event(self, event: ThreatEvent):
         return event.calculate_threat(self.player_class, self.defiance_points, self.t1_set)
 
     def _process_rage(self, event: ThreatEvent):
@@ -163,9 +163,6 @@ class WarriorThreatCalculationRequest(BaseModel):
 
     def _process_healing(self, event: ThreatEvent):
         self.hp_gains += event.amount
-        return event.calculate_threat(self.player_class, self.defiance_points, self.t1_set)
-
-    def _process_debuff(self, event: ThreatEvent):
         return event.calculate_threat(self.player_class, self.defiance_points, self.t1_set)
 
 

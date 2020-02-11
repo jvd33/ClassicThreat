@@ -4,7 +4,7 @@ from collections import defaultdict
 from urllib.parse import urlparse
 
 from ..utils import flatten
-from ..constants import WarriorThreatValues, Spell, DruidThreatValues
+from ..constants import WarriorThreatValues, Spell, DruidThreatValues, PaladinThreatValues
 
 FORMS = [Spell.BearForm, Spell.CatForm, Spell.BerserkerStance, Spell.BattleStance, Spell.DefensiveStance]
 DAMAGE = [
@@ -13,6 +13,27 @@ DAMAGE = [
     Spell.Hamstring, Spell.ThunderClap,
 ]
 
+GBLESSINGS = [
+    Spell.GreaterBlessingOfKings, Spell.GreaterBlessingOfLight, Spell.GreaterBlessingOfMight1, 
+    Spell.GreaterBlessingOfMight2, Spell.GreaterBlessingOfSalvation, Spell.GreaterBlessingOfSanctuary
+]
+
+BLESSINGS = [
+    Spell.BlessingOfFreedom, Spell.BlessingOfKings, Spell.BlessingOfLight1, Spell.BlessingOfLight2, 
+    Spell.BlessingOfLight3, Spell.BlessingOfMight1, Spell.BlessingOfMight2, Spell.BlessingOfMight3,
+    Spell.BlessingOfMight4, Spell.BlessingOfMight5, Spell.BlessingOfMight6, Spell.BlessingOfMight7,
+    Spell.BlessingOfProtection1, Spell.BlessingOfProtection2, Spell.BlessingOfProtection3, 
+    Spell.BlessingOfSacrifice1, Spell.BlessingOfSacrifice2, Spell.BlessingOfSalvation,
+    Spell.BlessingOfSanctuary1, Spell.BlessingOfSanctuary2, Spell.BlessingOfSanctuary3,
+    Spell.BlessingOfSanctuary4, 
+]
+
+PALADIN = [
+    *GBLESSINGS, *BLESSINGS, *Spell.HolyLight, *Spell.FlashOfLight, *Spell.LayOnHands, Spell.Cleanse,
+    *Spell.SealOfLight, *Spell.HolyShock, Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3, 
+    *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom, *Spell.JudgementOfRighteousness,
+    *Spell.JudgementOfLight, *Spell.JudgementOfWisdom, *Spell.RetributionAura, *Spell.Consecration,
+]
 zerk_specific = ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']
     
 battle_specific = ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunder Clap']
@@ -99,8 +120,8 @@ class ThreatEvent(BaseModel):
         mods = {
             'warrior': self.__warr_modifiers,
             'druid': self.__druid_modifiers,
+            'paladin': self.__paladin_modifiers,
         }.get(player_class.casefold(), None)
-
         raw = 0
         if not mods:    
             raise KeyError('Invalid Class Specified')
@@ -112,9 +133,10 @@ class ThreatEvent(BaseModel):
                 raw = mods.get(self.guid, mods.get('noop'))(self.friendlies_in_combat, self.enemies_in_combat)
             elif self.guid == Spell.SunderArmor:
                 raw = mods.get(self.guid, mods.get('noop'))(t1)
-            elif self.guid not in [*DAMAGE, *FORMS]:
+            elif self.guid in [*GBLESSINGS, *BLESSINGS]:
+                raw = 0
+            elif self.guid not in [*DAMAGE, *FORMS, Spell.RighteousFury]:
                 raw = mods.get(self.guid, mods.get('noop'))
-            
 
         elif self.event_type == 'damage':
             if self.guid in [Spell.Maul, Spell.Swipe]:
@@ -123,22 +145,37 @@ class ThreatEvent(BaseModel):
                 raw = mods.get(self.guid, mods.get('noop')) + self.amount
             elif self.guid == Spell.SunderArmor and self.hit_type in [7, 8]:
                 raw = mods.get(self.guid, mods.get('noop'))(t1) * -1
+            elif self.guid in [Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3]:
+                raw = self.amount * 1.2
             else:
                 raw = self.amount
 
         elif self.event_type == 'heal':
-            raw = mods.get('heal')(self.amount, self.enemies_in_combat)
+            if self.guid in [*Spell.HolyLight, *Spell.HolyShock, *Spell.FlashOfLight, *Spell.LayOnHands]:
+                raw = mods.get('paladinspellhealing')(self.amount, self.enemies_in_combat)
+            else:
+                raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
         elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS]:
             raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'energize':
-            raw = mods.get(Spell.RageGain)(self.amount)
+            if player_class.casefold() == 'paladin':
+                if self.guid in PALADIN:
+                    raw = mods.get('judgementenergize')(self.amount)
+                else: 
+                    raw = mods.get('mana')(self.amount)
+            else:
+                raw = mods.get(Spell.RageGain)(self.amount)
+
+        elif self.event_type in ['applybuff', 'refreshbuff']:
+            if self.guid in [*GBLESSINGS, *BLESSINGS]:
+                raw = mods.get(self.guid)(self.enemies_in_combat)
 
         else:
             raw = 0
 
-        if self.event_type != 'energize':
+        if self.event_type != 'energize' or player_class.casefold() == 'paladin':
             return mods.get(self.class_modifier)(raw, talent_pts), raw
 
         return raw, raw
@@ -192,6 +229,52 @@ class ThreatEvent(BaseModel):
             'noop': 0
         }
 
+    @property
+    def __paladin_modifiers(self):
+        __t = PaladinThreatValues.vals()
+        return {
+            Spell.GiftOfArthas: __t.GiftOfArthas,
+            'mana': lambda x, __t=__t: x * __t.ManaGain,
+            'paladinspellhealing': lambda x, n, __t=__t: x * __t.PaladinSpellHealing,
+            'judgementenergize': lambda x, __t=__t: x * __t.Healing,
+            'heal': lambda x, n, __t=__t: x * __t.Healing / n, # Split
+            Spell.Cleanse: __t.Cleanse,
+            
+            Spell.HolyShield1: __t.HolyShield1,
+            Spell.HolyShield2: __t.HolyShield2,
+            Spell.HolyShield3: __t.HolyShield3,
+            Spell.RighteousFury: lambda x, d, __t=__t: x * getattr(__t, f'ImpRf{d}'),
+            Spell.BlessingOfLight1: lambda n, __t=__t: __t.BlessingOfLight1/n,
+            Spell.BlessingOfLight2: lambda n, __t=__t: __t.BlessingOfLight2/n, 
+            Spell.BlessingOfLight3: lambda n, __t=__t: __t.BlessingOfLight3/n, 
+            Spell.BlessingOfMight1: lambda n, __t=__t: __t.BlessingOfMight1/n, 
+            Spell.BlessingOfMight2: lambda n, __t=__t: __t.BlessingOfMight2/n,
+            Spell.BlessingOfMight3: lambda n, __t=__t: __t.BlessingOfMight3/n,
+            Spell.BlessingOfMight4: lambda n, __t=__t: __t.BlessingOfMight4/n,
+            Spell.BlessingOfMight5: lambda n, __t=__t: __t.BlessingOfMight5/n,
+            Spell.BlessingOfMight6: lambda n, __t=__t: __t.BlessingOfMight6/n, 
+            Spell.BlessingOfMight7: lambda n, __t=__t: __t.BlessingOfMight7/n, 
+            Spell.BlessingOfSanctuary1: lambda n, __t=__t: __t.BlessingOfSanctuary1/n,
+            Spell.BlessingOfSanctuary2: lambda n, __t=__t: __t.BlessingOfSanctuary2/n,
+            Spell.BlessingOfSanctuary3: lambda n, __t=__t: __t.BlessingOfSanctuary3/n,
+            Spell.BlessingOfSanctuary4: lambda n, __t=__t: __t.BlessingOfSanctuary4/n,
+            Spell.BlessingOfSalvation: lambda n, __t=__t: __t.BlessingOfSalvation/n,
+            Spell.BlessingOfFreedom: lambda n, __t=__t: __t.BlessingOfFreedom,
+            Spell.BlessingOfProtection1: lambda n, __t=__t: __t.BlessingOfProtection1,
+            Spell.BlessingOfProtection2: lambda n, __t=__t: __t.BlessingOfProtection2,
+            Spell.BlessingOfProtection3: lambda n, __t=__t: __t.BlessingOfProtection3,
+            Spell.BlessingOfSacrifice1: lambda n, __t=__t: __t.BlessingOfSacrifice1,
+            Spell.BlessingOfSacrifice2: lambda n, __t=__t: __t.BlessingOfSacrifice2,
+            Spell.GreaterBlessingOfLight: lambda n, __t=__t: __t.GreaterBlessingOfLight/n,
+            Spell.GreaterBlessingOfMight1: lambda n, __t=__t: __t.GreaterBlessingOfMight1/n,
+            Spell.GreaterBlessingOfMight2: lambda n, __t=__t: __t.GreaterBlessingOfMight2/n,
+            Spell.GreaterBlessingOfSanctuary: lambda n, __t=__t: __t.GreaterBlessingOfSanctuary/n,
+            Spell.GreaterBlessingOfSalvation: lambda n, __t=__t: __t.GreaterBlessingOfSalvation/n,
+            Spell.BlessingOfKings: lambda n, __t=__t: __t.BlessingOfKings,
+            Spell.GreaterBlessingOfKings: lambda n, __t=__t: __t.GreaterBlessingOfKings/n,
+            'noop': 0
+        }
+
 
 class FightLog(BaseModel):
     boss_name: str
@@ -205,6 +288,7 @@ class FightLog(BaseModel):
     realm: str
     defiance_points: int = 0
     feral_instinct_points: int = 0
+    imp_rf_pts: int = 0
     friendlies_in_combat: int = 1
     gear: List = None
 
@@ -234,13 +318,19 @@ class FightLog(BaseModel):
             gear=gear,
             defiance_points=talent_pts,
             feral_instinct_points=talent_pts,
+            imp_rf_pts=talent_pts,
             friendlies_in_combat=friendlies,
             dps_threat=[FuryDPSThreatResult(total_time, **d) for d in dps_threat if d.get('player_name') != player_name]
         )
         if player_class == 'Druid':
             f.defiance_points = 0
+            f.imp_rf_pts = 0
         elif player_class == 'Warrior':
             f.feral_instinct_points = 0
+            f.imp_rf_pts = 0
+        elif player_class == 'Paladin':
+            f.feral_instinct_points = 0
+            f.defiance_points = 0
 
         modifier_event = [i for i in modifier_events if i.get('boss_name') == boss_name]
         for event in resp:
@@ -269,8 +359,10 @@ class FightLog(BaseModel):
     def _get_event_modifier(modifier_events, event, player_class):
         default = {
             'warrior': Spell.DefensiveStance,
-            'druid': Spell.BearForm
+            'druid': Spell.BearForm,
+            'paladin': Spell.RighteousFury,
         }.get(player_class.casefold())
+
         if not default:
             raise KeyError('Invalid Player Class')
 

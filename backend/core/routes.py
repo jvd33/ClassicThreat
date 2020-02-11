@@ -8,19 +8,23 @@ from starlette.responses import JSONResponse
 from .models.common import WCLDataRequest, FightLog
 from .models.warrior import WarriorThreatResult
 from .models.druid import DruidThreatResult
+from .models.paladin import PaladinThreatResult
 from .tasks import get_log_data
-from .constants import WarriorThreatValues, Threat, DruidThreatValues
+from .constants import WarriorThreatValues, Threat, DruidThreatValues, PaladinThreatValues
 from docs.examples import CALC_RESP_EXAMPLE, THREAT_RESP_EXAMPLE, HEARTBEAT, CALC_RESP_DRUID_EXAMPLE
 from .cache import RedisClient
 
 api_router = APIRouter()
 
+
 async def _refresh_cache(db):
     r = RedisClient()
     await r.refresh_rank_data(db=db)
 
+
 async def get_http_session():
     return aiohttp.ClientSession(json_serialize=ujson.dumps, raise_for_status=True)
+
 
 @api_router.get('/status', 
                 tags=['v1'],
@@ -37,6 +41,7 @@ async def get_http_session():
                 )
 async def status():
     return JSONResponse(content={'status': 'OK'}, status_code=200)
+
 
 
 @api_router.post('/calculate_warrior', 
@@ -71,6 +76,7 @@ async def calculate_warrior(req: WCLDataRequest, background_tasks: BackgroundTas
     except HTTPException as hexc:
         raise hexc
 
+
 @api_router.post('/calculate_druid', 
                 tags=['v1'], 
                 dependencies=[Depends(get_http_session)], 
@@ -102,6 +108,40 @@ async def calculate_druid(req: WCLDataRequest, background_tasks: BackgroundTasks
         return JSONResponse(content={'detail': f'Error from Warcraft Logs: {cexc.message}', 'code': cexc.status}, status_code=cexc.status)
     except HTTPException as hexc:
         raise hexc
+
+
+@api_router.post('/calculate_paladin', 
+                tags=['v1'], 
+                dependencies=[Depends(get_http_session)], 
+                response_model=PaladinThreatResult,
+                responses={
+                            404: {
+                                "description": "The report was not found, no player with the name was found in the report, or there were no valid boss fights found."
+                            },
+                            200: {
+                                "description": "Threat calculation succeeded",
+                                "content": {
+                                    "application/json": {
+                                        "example": {}
+                                    }
+                                },
+                            },
+                            400: {
+                                "description": "Bad response to WCL"
+                                },
+                            },
+                )
+async def calculate_paladin(req: WCLDataRequest, background_tasks: BackgroundTasks, session=Depends(get_http_session), ):
+    try:
+        async with session:
+            results, _ = await get_log_data(req, session=session, player_class='paladin')
+            background_tasks.add_task(_refresh_cache, 6)
+            return JSONResponse(content=results, status_code=200)
+    except ClientResponseError as cexc:
+        return JSONResponse(content={'detail': f'Error from Warcraft Logs: {cexc.message}', 'code': cexc.status}, status_code=cexc.status)
+    except HTTPException as hexc:
+        raise hexc
+
 
 @api_router.get('/events/{report_id}/{player_name}',
                 tags=['v1'],
@@ -155,6 +195,8 @@ async def get_threat_values(player_class):
         vals = WarriorThreatValues.items()
     elif player_class == 'Druid':
         vals = DruidThreatValues.items()
+    elif player_class == 'Paladin':
+        vals = PaladinThreatValues.items()
     else:
         return JSONResponse(content={'detail': 'Invalid Class'}, status_code=400)
     ret = [{'name': val.get('name'), **val.get('val')} for val in vals]
@@ -178,7 +220,8 @@ async def get_threat_values(player_class):
 async def get_boss_rankings(boss, player_class):
     db = {
         'Warrior': 2,
-        'Druid': 3
+        'Druid': 3,
+        'Paladin': 6
     }.get(player_class, None)
     if not db:
         return JSONResponse(content={'detail': 'Invalid Player Class'}, status_code=400)

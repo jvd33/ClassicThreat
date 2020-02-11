@@ -68,11 +68,77 @@ class Spell:
     ShieldBlock = 2565
     ShieldWall = 871
     Taunt = 355
-            
 
 
-    
+    # Paladin, ugh so many ranks
+    RighteousFury = 25780
+    HolyLight = [635, 639, 647, 1026, 1042, 3472, 10328, 10329, 25292]
+    HolyShock = [25903, 25913, 25914]
+    LayOnHands = [633, 2800, 10310]        
+    SealOfLight = [20167, 20333, 20334, 20340]
+    SealOfWisdom = [20166, 20356, 20357]
+    SealOfRighteousness = [20154, 21084, 20287, 20288, 20290, 20291, 20292, 20293, 20289]
+    JudgementOfWisdom = [20354, 20186, 20355]
+    JudgementOfRighteousness = [20283, 20187, 20280, 20281, 20282, 20284, 20285, 20286]
+    JudgementOfLight = [20344, 20185, 20345, 20346]
+    FlashOfLight = [19750, 19939, 19940, 19941, 19942, 19943]
+    Consecration = [26573, 20924, 20922, 20116, 20923]
+    RetributionAura = [7294, 10301, 10300, 10298, 10299]
+    Cleanse = 4987
+    HolyShield1 = 20925
+    HolyShield2 = 20927
+    HolyShield3 = 20928
 
+    # Light
+    BlessingOfLight1 = 19977
+    BlessingOfLight2 = 19978
+    BlessingOfLight3 = 19979
+
+    # Might
+    BlessingOfMight1 = 19740
+    BlessingOfMight2 = 19834
+    BlessingOfMight3 = 19835
+    BlessingOfMight4 = 19836
+    BlessingOfMight5 = 19837
+    BlessingOfMight6 = 19838
+    BlessingOfMight7 = 25291
+
+    # Sanctuary
+    BlessingOfSanctuary1 = 20911
+    BlessingOfSanctuary2 = 20912
+    BlessingOfSanctuary3 = 20913
+    BlessingOfSanctuary4 = 20914
+
+    # Salv
+    BlessingOfSalvation = 1038
+
+    # Freedom
+    BlessingOfFreedom = 1044
+
+    # BoP
+    BlessingOfProtection1 = 1022
+    BlessingOfProtection2 = 5599 
+    BlessingOfProtection3 = 10278
+
+    # Sac
+    BlessingOfSacrifice1 = 6940 
+    BlessingOfSacrifice2 = 20729
+
+    # Greater Light
+    GreaterBlessingOfLight = 25890
+
+    # Greater Might
+    GreaterBlessingOfMight1 = 25782
+    GreaterBlessingOfMight2 = 25916
+
+    # Greater Sanctuary
+    GreaterBlessingOfSanctuary = 25899
+
+    # Greater Salv
+    GreaterBlessingOfSalvation = 25895
+
+    BlessingOfKings = 20217
+    GreaterBlessingOfKings = 25898
 
 class WarriorThreatValues:
     DefensiveStance = {'threat': {'threat_type': 'Modifier', 'val': 1.3}, 'guid': Spell.DefensiveStance}
@@ -151,3 +217,83 @@ class DruidThreatValues:
     def items():
         return [{'name': attr, 'val': getattr(DruidThreatValues, attr).get('threat')} for attr in dir(DruidThreatValues)
                 if not callable(getattr(DruidThreatValues, attr)) and not attr.startswith("__")]
+
+
+
+class PaladinThreatValues:
+    GiftOfArthas = {'threat': {'threat_type': 'Flat', 'val': 90}, 'guid': Spell.GiftOfArthas}
+    ManaGain = {'threat': {'threat_type': 'Flat', 'val': .5}, 'guid': None}
+    RighteousFury = {'threat': {'threat_type': 'Modifier', 'val': 1.6}, 'guid': None}
+    ImpRf0 = {'threat': {'threat_type': 'Modifier', 'val': 1.6}, 'guid': None}
+    ImpRf1 = {'threat': {'threat_type': 'Modifier', 'val': 1.7}, 'guid': None}
+    ImpRf2 = {'threat': {'threat_type': 'Modifier', 'val': 1.8}, 'guid': None}
+    ImpRf3 = {'threat': {'threat_type': 'Modifier', 'val': 1.9}, 'guid': None}
+    PaladinSpellHealing = {'threat': {'threat_type': 'Modifier', 'val': .25}, 'guid': None}
+    Healing = {'threat': {'threat_type': 'Flat', 'val': .5}, 'guid': None}
+    Cleanse = {'threat': {'threat_type': 'Flat', 'val': 40}, 'guid': Spell.Cleanse}
+    HolyShield1 = {'threat': {'threat_type': 'Flat', 'val': 20}, 'guid': Spell.HolyShield1}
+    HolyShield2 = {'threat': {'threat_type': 'Flat', 'val': 30}, 'guid': Spell.HolyShield2}
+    HolyShield3 = {'threat': {'threat_type': 'Flat', 'val': 40}, 'guid': Spell.HolyShield3}
+
+    # Light
+    BlessingOfLight1 = {'threat': {'threat_type': 'Flat', 'val': 40}, 'guid': Spell.BlessingOfLight1}
+    BlessingOfLight2 = {'threat': {'threat_type': 'Flat', 'val': 50}, 'guid': Spell.BlessingOfLight2}
+    BlessingOfLight3 = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': Spell.BlessingOfLight3}
+
+    # Might
+    BlessingOfMight1 = {'threat': {'threat_type': 'Flat', 'val': 4}, 'guid': Spell.BlessingOfMight1}
+    BlessingOfMight2 = {'threat': {'threat_type': 'Flat', 'val': 12}, 'guid': Spell.BlessingOfMight2}
+    BlessingOfMight3 = {'threat': {'threat_type': 'Flat', 'val': 22}, 'guid': Spell.BlessingOfMight3}
+    BlessingOfMight4 = {'threat': {'threat_type': 'Flat', 'val': 32}, 'guid': Spell.BlessingOfMight4}
+    BlessingOfMight5 = {'threat': {'threat_type': 'Flat', 'val': 42}, 'guid': Spell.BlessingOfMight5}
+    BlessingOfMight6 = {'threat': {'threat_type': 'Flat', 'val': 52}, 'guid': Spell.BlessingOfMight6}
+    BlessingOfMight7 = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': Spell.BlessingOfMight7}
+
+    # Sanctuary
+    BlessingOfSanctuary1 = {'threat': {'threat_type': 'Flat', 'val': 30}, 'guid': Spell.BlessingOfSanctuary1}
+    BlessingOfSanctuary2 = {'threat': {'threat_type': 'Flat', 'val': 40}, 'guid': Spell.BlessingOfSanctuary2}
+    BlessingOfSanctuary3 = {'threat': {'threat_type': 'Flat', 'val': 50}, 'guid': Spell.BlessingOfSanctuary3}
+    BlessingOfSanctuary4 = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': Spell.BlessingOfSanctuary4}
+
+    # Salv
+    BlessingOfSalvation = {'threat': {'threat_type': 'Flat', 'val': 26}, 'guid': Spell.BlessingOfSalvation}
+
+    # Freedom
+    BlessingOfFreedom = {'threat': {'threat_type': 'Flat', 'val': 18}, 'guid': Spell.BlessingOfFreedom}
+
+    # BoP
+    BlessingOfProtection1 = {'threat': {'threat_type': 'Flat', 'val': 10}, 'guid': Spell.BlessingOfProtection1}
+    BlessingOfProtection2 = {'threat': {'threat_type': 'Flat', 'val': 24}, 'guid': Spell.BlessingOfProtection2} 
+    BlessingOfProtection3 = {'threat': {'threat_type': 'Flat', 'val': 38}, 'guid': Spell.BlessingOfProtection3}
+
+    # Sac
+    BlessingOfSacrifice1 = {'threat': {'threat_type': 'Flat', 'val': 46}, 'guid': Spell.BlessingOfSacrifice1} 
+    BlessingOfSacrifice2 = {'threat': {'threat_type': 'Flat', 'val': 54}, 'guid': Spell.BlessingOfSacrifice2}
+
+    # Greater Light
+    GreaterBlessingOfLight = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': Spell.GreaterBlessingOfLight}
+
+    # Greater Might
+    GreaterBlessingOfMight1 = {'threat': {'threat_type': 'Flat', 'val': 52}, 'guid': Spell.GreaterBlessingOfMight1}
+    GreaterBlessingOfMight2 = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': Spell.GreaterBlessingOfMight2}
+
+    # Greater Sanctuary
+    GreaterBlessingOfSanctuary = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': Spell.GreaterBlessingOfSanctuary}
+
+    # Greater Salv
+    GreaterBlessingOfSalvation = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': Spell.GreaterBlessingOfSalvation}
+
+    BlessingOfKings = {'threat': {'threat_type': 'Flat', 'val': 20}, 'guid': Spell.BlessingOfKings}
+    GreaterBlessingOfKings = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': Spell.GreaterBlessingOfKings}
+
+
+    @staticmethod
+    def vals():
+        ret = GenericObject(**{attr: getattr(PaladinThreatValues, attr).get('threat').get('val') for attr in dir(PaladinThreatValues)
+                if not callable(getattr(PaladinThreatValues, attr)) and not attr.startswith("__")})
+        return ret
+
+    @staticmethod
+    def items():
+        return [{'name': attr, 'val': getattr(PaladinThreatValues, attr).get('threat')} for attr in dir(PaladinThreatValues)
+                if not callable(getattr(PaladinThreatValues, attr)) and not attr.startswith("__")]
