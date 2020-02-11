@@ -171,6 +171,13 @@ export default {
       };
     },
   },
+  metaInfo: {
+    title: 'Threat Values',
+    htmlAttrs: {
+      lang: 'en',
+      amp: true
+    }
+  },
   data () {
     return {
       name: 'CalculationDetails',

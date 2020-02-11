@@ -221,5 +221,12 @@ export default {
           this.data = [];
       })
   },
+  metaInfo: {
+    title: 'Threat Rankings',
+    htmlAttrs: {
+      lang: 'en',
+      amp: true
+    }
+  },
 };
 </script>

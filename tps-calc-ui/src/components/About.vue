@@ -42,5 +42,12 @@
 <script>
 export default {
   name: 'About',
+  metaInfo: {
+    title: 'About Classic Threat',
+    htmlAttrs: {
+      lang: 'en',
+      amp: true
+    },
+  },
 };
 </script>

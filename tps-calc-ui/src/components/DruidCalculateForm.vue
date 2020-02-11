@@ -226,5 +226,12 @@ export default {
           next();
       }
   },
+  metaInfo: {
+    title: 'Druid Threat Calculator',
+    htmlAttrs: {
+      lang: 'en',
+      amp: true
+    }
+  },
 };
 </script>

@@ -226,5 +226,12 @@ export default {
           next();
       }
   },
+  metaInfo: {
+    title: 'Paladin Threat Calculator',
+    htmlAttrs: {
+      lang: 'en',
+      amp: true
+    }
+  },
 };
 </script>

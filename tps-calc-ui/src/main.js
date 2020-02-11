@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router'
 import VueGtag from "vue-gtag";
+import Meta from 'vue-meta'
 import App from './App.vue';
 import './quasar';
 import WarriorCalculateForm from './components/WarriorCalculateForm.vue';
@@ -29,7 +30,7 @@ const routes = [
     component: PaladinCalculateForm,
   },
   {
-    path: '/details',
+    path: '/threatvalues',
     component: CalculationDetails,
   },
   {
@@ -60,6 +61,7 @@ const router = new VueRouter({
 
 Vue.config.productionTip = false;
 Vue.use(VueRouter);
+Vue.use(Meta)
 
 Vue.use(VueGtag, {
   config: { id: "UA-77837329-2" }

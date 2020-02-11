@@ -256,5 +256,12 @@ export default {
           next();
       }
   },
+  metaInfo: {
+    title: 'Warrior Threat Calculator',
+    htmlAttrs: {
+      lang: 'en',
+      amp: true
+    }
+  },
 };
 </script>
