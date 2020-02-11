@@ -75,7 +75,7 @@ class Spell:
     HolyLight = [635, 639, 647, 1026, 1042, 3472, 10328, 10329, 25292]
     HolyShock = [25903, 25913, 25914]
     LayOnHands = [633, 2800, 10310]        
-    SealOfLight = [20167, 20333, 20334, 20340]
+    SealOfLight = [20165, 20347, 20348, 20349]
     SealOfWisdom = [20166, 20356, 20357]
     SealOfRighteousness = [20154, 21084, 20287, 20288, 20290, 20291, 20292, 20293, 20289]
     JudgementOfWisdom = [20354, 20186, 20355]
@@ -285,6 +285,25 @@ class PaladinThreatValues:
 
     BlessingOfKings = {'threat': {'threat_type': 'Flat', 'val': 20}, 'guid': Spell.BlessingOfKings}
     GreaterBlessingOfKings = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': Spell.GreaterBlessingOfKings}
+
+    # Seals
+    SealOfLight1 = {'threat': {'threat_type': 'Flat', 'val': 30}, 'guid': 20165}
+    SealOfLight2 = {'threat': {'threat_type': 'Flat', 'val': 40}, 'guid': 20347}
+    SealOfLight3 = {'threat': {'threat_type': 'Flat', 'val': 50}, 'guid': 20348}
+    SealOfLight4 = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': 20349}
+
+    SealOfWisdom1 = {'threat': {'threat_type': 'Flat', 'val': 38}, 'guid': 20166}
+    SealOfWisdom2 = {'threat': {'threat_type': 'Flat', 'val': 48}, 'guid': 20356}
+    SealOfWisdom3 = {'threat': {'threat_type': 'Flat', 'val': 58}, 'guid': 20357}
+
+    SealOfRighteousness1 = {'threat': {'threat_type': 'Flat', 'val': 1}, 'guid': 21084}
+    SealOfRighteousness2 = {'threat': {'threat_type': 'Flat', 'val': 10}, 'guid': 20287}
+    SealOfRighteousness3 = {'threat': {'threat_type': 'Flat', 'val': 18}, 'guid': 20288}
+    SealOfRighteousness4 = {'threat': {'threat_type': 'Flat', 'val': 26}, 'guid': 20289}
+    SealOfRighteousness5 = {'threat': {'threat_type': 'Flat', 'val': 34}, 'guid': 20290}
+    SealOfRighteousness6 = {'threat': {'threat_type': 'Flat', 'val': 42}, 'guid': 20291}
+    SealOfRighteousness7 = {'threat': {'threat_type': 'Flat', 'val': 50}, 'guid': 20292}
+    SealOfRighteousness8 = {'threat': {'threat_type': 'Flat', 'val': 58}, 'guid': 20293}
 
 
     @staticmethod

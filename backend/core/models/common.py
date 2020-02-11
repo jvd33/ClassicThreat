@@ -28,11 +28,15 @@ BLESSINGS = [
     Spell.BlessingOfSanctuary4, 
 ]
 
+SEALS = [
+    *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom
+]
+
 PALADIN = [
     *GBLESSINGS, *BLESSINGS, *Spell.HolyLight, *Spell.FlashOfLight, *Spell.LayOnHands, Spell.Cleanse,
     *Spell.SealOfLight, *Spell.HolyShock, Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3, 
     *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom, *Spell.JudgementOfRighteousness,
-    *Spell.JudgementOfLight, *Spell.JudgementOfWisdom, *Spell.RetributionAura, *Spell.Consecration,
+    *Spell.JudgementOfLight, *Spell.JudgementOfWisdom, *Spell.RetributionAura, *Spell.Consecration, *SEALS
 ]
 zerk_specific = ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']
     
@@ -135,7 +139,9 @@ class ThreatEvent(BaseModel):
                 raw = mods.get(self.guid, mods.get('noop'))(t1)
             elif self.guid in [*GBLESSINGS, *BLESSINGS]:
                 raw = 0
-            elif self.guid not in [*DAMAGE, *FORMS, Spell.RighteousFury]:
+            elif self.guid in SEALS:
+                raw = mods.get(self.guid)(self.enemies_in_combat)
+            elif self.guid not in [*DAMAGE, *FORMS, Spell.RighteousFury, Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3]:
                 raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'damage':
@@ -146,7 +152,7 @@ class ThreatEvent(BaseModel):
             elif self.guid == Spell.SunderArmor and self.hit_type in [7, 8]:
                 raw = mods.get(self.guid, mods.get('noop'))(t1) * -1
             elif self.guid in [Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3]:
-                raw = self.amount * 1.2
+                raw = mods.get(self.guid) + (self.amount * 1.2)
             else:
                 raw = self.amount
 
@@ -272,6 +278,23 @@ class ThreatEvent(BaseModel):
             Spell.GreaterBlessingOfSalvation: lambda n, __t=__t: __t.GreaterBlessingOfSalvation/n,
             Spell.BlessingOfKings: lambda n, __t=__t: __t.BlessingOfKings,
             Spell.GreaterBlessingOfKings: lambda n, __t=__t: __t.GreaterBlessingOfKings/n,
+            20165: lambda n, __t=__t: __t.SealOfLight1/n,
+            20347: lambda n, __t=__t: __t.SealOfLight2/n,
+            20348: lambda n, __t=__t: __t.SealOfLight3/n,
+            20349: lambda n, __t=__t: __t.SealOfLight4/n,
+
+            20166: lambda n, __t=__t: __t.SealOfWisdom1/n,
+            20356: lambda n, __t=__t: __t.SealOfWisdom2/n,
+            20357: lambda n, __t=__t: __t.SealOfWisdom3/n,
+
+            21084: lambda n, __t=__t: __t.SealOfRighteousness1/n,
+            20287: lambda n, __t=__t: __t.SealOfRighteousness2/n,
+            20288: lambda n, __t=__t: __t.SealOfRighteousness3/n,
+            20289: lambda n, __t=__t: __t.SealOfRighteousness4/n,
+            20290: lambda n, __t=__t: __t.SealOfRighteousness5/n,
+            20291: lambda n, __t=__t: __t.SealOfRighteousness6/n,
+            20292: lambda n, __t=__t: __t.SealOfRighteousness7/n,
+            20293: lambda n, __t=__t: __t.SealOfRighteousness8/n,
             'noop': 0
         }
 
