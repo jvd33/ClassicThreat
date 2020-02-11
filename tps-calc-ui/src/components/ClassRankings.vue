@@ -147,7 +147,8 @@ export default {
       data: [],
       boss_cache: {
         'Warrior': {},
-        'Druid': {}
+        'Druid': {},
+        'Paladin': {},
       },
       bosses: [
         'Lucifron', 'Magmadar', 'Gehennas', 'Garr',
