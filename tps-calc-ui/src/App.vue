@@ -153,31 +153,13 @@ import holylight from './assets/holylight.png';
 import manapot from './assets/manapot.png';
 
 export default {
-  metaInfo: {
+  meta: {
     title: 'Home',
-    titleTemplate: '%s | Classic Threat',
-    htmlAttrs: {
+    titleTemplate: title => `${title} | Classic Threat`,
+    htmlAttr: {
       lang: 'en',
       amp: true
     },
-    meta: [
-    {name: 'viewport', content: 'width=device-width, initial-scale=1'},
-    {name: 'charset', content: 'utf-8'},
-
-    {name: 'description', content: 'Threat Calculation Tools for Classic World of Warcraft'},
-
-    {property: 'og:url', content: 'https://classicthreat.com'},
-    {property: 'og:type', content: 'website'},
-    {property: 'og:title', content: 'Classic Threat | Threat Tools for Classic World of Warcraft'},
-    {property: 'og:description', content: 'Threat Calculation Tools for Classic World of Warcraft'},
-    {property: 'og:site_name', content: 'Classic Threat'},
-
-    {name: 'twitter:url', content: 'https://classicthreat.com'},
-    {name: 'twitter:card', content: 'summary'},
-    {name: 'twitter:title', content: 'Classic Threat | Threat Tools for Classic World of Warcraft'},
-    {name: 'twitter:description', content: 'Threat Calculation Tools for Classic World of Warcraft'},
-
-  ]
   },
   data() {
     return {

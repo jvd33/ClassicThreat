@@ -171,11 +171,16 @@ export default {
       };
     },
   },
-  metaInfo: {
-    title: 'Threat Values',
-    htmlAttrs: {
-      lang: 'en',
-      amp: true
+  meta() {
+    return {
+      title: 'Threat Values',
+      htmlAttr: {
+        lang: 'en',
+        amp: true
+      },
+      meta: {
+        description: {name: 'description', content: 'Classic World of Warcraft Tank Ability Threat Values'},
+      },
     }
   },
   data () {

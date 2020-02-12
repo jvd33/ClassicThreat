@@ -221,11 +221,16 @@ export default {
           this.data = [];
       })
   },
-  metaInfo: {
-    title: 'Threat Rankings',
-    htmlAttrs: {
-      lang: 'en',
-      amp: true
+  meta() {
+    return {
+      title: 'Threat Rankings',
+      htmlAttr: {
+        lang: 'en',
+        amp: true
+      },
+      meta: {
+        description: {name: 'description', content: 'Classic World of Warcraft Tank Threat Rankings'},
+      },
     }
   },
 };

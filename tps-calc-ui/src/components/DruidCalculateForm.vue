@@ -226,11 +226,16 @@ export default {
           next();
       }
   },
-  metaInfo: {
-    title: 'Druid Threat Calculator',
-    htmlAttrs: {
-      lang: 'en',
-      amp: true
+  meta() {
+    return {
+      title: 'Druid Threat Calculator',
+      htmlAttr: {
+        lang: 'en',
+        amp: true
+      },
+      meta: {
+        description: {name: 'description', content: 'Classic World of Warcraft Druid Threat Calculator'},
+      },
     }
   },
 };

@@ -226,11 +226,16 @@ export default {
           next();
       }
   },
-  metaInfo: {
-    title: 'Paladin Threat Calculator',
-    htmlAttrs: {
-      lang: 'en',
-      amp: true
+  meta() {
+    return {
+      title: 'Paladin Threat Calculator',
+      htmlAttr: {
+        lang: 'en',
+        amp: true
+      },
+      meta: {
+        description: {name: 'description', content: 'Classic World of Warcraft Paladin Threat Calculator'},
+      },
     }
   },
 };

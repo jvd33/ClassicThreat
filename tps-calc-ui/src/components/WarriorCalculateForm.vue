@@ -256,11 +256,16 @@ export default {
           next();
       }
   },
-  metaInfo: {
-    title: 'Warrior Threat Calculator',
-    htmlAttrs: {
-      lang: 'en',
-      amp: true
+  metaInfo() {
+    return {
+      title: 'Warrior Threat Calculator',
+      htmlAttrs: {
+        lang: 'en',
+        amp: true
+      },
+      meta: {
+        description: {name: 'description', content: 'Classic World of Warcraft Warrior Threat Calculator'},
+      },
     }
   },
 };
