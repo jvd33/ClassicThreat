@@ -84,7 +84,8 @@ class RedisClient:
         bosses = [
             'Lucifron', 'Magmadar', 'Gehennas', 'Garr', 'Shazzrah', 'Baron Geddon', 
             'Golemagg the Incinerator', 'Majordomo Executus', 'Sulfuron Harbinger', 'Ragnaros', 
-            'Onyxia',
+            'Onyxia', 'Razorgore the Untamed', 'Vaelastrasz the Corrupt', 'Broodlord Lashlayer',
+            'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus', 'Nefarian',
         ]
         await __redis.set('last_updated', ujson.dumps(datetime.datetime.now()))
         for b in bosses:
