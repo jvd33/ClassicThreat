@@ -159,7 +159,7 @@ class ThreatEvent(BaseModel):
         elif self.event_type == 'heal':
             if self.guid in [*Spell.HolyLight, *Spell.HolyShock, *Spell.FlashOfLight, *Spell.LayOnHands]:
                 raw = mods.get('paladinspellhealing')(self.amount, self.enemies_in_combat)
-            else:
+            elif self.guid != 23340: # Shadow of Ebonroc hotfix
                 raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
         elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS]:
