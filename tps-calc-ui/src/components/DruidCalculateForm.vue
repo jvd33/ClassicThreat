@@ -6,8 +6,8 @@
       Druid Threat Estimator
     </q-toolbar-title>
     <span class="text-primary q-pb-lg col-auto col-sm wrap-auto text-h6-sm text-italic">
-    More accurate as of February 5th, 2020! Threat is now calculated via sequential event parsing.
-    <a href="https://github.com/jvd33/ClassicThreat/compare/V1.2...V1.3" class="text-primary">View the change</a>
+    02/14/2020: Major updates and improvements, too much to list here!
+    <a href="https://github.com/jvd33/ClassicThreat/releases/tag/V1.5" class="text-primary">View the Release</a>
     </span>
     <q-form
       @submit="submit"
@@ -98,7 +98,7 @@
           <span class="h6 text-accent">
             To contribute, report bugs, or propose features, see <router-link :to="'About'" class="text-accent text-weight-bold">about</router-link>
     </span>
-    <druid-threat-result class="q-mt-sm q-mb-sm" v-if="this.results" :results="this.results"/>
+    <threat-result class="q-mt-sm q-mb-sm" v-if="this.results" :results="this.results" player_class="Druid" />
     <q-expansion-item
       caption="Instructions"
       :default-opened="false"

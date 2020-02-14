@@ -150,7 +150,28 @@ import cleanse from './assets/cleanse.png';
 import light from './assets/light.png';
 import sanctuary from './assets/sanctuary.png';
 import holylight from './assets/holylight.png';
+import thorns from './assets/thorns.png';
+import immo from './assets/immo.png';
+import melee from './assets/melee.png';
+import overpower from './assets/overpower.png';
+import moonfire from './assets/moonfire.png';
+import rake from './assets/rake.png';
+import tf from './assets/tf.png';
+import slam from './assets/slam.png';
+import frd from './assets/frd.png';
+import shred from './assets/shred.png';
+import rip from './assets/rip.png';
+import fb from './assets/fb.png';
+import ww from './assets/ww.png';
+import spike from './assets/spike.png';
 import manapot from './assets/manapot.png';
+import shoot from './assets/shoot.png';
+import defaultability from './assets/default.png';
+import sapper from './assets/sapper.png';
+import claw from './assets/claw.png';
+import consecrate from './assets/consecrate.png';
+import retaura from './assets/retaura.png';
+import judgement from './assets/judgement.png';
 
 export default {
   meta: {
@@ -166,6 +187,20 @@ export default {
         drawer: false,
         base: '/',
         custom_icons: {
+          'app:shoot': 'img:' + shoot,
+          'app:immo': 'img:' + immo,
+          'app:overpower': 'img:' + overpower,
+          'app:rake': 'img:' + rake,
+          'app:tf': 'img:' + tf,
+          'app:shred': 'img:' + rake,
+          'app:slam': 'img:' + slam,
+          'app:frd': 'img:' + frd,
+          'app:rip': 'img:' + rip,
+          'app:fb': 'img:' + fb,
+          'app:ww': 'img:' + ww,
+          'app:spike': 'img:' + spike,
+          'app:melee': 'img:' + melee,
+          'app:thorns': 'img:' + thorns,
           'app:taunt': 'img:' + taunt,
           'app:defiance': 'img:' + defiance,
           'app:bt': 'img:' + bt,
@@ -225,6 +260,12 @@ export default {
           'app:sanctuary': 'img:' + sanctuary,
           'app:holylight': 'img:' + holylight,
           'app:manapot': 'img:' + manapot,
+          'app:defaultability': 'img:' + defaultability,
+          'app:sapper': 'img:' + sapper,
+          'app:claw': 'img:' + claw,
+          'app:consecrate': 'img:' + consecrate,
+          'app:judgement': 'img:' + judgement,
+          'app:retaura': 'img:' + retaura,
         },
 
         calculators: [

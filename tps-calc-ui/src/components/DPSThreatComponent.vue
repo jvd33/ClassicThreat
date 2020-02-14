@@ -1,11 +1,14 @@
 <template>
-<q-page class="q-pa-sm col-10 col-sm-8" style="min-height: inherit">
+<q-page class="q-pa-sm col-12 col-sm-12 text-center" style="min-height: inherit">
+  <span class="text-h5 text-white col-12 col-sm-12">
+    Estimated DPS Caps
+  </span>
   <q-tabs
     v-model="tab"
     dense
     align="justify"
     no-caps
-    class="text-white shadow-2 rounded-borders"
+    class="text-white shadow-2 rounded-borders q-pt-md"
   >
     <q-tab v-if="!this.allianceOnly" name="horde" icon="app:horde" label="Horde" style="background: #5f110d"/>
     <q-tab name="alliance" icon="app:alliance" label="Alliance" style="background: #1b3658"/>
@@ -18,7 +21,7 @@
         hide-header
         :pagination="pagination"
         :columns="threatCols"
-        :data="getThreatTableData(results.tps, 'Alliance')"
+        :data="getThreatTableData(ref_tps, 'Alliance')"
         row-key="name"
         hide-bottom
         class="wrap"
@@ -48,7 +51,7 @@
         label="horde"
         :columns="threatCols"
         :pagination="pagination"
-        :data="getThreatTableData(results.tps, 'Horde')"
+        :data="getThreatTableData(ref_tps, 'Horde')"
         row-key="name"
         hide-header
         class="wrap"
@@ -86,7 +89,7 @@
 <script>
 export default {
 name: 'DPSThreat',
-  props: ['results', 'allianceOnly'],
+  props: ['results', 'allianceOnly', 'ref_tps'],
   methods: {
     getIcon(cls) {
       switch(cls) {
