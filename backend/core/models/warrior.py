@@ -114,8 +114,8 @@ class WarriorThreatCalculationRequest(BaseModel):
             realm=log.realm,
             defiance_points=log.defiance_points,
             friendlies_in_combat=log.friendlies_in_combat,
-            gear=log.gear,
-            dps_threat=log.dps_threat
+            gear=log.gear or [],
+            dps_threat=log.dps_threat or []
             
         )
         total_threat, total_threat_defiance, unmodified_tps, tps = [0, 0, 0, 0]
