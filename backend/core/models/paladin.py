@@ -3,19 +3,12 @@ from typing import List, Any, Dict
 from collections import defaultdict
 
 from ..constants import PaladinThreatValues, Spell
-from .common import ThreatEvent, FightLog, GBLESSINGS
+from .common import ThreatEvent, FightLog, GBLESSINGS, EventBreakdown
 
 class PaladinThreatCalculationRequest(BaseModel):
-
-    goa_procs: int = 0
-    mana_gains: int = 0
-    greater_blessing_casts: int = 0
-    greater_blessing_hits: int = 0
-    holy_shield_casts: int = 0
     time: float = 0
     total_damage: int = 0
     imp_rf_pts: int = 5
-    hp_gains: float = 0
     friendlies_in_combat: int = 1
     enemies_in_combat: int = 1 
     player_name: str = None
@@ -23,26 +16,38 @@ class PaladinThreatCalculationRequest(BaseModel):
     boss_name: str = None
     boss_id: int = None
     realm: str = None
+    events: List[EventBreakdown] = []
     dps_threat: List = list()
     gear: List = list()
 
 
     def process_events(self, events: List[ThreatEvent]):
-        mapper = defaultdict(int)
+        mapper = {}
+
         for event in events:
+            breakdown = mapper.get(event.guid, None)
+            if not breakdown: 
+                breakdown = EventBreakdown(
+                    name=event.name,
+                    guid=event.guid,
+                    count=0
+                )
+                mapper[event.guid] = breakdown
+
+            if event.guid == 17531:
+                print(event)
+            breakdown.base_threat += event.base_threat
+            breakdown.modified_threat += event.modified_threat
+
             if event.event_type == 'cast':
-                if event.guid in GBLESSINGS:
-                    self.greater_blessing_casts += 1
-                elif event.guid in [Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3]:
-                    self.holy_shield_casts += 1
-            elif event.event_type == 'energize':
-                self.mana_gains += event.amount
-            elif event.event_type in ['applybuff', 'refreshbuff']:
-                if event.guid in GBLESSINGS:
-                    self.greater_blessing_hits += 1
+                breakdown.count += 1
+
+            if event.event_type == 'damage':
+                if event.hit_type not in [7, 8]:
+                    breakdown.hits += 1
 
             if event.guid == Spell.GiftOfArthas:
-                self.goa_procs += 1
+                breakdown.hits += 1
 
         return mapper
 
@@ -57,37 +62,51 @@ class PaladinThreatCalculationRequest(BaseModel):
             realm=log.realm,
             imp_rf_pts=log.imp_rf_pts,
             friendlies_in_combat=log.friendlies_in_combat,
-            gear=log.gear,
-            dps_threat=log.dps_threat
+            gear=log.gear or [],
+            dps_threat=log.dps_threat or []
         )
-        total_threat, total_threat_imp_rf, unmodified_tps, tps = [0, 0, 0, 0]
-        for event in log.events:
-            modified, raw = resp._process_event(event)
-            total_threat_imp_rf += modified
-            total_threat += raw
 
-        unmodified_tps = total_threat / resp.time
-        tps = total_threat_imp_rf / resp.time
-        event_data = resp.process_events(log.events)
+        event_times = [e.timestamp for e in log.events]
+        start_active, end_active = min(event_times), max(event_times)
+        base_threat, modified_threat, base_tps, modified_tps = [0, 0, 0, 0]
+
+        events = []
+        for event in log.events:
+            event = resp._process_event(event)
+            events.append(event)
+            modified_threat += event.modified_threat
+            base_threat += event.base_threat
+
+        base_tps = base_threat / resp.time
+        modified_tps = modified_threat / resp.time
+        event_data = resp.process_events(log.events).values()
+        threat_events = [e for e in list(event_data) if e.base_threat > 0]
+        active_time = (end_active - start_active) / 1000.00
+        for e in threat_events:
+            e.base_tps = e.base_tps/resp.time
+            e.modified_tps = e.modified_tps/resp.time
+            e.percentage_threat = (e.modified_threat/modified_threat) * 100
+            e.casts_per_minute = e.count / (resp.time/60)
+        resp.events = sorted(threat_events, key=lambda e: e.percentage_threat, reverse=True)
         return PaladinThreatResult(
             **dict(resp),
-            **event_data,
-            total_threat=total_threat,
-            total_threat_imp_rf=total_threat_imp_rf,
-            unmodified_tps=unmodified_tps,
-            tps=tps,
+            base_threat=base_threat,
+            modified_threat=modified_threat,
+            base_tps=base_tps,
+            modified_tps=modified_tps,
+            active_time=active_time
         )
 
         
     def _process_event(self, event: ThreatEvent):
         def __dummy(event: ThreatEvent):
-            return 0, 0
+            return event
 
         return {
             'damage': self._process_damage,
             'cast': self.__process_event,
             'energize': self.__process_event,
-            'heal': self._process_healing,
+            'heal': self.__process_event,
             'applydebuff': self.__process_event,
             'refreshdebuff': self.__process_event,
             'refreshbuff': self.__process_event,
@@ -98,15 +117,12 @@ class PaladinThreatCalculationRequest(BaseModel):
         self.total_damage += event.amount
         return event.calculate_threat(self.player_class, self.imp_rf_pts)
 
-    def _process_healing(self, event: ThreatEvent):
-        self.hp_gains += event.amount
-        return event.calculate_threat(self.player_class, self.imp_rf_pts)
-
     def __process_event(self, event: ThreatEvent):
         return event.calculate_threat(self.player_class, self.imp_rf_pts)
 
 class PaladinThreatResult(PaladinThreatCalculationRequest):
-    total_threat: float = 0
-    total_threat_imp_rf: float = 0
-    unmodified_tps: float = 0.0
-    tps: float = 0.0
+    base_threat: float = 0
+    modified_threat: float = 0
+    base_tps: float = 0.0
+    modified_tps: float = 0.0
+    active_time: float = 0.0

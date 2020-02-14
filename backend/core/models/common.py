@@ -45,6 +45,19 @@ battle_specific = ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunde
 defensive_specific =  ['Shield Wall', 'Shield Block', 'Revenge']
     
 
+class EventBreakdown(BaseModel):
+    name: str
+    guid: int
+    count: int = 0
+    hits: int = 0
+    base_threat: int = 0
+    modified_threat: int = 0
+    base_tps: int = 0
+    modified_tps: int = 0
+    percentage_threat: float = 0
+    casts_per_minute: float = 0
+
+
 class WCLDataRequest(BaseModel):
     url: AnyUrl
     player_name: str
@@ -117,10 +130,10 @@ class ThreatEvent(BaseModel):
     hit_type: int = -1
     amount: float = 0
     class_modifier: int = 0
+    base_threat: int = 0
+    modified_threat: int = 0
 
     def calculate_threat(self, player_class, talent_pts=5, t1=False):
-
-        
         mods = {
             'warrior': self.__warr_modifiers,
             'druid': self.__druid_modifiers,
@@ -130,7 +143,8 @@ class ThreatEvent(BaseModel):
         if not mods:    
             raise KeyError('Invalid Class Specified')
         if self.guid == Spell.Execute:
-            return self.amount, self.amount
+            self.base_threat, self.modified_threat = self.amount, self.amount
+            return self
             
         if self.event_type == 'cast':
             if self.guid in [Spell.BattleShout6, Spell.BattleShout7]:
@@ -153,6 +167,8 @@ class ThreatEvent(BaseModel):
                 raw = mods.get(self.guid, mods.get('noop'))(t1) * -1
             elif self.guid in [Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3]:
                 raw = mods.get(self.guid) + (self.amount * 1.2)
+            elif self.guid == Spell.Thunderfury:
+                raw = mods.get(self.guid) + self.amount
             else:
                 raw = self.amount
 
@@ -160,9 +176,11 @@ class ThreatEvent(BaseModel):
             if self.guid in [*Spell.HolyLight, *Spell.HolyShock, *Spell.FlashOfLight, *Spell.LayOnHands]:
                 raw = mods.get('paladinspellhealing')(self.amount, self.enemies_in_combat)
             elif self.guid != 23394: # Shadow of Ebonroc hotfix
+                self.name = 'Healing Done'
+                self.guid = -100
                 raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
-        elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS]:
+        elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS, Spell.Thunderfury]:
             raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'energize':
@@ -171,8 +189,12 @@ class ThreatEvent(BaseModel):
                     raw = mods.get('judgementenergize')(self.amount)
                 else: 
                     raw = mods.get('mana')(self.amount)
-            else:
+            elif self.guid in [2687, 23602, 29131, 12964, 17057, 17099, 16959]:
+                self.name = 'Resource Gain'
+                self.guid = Spell.RageGain
                 raw = mods.get(Spell.RageGain)(self.amount)
+            else:
+                raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
         elif self.event_type in ['applybuff', 'refreshbuff']:
             if self.guid in [*GBLESSINGS, *BLESSINGS]:
@@ -182,9 +204,11 @@ class ThreatEvent(BaseModel):
             raw = 0
 
         if self.event_type != 'energize' or player_class.casefold() == 'paladin':
-            return mods.get(self.class_modifier)(raw, talent_pts), raw
+            self.modified_threat, self.base_threat = mods.get(self.class_modifier)(raw, talent_pts), raw
+            return self
 
-        return raw, raw
+        self.base_threat, self.modified_threat = raw, raw
+        return self
 
 
 
@@ -212,6 +236,7 @@ class ThreatEvent(BaseModel):
             Spell.Disarm: __t.Disarm,
             Spell.ShieldBash: __t.ShieldBash,
             Spell.MockingBlow: __t.MockingBlow,
+            Spell.Thunderfury: __t.Thunderfury,
             'heal': lambda x, n, __t=__t: x * __t.Healing / n, # Split
             'noop': 0
         }
@@ -245,7 +270,7 @@ class ThreatEvent(BaseModel):
             'judgementenergize': lambda x, __t=__t: x * __t.Healing,
             'heal': lambda x, n, __t=__t: x * __t.Healing / n, # Split
             Spell.Cleanse: __t.Cleanse,
-            
+            Spell.Thunderfury: __t.Thunderfury,
             Spell.HolyShield1: __t.HolyShield1,
             Spell.HolyShield2: __t.HolyShield2,
             Spell.HolyShield3: __t.HolyShield3,
