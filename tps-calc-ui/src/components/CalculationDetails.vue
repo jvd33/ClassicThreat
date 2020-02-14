@@ -131,6 +131,9 @@ export default {
       if (ability.includes('Blessing Of Protection')) return 'app:bop';
       if (ability.includes('Blessing Of Light')) return 'app:light';
       if (ability.includes('Blessing Of Salvation')) return 'app:salv';
+      if (ability.includes('Seal Of Righteous')) return 'app:righteousness';
+      if (ability.includes('Seal Of Light')) return 'app:sealoflight';
+      if (ability.includes('Seal Of Wisdom')) return 'app:sealofwisdom';
       if (ability.includes('Imp Rf')) return 'app:rf';
 
 
@@ -167,6 +170,7 @@ export default {
         case 'Blessing Of Freedom': return 'app:freedom';
         case 'Paladin Spell Healing': return 'app:holylight';
         case 'Mana Gain': return 'app:manapot';
+        case 'Thunderfury': return 'app:tf';
         default: return ability;
       };
     },
