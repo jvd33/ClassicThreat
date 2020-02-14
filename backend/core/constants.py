@@ -68,6 +68,7 @@ class Spell:
     ShieldBlock = 2565
     ShieldWall = 871
     Taunt = 355
+    Thunderfury = 21992
 
 
     # Paladin, ugh so many ranks
@@ -171,6 +172,7 @@ class WarriorThreatValues:
     Hamstring = {'threat': {'threat_type': 'Flat', 'val': 145}, 'guid': Spell.Hamstring}
     MockingBlow = {'threat': {'threat_type': 'Flat', 'val': 250}, 'guid': Spell.MockingBlow} # From libthreat 2, is it really 250?
     Disarm = {'threat': {'threat_type': 'Flat', 'val': 104}, 'guid': Spell.Disarm}
+    Thunderfury = {'threat': {'threat_type': 'Flat', 'val': 235}, 'guid': Spell.Thunderfury}
 
     @staticmethod
     def vals():
@@ -304,6 +306,8 @@ class PaladinThreatValues:
     SealOfRighteousness6 = {'threat': {'threat_type': 'Flat', 'val': 42}, 'guid': 20291}
     SealOfRighteousness7 = {'threat': {'threat_type': 'Flat', 'val': 50}, 'guid': 20292}
     SealOfRighteousness8 = {'threat': {'threat_type': 'Flat', 'val': 58}, 'guid': 20293}
+    Thunderfury = {'threat': {'threat_type': 'Flat', 'val': 235}, 'guid': Spell.Thunderfury}
+
 
 
     @staticmethod
