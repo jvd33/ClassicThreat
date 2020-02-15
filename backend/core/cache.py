@@ -146,8 +146,8 @@ class RedisClient:
                 'player': data.get('player_name'),
                 'boss': data.get('boss_name'),
                 'realm': data.get('realm'),
-                'modified_tps': threat,
-                'modified_threat': data.get('modified_threat') or data.get('total_threat_defiance') or data.get('total_threat_feral_instinct') or data.get('total_threat_imp_rf'),
+                'modified_threat': threat,
+                'modified_tps': data.get('modified_tps') or data.get('total_tps_defiance') or data.get('total_tps_feral_instinct') or data.get('total_tps_imp_rf'),
                 'report': key.split(':')[0],
                 'boss_id': data.get('boss_id'),
             }
@@ -166,7 +166,6 @@ class RedisClient:
             key = f'{report_id}:{player_name}:{k}'
             cache_result = v.dict()
             cache_result['dps_threat'] = ujson.dumps([d.dict() for d in v.dps_threat])
-            cache_result['events'] = ujson.dumps([d.dict() for d in v.events])
             cache_result['gear'] = ujson.dumps([dict(d) for d in v.gear])
 
             await __redis.hmset_dict(key, cache_result)
