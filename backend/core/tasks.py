@@ -70,7 +70,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
                     await getattr(redis, save)(report_id, req.player_name, cache_resp)
         missing = cached_data.get('missing', [])
     except Exception as exc:
-        logger.error(f'Failed to read from cache {exc}')
+        logger.error(f'Failed to read historic records from cache {exc}')
     
     wcl = WCLService(session=session)
     resp = await wcl.get_full_report(report_id)
@@ -89,7 +89,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
                 rank = await redis.get_encounter_percentile(k, v.get('tps'), db=rank_db)
                 v.update({'rank': rank})
             except Exception as exc:
-                logger.error(f'Failed to write to read from cache {exc}')
+                logger.error(f'Failed to read encounter percentiles {k} from cache {exc}')
         return ranks, cache_resp
     
     bosses = list(filter(lambda x: x.get('name') in [*req.bosses, *missing], bosses)) or bosses
@@ -129,7 +129,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
         redis = RedisClient()
         await getattr(redis, save)(report_id, player_name, r)
     except Exception as exc:
-        logger.error(f'Failed to write to cache {exc}')
+        logger.error(f'Failed to write cache {report_id}:{player_name}, {exc}')
 
     ranks = {k: v for k, v in sorted({**r, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
 
@@ -138,7 +138,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
             rank = await redis.get_encounter_percentile(k, v.get('tps'), db=rank_db)
             v.update({'rank': rank})
         except Exception as exc:
-            logger.error(f'Failed to read from cache {exc}')
+            logger.error(f'Failed to read {k} percentiles from cache {exc}')
     return ranks, events
  
 
