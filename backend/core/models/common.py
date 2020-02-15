@@ -364,7 +364,7 @@ class FightLog(BaseModel):
             total_time=total_time,
             player_class=player_class,
             realm=realm,
-            gear=gear,
+            gear=gear or [],
             defiance_points=talent_pts,
             feral_instinct_points=talent_pts,
             imp_rf_pts=talent_pts,
