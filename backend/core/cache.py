@@ -146,8 +146,8 @@ class RedisClient:
                 'player': data.get('player_name'),
                 'boss': data.get('boss_name'),
                 'realm': data.get('realm'),
-                'modified_threat': threat,
-                'modified_tps': data.get('modified_tps') or data.get('total_tps_defiance') or data.get('total_tps_feral_instinct') or data.get('total_tps_imp_rf'),
+                'tps': threat,
+                'total_threat': data.get('modified_threat'),
                 'report': key.split(':')[0],
                 'boss_id': data.get('boss_id'),
             }

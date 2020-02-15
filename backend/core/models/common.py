@@ -338,7 +338,7 @@ class FightLog(BaseModel):
     feral_instinct_points: int = 0
     imp_rf_pts: int = 0
     friendlies_in_combat: int = 1
-    gear: List = None
+    gear: List = list()
 
     @staticmethod
     def from_response(resp, 
