@@ -5,8 +5,8 @@
     </q-item>
     <q-table
       :title="getTitle()"
-      :data="getData()"
-      :v-model="player_class"
+      :data="current_view"
+      :key="player_class"
       separator="horizontal"
       :columns="columns"
       row-key="`${name}:${rank}:${report}"
@@ -74,9 +74,7 @@ import axios from 'axios';
 
 
 export default {
-  props: {
-    player_class: null,
-  },
+  props: ['player_class'],
   methods: {
     getHref(row) {
       return `https://classic.warcraftlogs.com/reports/${row.report}#fight=${row.boss_id}`
@@ -87,12 +85,12 @@ export default {
     getData() {
       if (this.boss_cache[this.player_class][this.boss] !== undefined) {
         this.loading = false;
-        return this.filterTable(this.filter);
+        this.current_view = this.boss_cache[this.player_class][this.boss]
       }
       axios
-      .get(process.env.VUE_APP_API_URL + `/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
+      .get(`https://classicthreat.com/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
       .then(response => {
-        this.data = response.data;
+        this.current_view = response.data;
         this.boss_cache[this.player_class][this.boss] = response.data
         this.loading = false;
       })
@@ -101,26 +99,23 @@ export default {
           this.loading = false;
           this.errorMsg = error.response ?
             error.response.data.details : 'Unexpected error. Try again later.';
-          this.data = [];
       })
-      return this.data;
     },
     selected(val) {
       this.boss = val;
       this.loading = true;
       if (this.boss_cache[this.player_class][val] !== undefined) {
-        this.data = this.boss_cache[this.player_class][val];
+        this.current_view = this.boss_cache[this.player_class][val];
         this.loading = false;
         return;
       }
       this.getData();
-      return this.filterTable(this.filter);
     },
     filterTable(filter) {
       if (this.boss_cache[this.player_class][this.boss] === undefined) {
-        return this.data;
+        return;
       }
-      let d = this.boss_cache[this.player_class][this.boss].filter((val) => val.player.includes(filter) || val.realm.includes(filter))
+      let d = this.boss_cache[this.player_class][this.boss].filter((val) => (val.player.localeCompare(filter, undefined, { sensitivity: 'base' }) === 0 || val.realm.localeCompare(filter, undefined, { sensitivity: 'base' }) === 0))
       let seen = []
       let final = []
       if (this.best_ranks === true) {
@@ -132,7 +127,6 @@ export default {
         });
         d = final;
       }
-      this.data = d;
       return d;
     },
   },
@@ -144,7 +138,7 @@ export default {
       loading: true,
       errorState: false,
       boss: 'Lucifron',
-      data: [],
+      current_view: [],
       boss_cache: {
         'Warrior': {},
         'Druid': {},
@@ -207,10 +201,10 @@ export default {
   mounted() {
     this.loading = true;
     axios
-      .get(process.env.VUE_APP_API_URL + `/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
+      .get(`https://classicthreat.com/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
       .then(response => {
-        this.data = response.data;
-        this.boss_cache[this.player_class][this.boss] = response.data
+        this.current_view = response.data;
+        this.boss_cache[this.player_class][this.boss] = response.data;
         this.loading = false;
       })
       .catch(error => {
@@ -220,6 +214,12 @@ export default {
 
           this.data = [];
       })
+  },
+  watch: {
+    player_class () {
+        this.loading = true;
+        this.getData();
+    }
   },
   meta() {
     return {

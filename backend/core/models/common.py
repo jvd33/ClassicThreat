@@ -66,7 +66,8 @@ class WCLDataRequest(BaseModel):
     friendlies_in_combat: int = 1
     enemies_in_combat: int = 1
     t1_set: bool = False
-
+    include_wipes: bool = True
+    
     @validator('url')
     def check_url(cls, v):
         assert v.host == 'classic.warcraftlogs.com' and v.path and len(v.path) > 1 and 'reports' in v.path, \
@@ -112,6 +113,7 @@ class BossActivityRequest(BaseModel):
     encounter: int
     report_id: str
     boss_name: str
+    is_kill: int
 
 
 class Rank(BaseModel):
@@ -328,6 +330,7 @@ class FightLog(BaseModel):
     boss_name: str
     boss_id: int
     report_id: str
+    is_kill: bool
     player_name: str
     player_class: str
     total_time: int
@@ -352,6 +355,7 @@ class FightLog(BaseModel):
                       dps_threat, 
                       gear,
                       realm, 
+                      is_kill,
                       t1=False,
                       talent_pts=5,
                       friendlies=1,
@@ -364,6 +368,7 @@ class FightLog(BaseModel):
             total_time=total_time,
             player_class=player_class,
             realm=realm,
+            is_kill=is_kill,
             gear=gear or [],
             defiance_points=talent_pts,
             feral_instinct_points=talent_pts,
@@ -380,8 +385,7 @@ class FightLog(BaseModel):
         elif player_class == 'Paladin':
             f.feral_instinct_points = 0
             f.defiance_points = 0
-
-        modifier_event = [i for i in modifier_events if i.get('boss_name') == boss_name]
+        modifier_event = [i for i in modifier_events if i.get('boss_id') == boss_id]
         for event in resp:
             if event.get('type') == 'damage' and event.get('targetIsFriendly', False):
                 continue
@@ -416,7 +420,7 @@ class FightLog(BaseModel):
             raise KeyError('Invalid Player Class')
 
         time = event.get('timestamp')
-        for k, rnges in [el for el in modifier_events[0].items() if el[0] != 'boss_name']:
+        for k, rnges in [el for el in modifier_events[0].items() if el[0] != 'boss_id']:
             for rnge in rnges:
                 if rnge[0] <= time and (time <= rnge[1] if rnge[1] else True):
                     return k
