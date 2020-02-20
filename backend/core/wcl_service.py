@@ -117,6 +117,7 @@ class WCLService:
                     'player_name': player.get('name'),
                     'damage': player.get('abilities'),
                     'boss_name': req.boss_name,
+                    'boss_id': req.encounter,
                     'total': player.get('total'),
                     'casts': flatten([e.get('abilities') for e in casts.get('entries') if e.get('name') == player.get('name')]),
                     'gear': player.get('gear')
@@ -134,6 +135,7 @@ class WCLService:
                 'execute_dmg': execute_dmg[0] if execute_dmg else 0,
                 'total_dmg': r.get('total'),
                 'boss_name': r.get('boss_name'),
+                'boss_id': r.get('boss_id'),
                 'gear': r.get('gear')
             }
             ret.append(d)

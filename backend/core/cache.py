@@ -16,13 +16,18 @@ class RedisClient:
     async def save_warr_results(self, report_id: str, character: str, data):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=0))
         d = []
-        for k, v in data.items():
-            key = f'{report_id}:{character}:{k}'
+        for v in data.values():
+            if not v.get('is_kill', False):
+                continue
+
+            boss_name = v.get('boss_name')
+            key = f'{report_id}:{character}:{boss_name}'
             resp = dict(v)
             resp['t1_set'] = str(v.get('t1_set'))
             resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
             resp['events'] = ujson.dumps(v.get('events'))
             resp['gear'] = ujson.dumps(v.get('gear'))
+
             await __redis.delete(key)
             r = await __redis.hmset_dict(key, resp)
             d.append(r)
@@ -33,8 +38,12 @@ class RedisClient:
     async def save_druid_results(self, report_id: str, character: str, data):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=1))
         d = []
-        for k, v in data.items():
-            key = f'{report_id}:{character}:{k}'
+        for v in data.values():
+            if not v.get('is_kill', False):
+                continue
+
+            boss_name = v.get('boss_name')
+            key = f'{report_id}:{character}:{boss_name}'
             resp = dict(v)
             resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
             resp['gear'] = ujson.dumps(v.get('gear'))
@@ -49,8 +58,12 @@ class RedisClient:
     async def save_paladin_results(self, report_id: str, character: str, data):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=5))
         d = []
-        for k, v in data.items():
-            key = f'{report_id}:{character}:{k}'
+        for v in data.values():
+            if not v.get('is_kill', False):
+                continue
+
+            boss_name = v.get('boss_name')
+            key = f'{report_id}:{character}:{boss_name}'
             resp = dict(v)
             resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
             resp['gear'] = ujson.dumps(v.get('gear'))
@@ -67,7 +80,7 @@ class RedisClient:
         # DB 5 = Paladin parses
         if not boss_names:
             matches = await self.get_events(report_id, character)
-            matches = {d.get('boss_name'): d for d in matches}
+            matches = {d.get('boss_id'): d for d in matches}
             return {'matches': matches, 'missing': []}
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
                                                             
@@ -112,7 +125,7 @@ class RedisClient:
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         keys = await __redis.keys(key, encoding='utf-8')
         __redis.close()
-        return keys
+        return keys[:500]
 
     async def _get_tps_values(self, keys, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))

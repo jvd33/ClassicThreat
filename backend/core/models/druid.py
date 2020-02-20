@@ -62,7 +62,7 @@ class DruidThreatCalculationRequest(BaseModel):
             feral_instinct_points=log.feral_instinct_points,
             friendlies_in_combat=log.friendlies_in_combat,
             gear=log.gear or [],
-            dps_threat=log.dps_threat or []
+            dps_threat=log.dps_threat or [],
         )
 
         event_times = [e.timestamp for e in log.events]
@@ -94,7 +94,8 @@ class DruidThreatCalculationRequest(BaseModel):
             modified_threat=modified_threat,
             base_tps=base_tps,
             modified_tps=modified_tps,
-            active_time=active_time
+            active_time=active_time, 
+            is_kill=log.is_kill
         )
 
         
@@ -125,3 +126,4 @@ class DruidThreatResult(DruidThreatCalculationRequest):
     base_tps: float = 0.0
     modified_tps: float = 0.0
     active_time: float = 0.0
+    is_kill: bool

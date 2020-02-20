@@ -47,7 +47,10 @@ def get_class_opts(player_class):
     }.get(player_class, None)
 
 async def get_log_data(req: WCLDataRequest, session, player_class):
-
+    """
+    TODO: Refactor this so the cache logic is separated from the external API call logic
+    This is too much and it makes it impossible to reuse the calculation code
+    """
 
     logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
     report_id = req.report_id
@@ -65,7 +68,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
                 if logs:
                     result = recalc_fn(logs, req=req)
                     cache_resp.update(**{
-                        k: r.dict() for r in result
+                        r.boss_id: r.dict() for r in result
                     })
                     await getattr(redis, save)(report_id, req.player_name, cache_resp)
         missing = cached_data.get('missing', [])
@@ -75,21 +78,34 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
     wcl = WCLService(session=session)
     resp = await wcl.get_full_report(report_id)
     missing = set(req.bosses) - set(cache_resp.keys()) if req.bosses else \
-                    set([v.get('name') for v in resp.get('fights') if v.get('boss') != 0 and v.get('kill') == True]) - set(cache_resp.keys()) 
-    bosses = [v for v in resp.get('fights') if v.get('name') in missing and v.get('boss') != 0 and v.get('kill') == True]
+                    set([v.get('name') for v in resp.get('fights') if v.get('boss') != 0]) - set(cache_resp.keys()) 
+    bosses = [v for v in resp.get('fights') if v.get('name') in missing and v.get('boss') != 0]
     
+    if not req.include_wipes:
+        bosses = [b for b in bosses if b.get('kill') == 1]
+        
     if not bosses:
         if not cache_resp:
             logger.error(f'No bosses found in log {report_id} OR cache for player {req.player_name}: {bosses}')
             raise HTTPException(status_code=404,
                                 detail=f'Not found: No boss activity found matching {req.bosses}')
         ranks = {k: v for k, v in sorted(cache_resp.items(), key=lambda x: x[1].get('boss_id'))}
+        ret = {}
         for k, v in ranks.items():
+            boss_name = v.get('boss_name')
             try:
-                rank = await redis.get_encounter_percentile(k, v.get('tps'), db=rank_db)
+                rank = await redis.get_encounter_percentile(k, v.get('modified_tps'), db=rank_db)
                 v.update({'rank': rank})
             except Exception as exc:
-                logger.error(f'Failed to read encounter percentiles {k} from cache {exc}')
+                logger.error(f'Failed to read {k} percentiles from cache {exc}')
+            finally:
+                if v.get('is_kill', False):
+                    ret[boss_name] = v
+                else:
+                    wipe_count = count.get(boss_name, 1)
+                    entry_name = f'{boss_name} Wipe {wipe_count}'
+                    ret[entry_name] = v
+                    count[boss_name] += 1
         return ranks, cache_resp
     
     bosses = list(filter(lambda x: x.get('name') in [*req.bosses, *missing], bosses)) or bosses
@@ -116,13 +132,14 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
         encounter=boss.get('id'),
         boss_name=boss.get('name'),
         report_id=report_id,
+        is_kill=boss.get('kill')
     ) for boss in bosses]
 
     events = await get_events(player_name, player_cls, realm, reqs, req.talent_pts, req.friendlies_in_combat, session, req.t1_set)
 
     r = [calc_model.from_event_log(log) for boss, log in events.items()]
     r = {
-        a.boss_name: a.dict() for a in r
+        a.boss_id: a.dict() for a in r
     }
 
     try:
@@ -133,13 +150,24 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
 
     ranks = {k: v for k, v in sorted({**r, **cache_resp}.items(), key=lambda x: x[1].get('boss_id'))}
 
+    ret = {}
+    count = defaultdict(lambda:1)
     for k, v in ranks.items():
+        boss_name = v.get('boss_name')
         try:
             rank = await redis.get_encounter_percentile(k, v.get('modified_tps'), db=rank_db)
             v.update({'rank': rank})
         except Exception as exc:
-            logger.error(f'Failed to read {k} percentiles from cache {exc}')
-    return ranks, events
+            logger.error(f'Failed to read {boss_name}, {k} percentiles from cache {exc}')
+        finally:
+            if v.get('is_kill', False):
+                ret[boss_name] = v
+            else:
+                wipe_count = count.get(boss_name, 1)
+                entry_name = f'{boss_name} Wipe {wipe_count}'
+                ret[entry_name] = v
+                count[boss_name] += 1
+    return ret, events
  
 
 async def get_events(player_name, player_class, realm, reqs: List[BossActivityRequest], talent_pts, friendlies, session, t1=False):
@@ -159,7 +187,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
     stances = [await modifier_fn(e, reqs[0].player_id) for e in future_results]
     all_events = []
     dps = await asyncio.gather(*[wcl.get_dps_details(req) for req in reqs])
-    for fight in future_results:
+    for fight, req in zip(future_results, reqs):
         if not fight.get('events'):
             continue
         boss = {
@@ -171,9 +199,11 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             'dps_threat': [],
             'player_gear': [],
             'boss_id': fight.get('boss_id'),
+            'is_kill': bool(req.is_kill)
             
         }
-        dps_results = [x for x in dps if x[0] and x[0].get('boss_name') == fight.get('boss_name')]
+
+        dps_results = [x for x in dps if x[0] and x[0].get('boss_id') == fight.get('boss_id')]
         for b in dps_results:
             for d in b: 
                 if d.get('gear'):
@@ -205,14 +235,15 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
         all_events.append(boss)
     
     all_events = {
-        e.get('boss_name'): {
+        e.get('boss_id'): {
             'events': e.get('events'),
             'total_time': e.get('total_time'),
             'start_time': e.get('start_time'),
             'end_time': e.get('end_time'),
             'dps_threat': e.get('dps_threat'),
-            'boss_id': e.get('boss_id'),
-            'gear': e.get('gear')
+            'boss_name': e.get('boss_name'),
+            'gear': e.get('gear'),
+            'is_kill': e.get('is_kill'),
         } for e in all_events
     }
     all_events = {
@@ -220,8 +251,9 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             resp=v.get('events'), 
             report_id=report_id, 
             player_name=player_name, 
-            boss_name=k, 
-            boss_id=v.get('boss_id'),
+            boss_name=v.get('boss_name'), 
+            boss_id=k,
+            is_kill=v.get('is_kill'),
             total_time=v.get('total_time'), 
             player_class=player_class,
             modifier_events=stances,
@@ -260,7 +292,7 @@ async def dummy_process_paladin_state(data, player_id):
             time = e.get('timestamp')
     
     windows[Spell.RighteousFury].append((time, 0))
-    return {**windows, 'boss_name': data.get('boss_name')}
+    return {**windows, 'boss_id': data.get('boss_id')}
 
 async def process_stance_state(data, player_id):
     windows = {
@@ -303,7 +335,7 @@ async def process_stance_state(data, player_id):
         else:
             last_stance = Spell.DefensiveStance
     windows[last_stance].append((time, 0))
-    return {**windows, 'boss_name': data.get('boss_name')}
+    return {**windows, 'boss_id': data.get('boss_id')}
 
 
 async def process_shapeshifts(data, player_id):
@@ -351,4 +383,4 @@ async def process_shapeshifts(data, player_id):
 
     windows[last_form].append((time, 0))
 
-    return {**windows, 'boss_name': data.get('boss_name')}
+    return {**windows, 'boss_id': data.get('boss_id')}

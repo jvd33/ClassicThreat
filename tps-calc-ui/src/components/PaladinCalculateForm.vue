@@ -5,10 +5,6 @@
     >
       Paladin Threat Estimator
     </q-toolbar-title>
-    <span class="text-primary q-pb-lg col-auto col-sm wrap-auto text-h6-sm text-italic">
-    02/14/2020: Major updates and improvements, too much to list here!
-    <a href="https://github.com/jvd33/ClassicThreat/releases/tag/V1.5" class="text-primary">View the Release</a>
-    </span>
     <q-form
       @submit="submit"
       class="q-gutter-md row-6 bordered rounded-borders"
@@ -78,7 +74,15 @@
       >
       </q-select>
 
-
+      <q-toggle
+        size="xl"
+        class="col-2 col-sm-2 q-ma-sm q-pt-md"
+        v-model="include_wipes"
+        label="Calculate Threat on Wipes?"
+        lazy-rules
+        title=""
+        dense
+      />
       <div class="q-pt-lg q-mt-lg col-12 col-12-sm">
         <q-btn label="Estimate" type="submit" color="primary"/>
       </div>
@@ -137,6 +141,7 @@ export default {
           friendlies_in_combat: 1,
           bosses: [],
           t1: false,
+          include_wipes: true,
           options: [
               3, 2, 1, 0
           ],
@@ -197,6 +202,7 @@ export default {
           bosses: this.bosses || [],
           friendlies_in_combat: this.friendlies_in_combat,
           t1_set: this.t1,
+          include_wipes: this.include_wipes,
         })
         .then(response => {
           this.api_status = response.status;

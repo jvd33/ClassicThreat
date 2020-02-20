@@ -1,7 +1,10 @@
 <template>
   <q-page>
     <q-list bordered class="rounded-borders border-primary q-mb-lg" v-for="(value, name) in results" :key="name">
-      <q-expansion-item :label="getRowTitle(name, value)" :caption="getCaption(name, value)">
+      <q-expansion-item :label="getRowTitle(name, value)"
+        :caption="getCaption(name, value)"
+        :icon="value.is_kill ? 'check_circle' : 'cancel'"
+        :header-class="value.is_kill ? 'text-green' : 'text-red'">
         <q-card class="qa-pa-md">
           <q-card-section class="q-pa-sm row justify-center">
            <q-item tag="label" class="center col-12 shadow-8 q-ma-md">
