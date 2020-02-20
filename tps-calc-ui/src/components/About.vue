@@ -6,11 +6,7 @@
           Contact me on Discord: <span class="text-primary text-weight-bold text-h6">coandca#1313</span>
           <br/>
           or send gold to Aemin - Skeram US (pls)
-          <br/><br/>
-          There's a public API, documentation can be viewed at
-          <a class="text-accent text-weight-bold" href="/api/v1/docs">
-            https://classicthreat.com/api/v1/docs
-          </a>. There's very little functionality, but the website is driven by an accessible REST API.
+
           <br/><br/>
           Feature Requests and Bug Reports can be submitted on GitHub:
           <a class="text-accent text-weight-bold" href="https://github.com/jvd33/ClassicTPSEstimator/issues">
@@ -27,7 +23,7 @@
             - TPS Graphing (Coming Soon!)<br/>
             - Comparing against other players previously submitted to ClassicThreat <br/>
             - Non-tank roles
-          <span class="text-primary text-h6">Thanks to:<br/></span>
+          <span class="text-primary text-h6"><br/>Thanks to:<br/></span>
             - Dhoris/AutumnRain for his great work on the TPS spreadsheet that inspired this<br/>
             - Fight Club/magey's classic-warrior GitHub/libthreat2/everyone who has contributed to our understanding of threat mechanics <br/>
         </q-card-section>

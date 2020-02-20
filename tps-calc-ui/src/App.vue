@@ -1,6 +1,8 @@
 <template>
   <q-layout view="hHh lpR lFf">
-    <link href="https://fonts.googleapis.com/css?family=Muli&display=swap" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com/" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css?family=Muli&display=swap" as="style" crossorigin/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Muli&display=swap" crossorigin/>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="public/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="public/favicon-16x16.png">
@@ -8,7 +10,7 @@
     <q-header elevated class="bg-primary fixed-top" height-hint="98">
       <q-toolbar>
         <q-btn flat @click="drawer = !drawer" round dense material icon="menu" />
-        <q-toolbar-title>Classic Threat Tools</q-toolbar-title>
+        <q-toolbar-title>ClassicThreat</q-toolbar-title>
       </q-toolbar>
     </q-header>
 
@@ -83,6 +85,10 @@
     </q-drawer>
 
     <q-page-container>
+      <span class="text-primary q-pb-lg col-auto col-sm wrap-auto text-h6 text-italic">
+        Feb 20 Update: Now supports calculating threat of wipes + performance improvements!
+        <a href="https://github.com/jvd33/ClassicThreat/releases/tag/V2.0" class="text-primary">View the Release</a>
+      </span>
       <router-view />
       <q-page-scroller position="bottom-right" :scroll-offset="400" :offset="[30, 60]">
       <q-btn icon="keyboard_arrow_up" color="primary" />
