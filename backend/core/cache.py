@@ -27,6 +27,7 @@ class RedisClient:
             resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
             resp['events'] = ujson.dumps(v.get('events'))
             resp['gear'] = ujson.dumps(v.get('gear'))
+            resp['is_kill'] = ujson.dumps(v.get('is_kill'))
 
             await __redis.delete(key)
             r = await __redis.hmset_dict(key, resp)
@@ -45,6 +46,7 @@ class RedisClient:
             boss_name = v.get('boss_name')
             key = f'{report_id}:{character}:{boss_name}'
             resp = dict(v)
+            resp['is_kill'] = ujson.dumps(v.get('is_kill'))
             resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
             resp['gear'] = ujson.dumps(v.get('gear'))
             resp['events'] = ujson.dumps(v.get('events'))
@@ -68,6 +70,8 @@ class RedisClient:
             resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
             resp['gear'] = ujson.dumps(v.get('gear'))
             resp['events'] = ujson.dumps(v.get('events'))
+            resp['is_kill'] = ujson.dumps(v.get('is_kill'))
+
             await __redis.delete(key)
             r = await __redis.hmset_dict(key, resp)
             d.append(r)

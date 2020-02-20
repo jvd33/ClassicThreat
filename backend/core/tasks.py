@@ -94,7 +94,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
         for k, v in ranks.items():
             boss_name = v.get('boss_name')
             try:
-                rank = await redis.get_encounter_percentile(k, v.get('modified_tps'), db=rank_db)
+                rank = await redis.get_encounter_percentile(boss_name, v.get('modified_tps'), db=rank_db)
                 v.update({'rank': rank})
             except Exception as exc:
                 logger.error(f'Failed to read {k} percentiles from cache {exc}')
@@ -155,7 +155,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
     for k, v in ranks.items():
         boss_name = v.get('boss_name')
         try:
-            rank = await redis.get_encounter_percentile(k, v.get('modified_tps'), db=rank_db)
+            rank = await redis.get_encounter_percentile(boss_name, v.get('modified_tps'), db=rank_db)
             v.update({'rank': rank})
         except Exception as exc:
             logger.error(f'Failed to read {boss_name}, {k} percentiles from cache {exc}')
