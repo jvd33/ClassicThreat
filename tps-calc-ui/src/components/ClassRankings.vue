@@ -7,6 +7,7 @@
       :title="getTitle()"
       :data="current_view"
       :key="player_class"
+      :filter="filter"
       separator="horizontal"
       :columns="columns"
       row-key="`${name}:${rank}:${report}"
@@ -30,7 +31,6 @@
               class="border-primary col-5-sm col-5"
               dark
               @input = "selected(boss)"
-              :filterMethod="filterTable(filter)"
             >
 
             </q-select>
@@ -43,9 +43,6 @@
             </q-input>
             <q-space/>
             <q-separator vertical inset class="bg-primary q-ma-lg" ></q-separator>
-            <q-toggle class="text-primary col-2 col-2-sm" label="Best Parses Only?" dense dark elevated highlight justify-right v-model="best_ranks">
-
-            </q-toggle>
           </q-item-section>
       </template>
       <template v-slot:body-cell-rank="props">
@@ -86,6 +83,7 @@ export default {
       if (this.boss_cache[this.player_class][this.boss] !== undefined) {
         this.loading = false;
         this.current_view = this.boss_cache[this.player_class][this.boss]
+        return this.current_view;
       }
       axios
       .get(`https://classicthreat.com/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
@@ -100,6 +98,7 @@ export default {
           this.errorMsg = error.response ?
             error.response.data.details : 'Unexpected error. Try again later.';
       })
+      return this.current_view;
     },
     selected(val) {
       this.boss = val;
@@ -113,7 +112,7 @@ export default {
     },
     filterTable(filter) {
       if (this.boss_cache[this.player_class][this.boss] === undefined) {
-        return;
+        return this.current_view;
       }
       let d = this.boss_cache[this.player_class][this.boss].filter((val) => (val.player.localeCompare(filter, undefined, { sensitivity: 'base' }) === 0 || val.realm.localeCompare(filter, undefined, { sensitivity: 'base' }) === 0))
       let seen = []
@@ -127,6 +126,7 @@ export default {
         });
         d = final;
       }
+      this.current_view = d;
       return d;
     },
   },
