@@ -104,8 +104,6 @@ class ThreatEvent(BaseModel):
             'paladin': self.__paladin_modifiers,
         }.get(player_class.casefold(), None)
         raw = 0
-        if self.name == 'Essence of the Red':
-            print(self)
         if not mods:    
             raise KeyError('Invalid Class Specified')
         if self.guid == Spell.Execute:

@@ -34,8 +34,6 @@ class PaladinThreatCalculationRequest(BaseModel):
                 )
                 mapper[event.guid] = breakdown
 
-            if event.guid == 17531:
-                print(event)
             breakdown.base_threat += event.base_threat
             breakdown.modified_threat += event.modified_threat
 

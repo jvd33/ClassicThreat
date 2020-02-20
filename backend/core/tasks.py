@@ -91,6 +91,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
                                 detail=f'Not found: No boss activity found matching {req.bosses}')
         ranks = {k: v for k, v in sorted(cache_resp.items(), key=lambda x: x[1].get('boss_id'))}
         ret = {}
+        count = defaultdict(lambda:1)
         for k, v in ranks.items():
             boss_name = v.get('boss_name')
             try:
