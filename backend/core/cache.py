@@ -134,7 +134,7 @@ class RedisClient:
     async def _get_tps_values(self, keys, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         cached_data = [{k: await __redis.hgetall(k, encoding='utf-8')} for k in keys]
-        resp = {k: float(v.get('modified_tps')) for d in cached_data for k,v in d.items() if float(v.get('modified_tps')) != 0.0}
+        resp = {k: float(v.get('modified_tps')) for d in cached_data for k,v in d.items() if float(v.get('modified_tps', '0.0')) != 0.0}
         __redis.close()
         return resp
 
