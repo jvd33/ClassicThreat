@@ -4,45 +4,7 @@ from collections import defaultdict
 from urllib.parse import urlparse
 
 from ..utils import flatten
-from ..constants import WarriorThreatValues, Spell, DruidThreatValues, PaladinThreatValues
-
-FORMS = [Spell.BearForm, Spell.CatForm, Spell.BerserkerStance, Spell.BattleStance, Spell.DefensiveStance]
-DAMAGE = [
-    Spell.HeroicStrike8, Spell.HeroicStrike9, Spell.Revenge6, Spell.Revenge5, Spell.MockingBlow, Spell.ShieldSlam, 
-    Spell.Swipe, Spell.Maul, Spell.FaerieFire, Spell.FaerieFireFeral, Spell.Cleave, Spell.Execute, Spell.ShieldBash,
-    Spell.Hamstring, Spell.ThunderClap,
-]
-
-GBLESSINGS = [
-    Spell.GreaterBlessingOfKings, Spell.GreaterBlessingOfLight, Spell.GreaterBlessingOfMight1, 
-    Spell.GreaterBlessingOfMight2, Spell.GreaterBlessingOfSalvation, Spell.GreaterBlessingOfSanctuary
-]
-
-BLESSINGS = [
-    Spell.BlessingOfFreedom, Spell.BlessingOfKings, Spell.BlessingOfLight1, Spell.BlessingOfLight2, 
-    Spell.BlessingOfLight3, Spell.BlessingOfMight1, Spell.BlessingOfMight2, Spell.BlessingOfMight3,
-    Spell.BlessingOfMight4, Spell.BlessingOfMight5, Spell.BlessingOfMight6, Spell.BlessingOfMight7,
-    Spell.BlessingOfProtection1, Spell.BlessingOfProtection2, Spell.BlessingOfProtection3, 
-    Spell.BlessingOfSacrifice1, Spell.BlessingOfSacrifice2, Spell.BlessingOfSalvation,
-    Spell.BlessingOfSanctuary1, Spell.BlessingOfSanctuary2, Spell.BlessingOfSanctuary3,
-    Spell.BlessingOfSanctuary4, 
-]
-
-SEALS = [
-    *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom
-]
-
-PALADIN = [
-    *GBLESSINGS, *BLESSINGS, *Spell.HolyLight, *Spell.FlashOfLight, *Spell.LayOnHands, Spell.Cleanse,
-    *Spell.SealOfLight, *Spell.HolyShock, Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3, 
-    *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom, *Spell.JudgementOfRighteousness,
-    *Spell.JudgementOfLight, *Spell.JudgementOfWisdom, *Spell.RetributionAura, *Spell.Consecration, *SEALS
-]
-zerk_specific = ['Berserker Rage', 'Intercept', 'Pummel', 'Recklessness', 'Whirlwind']
-    
-battle_specific = ['Overpower', 'Charge', 'Retaliation', 'Mocking Blow', 'Thunder Clap']
-    
-defensive_specific =  ['Shield Wall', 'Shield Block', 'Revenge']
+from ..constants import WarriorThreatValues, Spell, DruidThreatValues, PaladinThreatValues, FORMS, DAMAGE, PALADIN, GBLESSINGS, BLESSINGS, SEALS
     
 
 class EventBreakdown(BaseModel):
@@ -142,6 +104,8 @@ class ThreatEvent(BaseModel):
             'paladin': self.__paladin_modifiers,
         }.get(player_class.casefold(), None)
         raw = 0
+        if self.name == 'Essence of the Red':
+            print(self)
         if not mods:    
             raise KeyError('Invalid Class Specified')
         if self.guid == Spell.Execute:
@@ -194,6 +158,8 @@ class ThreatEvent(BaseModel):
             elif self.guid in [2687, 23602, 29131, 12964, 17057, 17099, 16959]:
                 self.name = 'Resource Gain'
                 self.guid = Spell.RageGain
+                raw = mods.get(Spell.RageGain)(self.amount)
+            elif self.guid == 23513:
                 raw = mods.get(Spell.RageGain)(self.amount)
             else:
                 raw = mods.get('heal')(self.amount, self.enemies_in_combat)

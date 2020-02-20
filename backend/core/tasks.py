@@ -216,7 +216,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
                 boss['gear'] = data.get('gear')
                 continue 
 
-            elif data.get('sourceID') != fight.get('player_id') or \
+            elif data.get('sourceID') != fight.get('player_id') and (data.get('targetID') != fight.get('player_id') or data.get('type') != 'energize') or \
                         data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize', 'refreshdebuff', 'applybuff', 'refreshbuff']:
                 continue
                 

@@ -1,6 +1,7 @@
 import enum
 from pydantic import BaseModel
 
+
 class GenericObject:
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
@@ -320,3 +321,38 @@ class PaladinThreatValues:
     def items():
         return [{'name': attr, 'val': getattr(PaladinThreatValues, attr).get('threat')} for attr in dir(PaladinThreatValues)
                 if not callable(getattr(PaladinThreatValues, attr)) and not attr.startswith("__")]
+
+
+
+FORMS = [Spell.BearForm, Spell.CatForm, Spell.BerserkerStance, Spell.BattleStance, Spell.DefensiveStance]
+DAMAGE = [
+    Spell.HeroicStrike8, Spell.HeroicStrike9, Spell.Revenge6, Spell.Revenge5, Spell.MockingBlow, Spell.ShieldSlam, 
+    Spell.Swipe, Spell.Maul, Spell.FaerieFire, Spell.FaerieFireFeral, Spell.Cleave, Spell.Execute, Spell.ShieldBash,
+    Spell.Hamstring, Spell.ThunderClap,
+]
+
+GBLESSINGS = [
+    Spell.GreaterBlessingOfKings, Spell.GreaterBlessingOfLight, Spell.GreaterBlessingOfMight1, 
+    Spell.GreaterBlessingOfMight2, Spell.GreaterBlessingOfSalvation, Spell.GreaterBlessingOfSanctuary
+]
+
+BLESSINGS = [
+    Spell.BlessingOfFreedom, Spell.BlessingOfKings, Spell.BlessingOfLight1, Spell.BlessingOfLight2, 
+    Spell.BlessingOfLight3, Spell.BlessingOfMight1, Spell.BlessingOfMight2, Spell.BlessingOfMight3,
+    Spell.BlessingOfMight4, Spell.BlessingOfMight5, Spell.BlessingOfMight6, Spell.BlessingOfMight7,
+    Spell.BlessingOfProtection1, Spell.BlessingOfProtection2, Spell.BlessingOfProtection3, 
+    Spell.BlessingOfSacrifice1, Spell.BlessingOfSacrifice2, Spell.BlessingOfSalvation,
+    Spell.BlessingOfSanctuary1, Spell.BlessingOfSanctuary2, Spell.BlessingOfSanctuary3,
+    Spell.BlessingOfSanctuary4, 
+]
+
+SEALS = [
+    *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom
+]
+
+PALADIN = [
+    *GBLESSINGS, *BLESSINGS, *Spell.HolyLight, *Spell.FlashOfLight, *Spell.LayOnHands, Spell.Cleanse,
+    *Spell.SealOfLight, *Spell.HolyShock, Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3, 
+    *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom, *Spell.JudgementOfRighteousness,
+    *Spell.JudgementOfLight, *Spell.JudgementOfWisdom, *Spell.RetributionAura, *Spell.Consecration, *SEALS
+]

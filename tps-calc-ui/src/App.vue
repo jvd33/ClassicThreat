@@ -178,6 +178,7 @@ import claw from './assets/claw.png';
 import consecrate from './assets/consecrate.png';
 import retaura from './assets/retaura.png';
 import judgement from './assets/judgement.png';
+import ba from './assets/ba.png';
 
 export default {
   meta: {
@@ -272,6 +273,8 @@ export default {
           'app:consecrate': 'img:' + consecrate,
           'app:judgement': 'img:' + judgement,
           'app:retaura': 'img:' + retaura,
+          'app:ba': 'img:' + ba,
+
         },
 
         calculators: [
