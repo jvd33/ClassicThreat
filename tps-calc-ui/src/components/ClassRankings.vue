@@ -52,6 +52,18 @@
           </q-item-section>
         </q-item>
       </template>
+      <div slot="bottom" slot-scope="props" class="row flex-center fit">
+    <q-btn
+      round dense icon="chevron_left" color="primary" class="q-mr-md"
+      :disable="props.isFirstPage"
+      @click="props.prevPage"
+    />
+    <q-btn
+      round dense icon="chevron_right" color="primary"
+      :disable="props.isLastPage"
+      @click="props.nextPage"
+    />
+  </div>
     </q-table>
     <q-inner-loading :showing="loading">
       <q-spinner-puff size="250px" class="q-mb-sm" color="primary"/>

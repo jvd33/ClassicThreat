@@ -144,15 +144,18 @@ class ThreatEvent(BaseModel):
                 self.guid = -100
                 raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
-        elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS, Spell.Thunderfury]:
+        elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS, Spell.Thunderfury, *Spell.WisdomGuids]:
             raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'energize':
             if player_class.casefold() == 'paladin':
                 if self.guid in PALADIN:
                     raw = mods.get('judgementenergize')(self.amount)
-                else: 
+                elif self.guid in Spell.WisdomGuids: 
+                    raw = 0
+                else:
                     raw = mods.get('mana')(self.amount)
+
             elif self.guid in [2687, 23602, 29131, 12964, 17057, 17099, 16959]:
                 self.name = 'Resource Gain'
                 self.guid = Spell.RageGain
@@ -306,6 +309,7 @@ class FightLog(BaseModel):
     imp_rf_pts: int = 0
     friendlies_in_combat: int = 1
     gear: List = list()
+    aggro_windows: Dict = dict()
 
     @staticmethod
     def from_response(resp, 
@@ -320,6 +324,7 @@ class FightLog(BaseModel):
                       gear,
                       realm, 
                       is_kill,
+                      aggro_windows,
                       t1=False,
                       talent_pts=5,
                       friendlies=1,
@@ -338,7 +343,8 @@ class FightLog(BaseModel):
             feral_instinct_points=talent_pts,
             imp_rf_pts=talent_pts,
             friendlies_in_combat=friendlies,
-            dps_threat=[FuryDPSThreatResult(total_time, **d) for d in dps_threat if d.get('player_name') != player_name]
+            dps_threat=[FuryDPSThreatResult(total_time, **d) for d in dps_threat if d.get('player_name') != player_name],
+            aggro_windows=aggro_windows
         )
         if player_class == 'Druid':
             f.defiance_points = 0

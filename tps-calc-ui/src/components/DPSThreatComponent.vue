@@ -10,7 +10,7 @@
     no-caps
     class="text-white shadow-2 rounded-borders q-pt-md"
   >
-    <q-tab v-if="!this.allianceOnly" name="horde" icon="app:horde" label="Horde" style="background: #5f110d"/>
+    <q-tab v-if="this.results.player_class !== 'Paladin'" name="horde" icon="app:horde" label="Horde" style="background: #5f110d"/>
     <q-tab name="alliance" icon="app:alliance" label="Alliance" style="background: #1b3658"/>
   </q-tabs>
   <q-tab-panels v-model="tab" animated class="shadow-2 rounded-borders row" transition-prev="fade" transition-next="fade">
@@ -45,7 +45,7 @@
         </template>
       </q-table>
     </q-tab-panel>
-    <q-tab-panel name="horde" icon="app:horde" value="horde" style="background: #5f110d" v-if="!this.allianceOnly">
+    <q-tab-panel name="horde" icon="app:horde" value="horde" style="background: #5f110d" v-if="this.results.player_class !== 'Paladin'">
       <q-table
         title=""
         label="horde"
@@ -142,7 +142,7 @@ name: 'DPSThreat',
       name: 'DPSThreat',
       errorState: false,
       errorMsg: null,
-      tab: this.allianceOnly ? 'alliance' : 'horde',
+      tab: this.results.player_class === 'Paladin' ? 'alliance' : 'horde',
       tranq: false,
       pagination: {
         rowsPerPage: 0,

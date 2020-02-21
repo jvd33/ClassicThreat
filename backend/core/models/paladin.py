@@ -66,7 +66,9 @@ class PaladinThreatCalculationRequest(BaseModel):
 
         event_times = [e.timestamp for e in log.events]
         start_active, end_active = min(event_times), max(event_times)
-        base_threat, modified_threat, base_tps, modified_tps = [0, 0, 0, 0]
+        base_threat, modified_threat, base_tps, modified_tps, threat_with_aggro = [0, 0, 0, 0, 0]
+        windows = log.aggro_windows.get('windows')
+        time_with_aggro = log.aggro_windows.get('total_time', 0) / 1000.00
 
         events = []
         for event in log.events:
@@ -74,6 +76,9 @@ class PaladinThreatCalculationRequest(BaseModel):
             events.append(event)
             modified_threat += event.modified_threat
             base_threat += event.base_threat
+            if any(w and w[0] <= event.timestamp <= w[1] for w in windows):
+                threat_with_aggro += event.modified_threat
+
 
         base_tps = base_threat / resp.time
         modified_tps = modified_threat / resp.time
@@ -90,10 +95,12 @@ class PaladinThreatCalculationRequest(BaseModel):
             **dict(resp),
             base_threat=base_threat,
             modified_threat=modified_threat,
+            threat_with_aggro=threat_with_aggro,
             base_tps=base_tps,
             modified_tps=modified_tps,
+            time_with_aggro=time_with_aggro,
             active_time=active_time,
-            is_kill=log.is_kill
+            is_kill=log.is_kill,
         )
 
         
@@ -122,7 +129,9 @@ class PaladinThreatCalculationRequest(BaseModel):
 class PaladinThreatResult(PaladinThreatCalculationRequest):
     base_threat: float = 0
     modified_threat: float = 0
+    threat_with_aggro: float = 0
     base_tps: float = 0.0
     modified_tps: float = 0.0
     active_time: float = 0.0
+    time_with_aggro: float = 0.0
     is_kill: bool

@@ -89,6 +89,30 @@ class WCLService:
         return ret
 
 
+    async def get_aggro_windows(self, req: BossActivityRequest):
+        url = self.base_url + f'report/tables/threat/{req.report_id}'
+        params = {
+            'start': req.start_time,
+            'end': req.end_time,
+            'sourceid': req.player_id,
+        }
+
+        resp = await self._send_scoped_request('GET', url, params=params)
+        if not resp:
+            resp = await self._send_scoped_request('GET', url, params=params, translate=False)
+        ret = ujson.loads(resp)
+        
+        threat = ret.get('threat', [])
+        targets = [t for r in threat for t in r.get('targets') if t.get('name') == req.boss_name]
+        total_time = [target.get('totalUptime') for target in targets]
+        total_time = total_time[0] if total_time else 0
+        windows = {
+            'windows': [(band.get('startTime'), band.get('endTime')) for target in targets for band in target.get('bands')],
+        }
+        windows.update({'event': 'threat', 'boss_name': req.boss_name, 'boss_id': req.encounter, 'start_time': req.start_time, 'total_time': total_time})
+        return windows
+
+
     async def get_dps_details(self, req: BossActivityRequest):
         url = self.base_url + f'report/tables/damage-done/{req.report_id}'
         casts = self.base_url + f'report/tables/casts/{req.report_id}'

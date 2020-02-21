@@ -129,7 +129,7 @@ class RedisClient:
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         keys = await __redis.keys(key, encoding='utf-8')
         __redis.close()
-        return keys[:500]
+        return keys[:501]
 
     async def _get_tps_values(self, keys, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))

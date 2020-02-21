@@ -19,11 +19,11 @@
             <q-separator color="primary q-ma-sm" inset></q-separator>
 
             <span class="text-h4 text-weight-bold text-center text-primary q-pa-md col-12 col-sm-12">
-              Estimated TPS: {{active_only ? (value.modified_threat/value.active_time).toPrecision(5) : value.modified_tps.toPrecision(5)}}
+              Total TPS: {{active_only ? (value.modified_threat/value.active_time).toPrecision(5) : value.modified_tps.toPrecision(5)}}
               <br/>
               <span class="q-pa-md center text-subtitle2 justify-left text-white">
                 <q-icon :name="tpsIcon(player_class)" size="40px" class="q-mr-sm"/>
-                Total Threat (estimated):
+                Total Threat:
                 <strong>
                   {{value.modified_threat.toPrecision(8)}}
                 </strong>
@@ -32,6 +32,27 @@
                 Damage per Second:
                 <strong>
                   {{active_only ? (value.total_damage/value.active_time).toPrecision(4) : (value.total_damage/value.time).toPrecision(4)}}
+                </strong>
+                <br/>
+                <br/>
+                <q-icon name="help" size="20px" class="q-mr-sm">
+                  <q-tooltip anchor="center left" self="center right" :offset="[10, 10]">
+                      The percent of total encounter time spent with aggro on the boss.
+                  </q-tooltip>
+                </q-icon>
+                Boss Tanking Time:
+                <strong>
+                  {{(value.time_with_aggro/value.time * 100).toPrecision(4)}}%
+                </strong>
+                <br/>
+                <q-icon name="help" size="20px" class="q-mr-sm">
+                  <q-tooltip anchor="center left" self="center right" :offset="[10, 10]">
+                      Total threat per second of all events where you have aggro on the boss.
+                  </q-tooltip>
+                </q-icon>
+                TPS With Boss Aggro:
+                <strong>
+                  {{value.time_with_aggro > 0 ? (value.threat_with_aggro/value.time_with_aggro).toPrecision(5) : 0}}
                 </strong>
                 <br/>
               </span>

@@ -179,6 +179,7 @@ import consecrate from './assets/consecrate.png';
 import retaura from './assets/retaura.png';
 import judgement from './assets/judgement.png';
 import ba from './assets/ba.png';
+import hammerofwrath from './assets/hamofwrath.png';
 
 export default {
   meta: {
@@ -274,6 +275,7 @@ export default {
           'app:judgement': 'img:' + judgement,
           'app:retaura': 'img:' + retaura,
           'app:ba': 'img:' + ba,
+          'app:hammerofwrath': 'img:' + hammerofwrath,
 
         },
 

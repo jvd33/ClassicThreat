@@ -188,6 +188,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
     stances = [await modifier_fn(e, reqs[0].player_id) for e in future_results]
     all_events = []
     dps = await asyncio.gather(*[wcl.get_dps_details(req) for req in reqs])
+    aggro_windows = await asyncio.gather(*[wcl.get_aggro_windows(req) for req in reqs])
     for fight, req in zip(future_results, reqs):
         if not fight.get('events'):
             continue
@@ -203,7 +204,9 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             'is_kill': bool(req.is_kill)
             
         }
-
+        
+        windows = [x for x in aggro_windows if x.get('boss_id') == fight.get('boss_id')]
+        window = windows[0] if windows else None
         dps_results = [x for x in dps if x[0] and x[0].get('boss_id') == fight.get('boss_id')]
         for b in dps_results:
             for d in b: 
@@ -216,7 +219,6 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             if data.get('type') == 'combatantinfo':
                 boss['gear'] = data.get('gear')
                 continue 
-
             elif data.get('sourceID') != fight.get('player_id') and (data.get('targetID') != fight.get('player_id') or data.get('type') != 'energize') or \
                         data.get('type') not in ['cast', 'applydebuff', 'damage', 'heal', 'energize', 'refreshdebuff', 'applybuff', 'refreshbuff']:
                 continue
@@ -232,6 +234,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             boss.update(**{
                 'events': [data, *boss['events']],
                 'end_time': data.get('end_time'),
+                'aggro_windows': window,
             })
         all_events.append(boss)
     
@@ -245,6 +248,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             'boss_name': e.get('boss_name'),
             'gear': e.get('gear'),
             'is_kill': e.get('is_kill'),
+            'aggro_windows': e.get('aggro_windows'),
         } for e in all_events
     }
     all_events = {
@@ -263,7 +267,8 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             t1=t1,
             gear=v.get('gear'),
             talent_pts=talent_pts,
-            friendlies=friendlies
+            friendlies=friendlies,
+            aggro_windows=v.get('aggro_windows'),
         ) 
         for k, v in sorted(all_events.items(), key=lambda x: x[1].get('start_time'))
     }

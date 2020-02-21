@@ -141,6 +141,7 @@ class Spell:
 
     BlessingOfKings = 20217
     GreaterBlessingOfKings = 25898
+    WisdomGuids = [25894, 25290, 19742, 19850, 19852, 19853, 19854, 25918]
 
 class WarriorThreatValues:
     DefensiveStance = {'threat': {'threat_type': 'Modifier', 'val': 1.3}, 'guid': Spell.DefensiveStance}

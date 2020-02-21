@@ -130,7 +130,9 @@ export default {
         case 'Seal of Righteousness': return 'app:righteousness';
         case 'Seal of Light': return 'app:sealoflight';
         case 'Sacred Shield': return 'app:holyshield';
+        case 'Holy Shield': return 'app:holyshield';
         case 'Essence of the Red': return 'app:ba';
+        case 'Hammer of Wrath': return 'app:hammerofwrath';
         default: return 'app:defaultability';
       };
     },
