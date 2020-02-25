@@ -148,11 +148,12 @@ class ThreatEvent(BaseModel):
             raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'energize':
-            if player_class.casefold() == 'paladin':
+
+            if self.guid in Spell.WisdomGuids: 
+                raw = 0
+            elif player_class.casefold() == 'paladin':
                 if self.guid in PALADIN:
                     raw = mods.get('judgementenergize')(self.amount)
-                elif self.guid in Spell.WisdomGuids: 
-                    raw = 0
                 else:
                     raw = mods.get('mana')(self.amount)
 
