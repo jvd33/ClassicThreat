@@ -213,7 +213,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
                 if d.get('gear'):
                     del d['gear']
 
-        boss['dps_threat'] = dps_results[0]
+        boss['dps_threat'] = dps_results[0] if dps_results else []
         player_gear = []
         for data in fight.get('events'):
             if data.get('type') == 'combatantinfo':
