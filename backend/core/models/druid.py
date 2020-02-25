@@ -65,7 +65,7 @@ class DruidThreatCalculationRequest(BaseModel):
             dps_threat=log.dps_threat or [],
         )
 
-        event_times = [e.timestamp for e in log.events]
+        event_times = [e.timestamp for e in log.events] or [0]
         start_active, end_active = min(event_times), max(event_times)
         base_threat, modified_threat, base_tps, modified_tps, threat_with_aggro = [0, 0, 0, 0, 0]
         windows = log.aggro_windows.get('windows')

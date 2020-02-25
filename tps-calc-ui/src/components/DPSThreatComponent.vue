@@ -104,6 +104,7 @@ name: 'DPSThreat',
     },
 
     getThreatTableData(tps, faction) {
+      tps = tps || 0
       let top_fury = this.results ?
         this.results.dps_threat.reduce((max, player) => max.total_dmg > player.total_dmg ? max : player) :
         {
@@ -131,8 +132,8 @@ name: 'DPSThreat',
 
       let ret = [];
       Object.keys(classes).forEach((k) => {
-          if (faction === 'Horde') ret.push({class: k, dps: (tps*classes[k].rip_at)/classes[k].mod().toPrecision(4), faction: 'Horde', tranq: false });
-          else if (faction === 'Alliance') ret.push({class: k, dps: ((tps*classes[k].rip_at)/(classes[k].mod() * .7)).toPrecision(4), faction: 'Alliance', tranq: false });
+          if (faction === 'Horde') ret.push({class: k, dps: (tps*classes[k].rip_at)/classes[k].mod().toPrecision(4) || 0, faction: 'Horde', tranq: false });
+          else if (faction === 'Alliance') ret.push({class: k, dps: (((tps*classes[k].rip_at)/(classes[k].mod() * .7)) || 0).toPrecision(4), faction: 'Alliance', tranq: false });
       });
       return ret.sort((a, b) => {return a.dps - b.dps});
     },

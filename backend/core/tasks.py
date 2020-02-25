@@ -207,7 +207,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
         
         windows = [x for x in aggro_windows if x.get('boss_id') == fight.get('boss_id')]
         window = windows[0] if windows else None
-        dps_results = [x for x in dps if x[0] and x[0].get('boss_id') == fight.get('boss_id')]
+        dps_results = [x for x in dps if x and x[0].get('boss_id') == fight.get('boss_id')]
         for b in dps_results:
             for d in b: 
                 if d.get('gear'):
@@ -268,7 +268,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
             gear=v.get('gear'),
             talent_pts=talent_pts,
             friendlies=friendlies,
-            aggro_windows=v.get('aggro_windows'),
+            aggro_windows=v.get('aggro_windows') or {},
         ) 
         for k, v in sorted(all_events.items(), key=lambda x: x[1].get('start_time'))
     }

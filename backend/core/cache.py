@@ -186,6 +186,7 @@ class RedisClient:
             cache_result['events'] = ujson.dumps([d.dict() for d in v.events])
             cache_result['gear'] = ujson.dumps([dict(d) for d in v.gear])
             cache_result['is_kill'] = ujson.dumps(v.is_kill)
+            cache_result['aggro_windows'] = ujson.dumps(v.aggro_windows)
             await __redis.hmset_dict(key, cache_result)
         __redis.close()
 
@@ -206,7 +207,8 @@ class RedisClient:
             r['dps_threat'] = [FuryDPSThreatResult(int(r['total_time']), **f) for f in ujson.loads(r['dps_threat'])]
             r['events'] = [ThreatEvent(**e) for e in ujson.loads(r['events'])]
             r['gear'] = [i for i in ujson.loads(r['gear'])]
-            r['is_kill'] = ujson.loads(r['is_kill'])
+            r['is_kill'] = ujson.loads(r.get('is_kill', True))
+            r['aggro_windows'] = ujson.loads(r.get('aggro_windows', '{}'))
             d.append(r)
         __redis.close()
         

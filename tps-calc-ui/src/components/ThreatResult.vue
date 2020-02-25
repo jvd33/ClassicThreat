@@ -19,7 +19,7 @@
             <q-separator color="primary q-ma-sm" inset></q-separator>
 
             <span class="text-h4 text-weight-bold text-center text-primary q-pa-md col-12 col-sm-12">
-              Total TPS: {{active_only ? (value.modified_threat/value.active_time).toPrecision(5) : value.modified_tps.toPrecision(5)}}
+              Total TPS: {{active_only ? ((value.modified_threat/value.active_time) || 0).toPrecision(5) : value.modified_tps.toPrecision(5)}}
               <br/>
               <span class="q-pa-md center text-subtitle2 justify-left text-white">
                 <q-icon :name="tpsIcon(player_class)" size="40px" class="q-mr-sm"/>
@@ -31,7 +31,7 @@
                 <q-icon name="app:taunt" size="40px" class="q-mr-sm"/>
                 Damage per Second:
                 <strong>
-                  {{active_only ? (value.total_damage/value.active_time).toPrecision(4) : (value.total_damage/value.time).toPrecision(4)}}
+                  {{active_only ? ((value.total_damage/value.active_time) ||0).toPrecision(4) : ((value.total_damage/value.time)||0).toPrecision(4)}}
                 </strong>
                 <br/>
                 <br/>

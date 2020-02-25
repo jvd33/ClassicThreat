@@ -329,6 +329,7 @@ class FightLog(BaseModel):
                       talent_pts=5,
                       friendlies=1,
                       **kwargs):
+
         f = FightLog(
             boss_name=boss_name,
             player_name=player_name,
