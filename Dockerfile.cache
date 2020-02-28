@@ -1,9 +1,0 @@
-FROM redis:latest
-
-RUN apt-get update && \
-apt-get install python python-pip -y && \
-pip install awscli -y && \
-apt-get remove python python-pip -y && \
-rm /var/cache/apt-get/*
-
-
