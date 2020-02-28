@@ -169,7 +169,7 @@ class RedisClient:
                 'boss_id': data.get('boss_id'),
             }
         __redis.close()
-        return ranks[:501]  
+        return ranks  
 
     async def get_by_key(self, key, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))

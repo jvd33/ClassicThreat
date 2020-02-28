@@ -228,4 +228,4 @@ async def get_boss_rankings(boss, player_class):
     r = RedisClient()
     ranks = await r.get_encounter_rankings(boss, db=db)
     ranks = [{**v[1], **{'rank': i + 1}} for i, v in enumerate(ranks.items())]
-    return JSONResponse(content=ranks[:500], status_code=200)
+    return JSONResponse(content=ranks[:501], status_code=200)
