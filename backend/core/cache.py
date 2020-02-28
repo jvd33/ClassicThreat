@@ -129,7 +129,7 @@ class RedisClient:
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         keys = await __redis.keys(key, encoding='utf-8')
         __redis.close()
-        return keys[:501]
+        return keys
 
     async def _get_tps_values(self, keys, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
@@ -169,7 +169,7 @@ class RedisClient:
                 'boss_id': data.get('boss_id'),
             }
         __redis.close()
-        return ranks  
+        return ranks[:501]  
 
     async def get_by_key(self, key, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
