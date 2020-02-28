@@ -169,6 +169,7 @@ class RedisClient:
                 'boss_id': data.get('boss_id'),
             }
         __redis.close()
+        ranks = {k: v for k, v in sorted(ranks.items(), key=lambda r: v[1].get('tps', 0), reverse=True)}
         return ranks  
 
     async def get_by_key(self, key, db=0):
