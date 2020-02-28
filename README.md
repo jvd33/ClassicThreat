@@ -7,16 +7,13 @@ ClassicThreat is a tool meant to help tanks in Classic WoW analyze their perform
 Contact the author on discord at coandca#1313 or via GitHub
 # Features and Usage
 
-Right now, the application supports the calculation of Threat per Second (TPS) for Warrior tanks, Fury/Prot and Deep Protection specced. 
+Right now, the application supports the calculation and percentile ranking of Threat per Second (TPS) for Warriors, Druids, and Paladins.
 
 Given a link to a Warcraft logs report (optionally with a fight URL fragment to specify just one fight to analyze), the application will:
   - Retrieve and validate the metadata for the report URL, including boss fights and kill times.
   - Given the boss fight information, the application requests performance metrics for each specific boss encounter (which you can see in more detail on the website itself)
   - Processes the responses and estimates threat per second from ability usage and other events seen in the logs
 
-Hopefully, this will be improved upon and we can get some actually valuable tank metrics spread around.
-
-To view the calculation logic, check out [`calculate_warrior_threat`](backend/core/models.py#L76)
 
 ### Tech
 
@@ -37,6 +34,8 @@ This was also kind of a tech playground for me, so there's some neat technologie
 
 
 ##### Building and running the backend 
+Make sure you have a WCL public key for the environment variable.
+
 make a Python 3.7.5 virtual environment first, then:
 ```sh
 $ (venv) cd backend
@@ -46,6 +45,10 @@ $ (venv) uvicorn main:app --reload
 
 The backend API will now be running on `localhost:8000`.
 
+While you don't NEED to have a local redis instance available to run the application, ranks will not process and the application will refetch events
+every time a calculation request is submitted. Using a local cache instance is recommended to catch regressions, since the calculations will
+process regardless of the existence of a cache or not and the connection errors are swallowed.
+
 ##### Building and running the frontend
 Install node, npm etc etc...
 ```sh
@@ -54,7 +57,7 @@ $ npm i
 $ npm run serve
 ```
 
-The front end will now be running on `localhost:8080`.
+The front end will now be running on `localhost:8080`. To point the front end at a different URL, just set the `VUE_APP_API_URL` environment variable.
 
 Environment variables are used for API urls and API keys, make either a global `.env` file or .env files for each environment at `/backend/.env` and `tps-calc-ui/.env`, using `.env.example` as a reference for the variables needed to run the application.
 
@@ -71,14 +74,11 @@ Want to contribute? Clone the repo and submit a PR, if the code meets software b
 To report bugs/errors, simply open an issue on GitHub stating the issue, repro steps, and any other applicable information.
 
 ### Todos
- - Calculate DPS needed to rip given the TPS per class
- - Bear tanks
- - Paladin tanks? (lol memespec)
  - Split TPS across individual mobs in the boss encounters (e.g. Lucifron TPS, Flamewaker 1 TPS, Flamewaker 2 TPS)
- - DPS/TPS correlation, tank survivability, CPM, etc.
+ - DPS/TPS correlation, tank survivability, etc.
  - Literally any other valuable analysis because this is so much easier than using WarcraftLogs
  - Write Tests (lazy)
- - Refactor pretty much all the `core/tasks.py` logic
+ - Add TPS over time graphs
 
 License
 ----
