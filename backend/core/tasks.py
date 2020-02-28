@@ -54,33 +54,30 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
 
     logger.info(f'REQUEST FOR: {req.player_name} -------- REPORT: {req.url} -------- BOSSES: {req.bosses}')
     report_id = req.report_id
-    missing = req.bosses
     cache_resp = {}
     data_db, calc_model, recalc_fn, save, rank_db = get_class_opts(player_class)    
 
     try:
         redis = RedisClient()
-        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, db=data_db) or {}
+        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, req.include_wipes, db=data_db) or {}
         if cached_data.get('matches'):
             cache_resp = {}
-            for k in cached_data.get('matches'):
-                logs = {} #await redis.get_events(report_id, req.player_name, bosses=[k])
-                if logs:
-                    result = recalc_fn(logs, req=req)
-                    cache_resp.update(**{
-                        r.boss_id: r.dict() for r in result
-                    })
-                    await getattr(redis, save)(report_id, req.player_name, cache_resp)
+            logs = list(cached_data.get('matches').values())
+            result = recalc_fn(logs, req=req)
+            cache_resp.update(**{
+                str(r.boss_id): r.dict() for r in result
+            })
+            await getattr(redis, save)(report_id, req.player_name, cache_resp)
         missing = cached_data.get('missing', [])
     except Exception as exc:
         logger.error(f'Failed to read historic records from cache {exc}')
     
     wcl = WCLService(session=session)
     resp = await wcl.get_full_report(report_id)
-    missing = set(req.bosses) - set(cache_resp.keys()) if req.bosses else \
-                    set([v.get('name') for v in resp.get('fights') if v.get('boss') != 0]) - set(cache_resp.keys()) 
-    bosses = [v for v in resp.get('fights') if v.get('name') in missing and v.get('boss') != 0]
-    
+    bosses = [v for v in resp.get('fights') if v.get('boss') != 0 and str(v.get('id', 0)) not in cache_resp.keys()]
+
+    if req.bosses:
+        bosses = [v for v in bosses if v.get('name') in req.bosses]
     if not req.include_wipes:
         bosses = [b for b in bosses if b.get('kill') == 1]
         
@@ -88,7 +85,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
         if not cache_resp:
             logger.error(f'No bosses found in log {report_id} OR cache for player {req.player_name}: {bosses}')
             raise HTTPException(status_code=404,
-                                detail=f'Not found: No boss activity found matching {req.bosses}')
+                                detail=f'Not found: No boss activity found matching {req.bosses}, includes_wipes={req.include_wipes}')
         ranks = {k: v for k, v in sorted(cache_resp.items(), key=lambda x: x[1].get('boss_id'))}
         ret = {}
         count = defaultdict(lambda:1)
@@ -107,9 +104,8 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
                     entry_name = f'{boss_name} Wipe {wipe_count}'
                     ret[entry_name] = v
                     count[boss_name] += 1
-        return ranks, cache_resp
+        return ret, cache_resp
     
-    bosses = list(filter(lambda x: x.get('name') in [*req.bosses, *missing], bosses)) or bosses
     player_info = [p for p in resp.get('friendlies') if p.get('name').casefold() == req.player_name.casefold()]
     if not player_info:
         logger.error(f'Player {req.player_name} not found in provided report {report_id}.')

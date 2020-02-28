@@ -98,7 +98,7 @@ export default {
         return this.current_view;
       }
       axios
-      .get(`https://classicthreat.com/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
+      .get(process.env.VUE_APP_API_URL + `/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
       .then(response => {
         this.current_view = response.data;
         this.boss_cache[this.player_class][this.boss] = response.data
@@ -213,7 +213,7 @@ export default {
   mounted() {
     this.loading = true;
     axios
-      .get(`https://classicthreat.com/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
+      .get(process.env.VUE_APP_API_URL + `/api/v1/rankings?player_class=${this.player_class}&boss=${this.boss}`)
       .then(response => {
         this.current_view = response.data;
         this.boss_cache[this.player_class][this.boss] = response.data;

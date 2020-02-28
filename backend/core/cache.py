@@ -78,20 +78,18 @@ class RedisClient:
         __redis.close()
         return d
 
-    async def check_cache(self, report_id: str, character: str, boss_names, db=0):
+    async def check_cache(self, report_id: str, character: str, boss_names, include_wipes, db=0):
         # DB 0 = Warrior parses
         # DB 1 = Druid parses
         # DB 5 = Paladin parses
-        if not boss_names:
-            matches = await self.get_events(report_id, character)
-            matches = {d.get('boss_id'): d for d in matches}
-            return {'matches': matches, 'missing': []}
-        __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
-                                                            
-        cached_data = [dict(await __redis.hgetall(f'{report_id}:{character}:{b}', encoding='utf-8')) for b in boss_names]
-        matches = {d.get('boss_name'): d for d in cached_data}
-        missing = list(set(boss_names) - set(matches.keys())) or []
-        __redis.close()
+        matches = await self.get_events(report_id, character)
+        matches = {d.get('boss_id'): d for d in matches}
+        if boss_names:
+            matches = {d.get('boss_id'): d for d in matches.values() if d.get('boss_name') in boss_names}
+        if not include_wipes:
+            matches = {d.get('boss_id'): d for d in matches.values() if d.get('is_kill')}
+        names = [match.get('boss_name') for match in matches.values()]
+        missing = list(set(boss_names) - set(names)) or []
         return {'matches': matches, 'missing': missing}
 
 

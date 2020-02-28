@@ -75,6 +75,8 @@ async def calculate_warrior(req: WCLDataRequest, background_tasks: BackgroundTas
         return JSONResponse(content={'detail': f'Error from Warcraft Logs: {cexc.message}', 'code': cexc.status}, status_code=cexc.status)
     except HTTPException as hexc:
         raise hexc
+    finally:
+        await session.close()
 
 
 @api_router.post('/calculate_druid', 
@@ -108,6 +110,8 @@ async def calculate_druid(req: WCLDataRequest, background_tasks: BackgroundTasks
         return JSONResponse(content={'detail': f'Error from Warcraft Logs: {cexc.message}', 'code': cexc.status}, status_code=cexc.status)
     except HTTPException as hexc:
         raise hexc
+    finally:
+        await session.close()
 
 
 @api_router.post('/calculate_paladin', 
@@ -141,7 +145,8 @@ async def calculate_paladin(req: WCLDataRequest, background_tasks: BackgroundTas
         return JSONResponse(content={'detail': f'Error from Warcraft Logs: {cexc.message}', 'code': cexc.status}, status_code=cexc.status)
     except HTTPException as hexc:
         raise hexc
-
+    finally:
+        await session.close()
 
 @api_router.get('/events/{report_id}/{player_name}',
                 tags=['v1'],
