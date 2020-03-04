@@ -1,8 +1,22 @@
 <template>
   <div class="q-pa-md col-12" >
     <div>
-      <q-card>
-        <q-card-section>
+      <q-card class="row">
+
+        <q-toolbar-title
+          class="text-primary text-h3 vertical-middle col-12"
+        >
+          <q-avatar size="200px" class="shadow-10 q-ma-md vertical-middle center">
+            <q-img :src="require('../assets/nef_circ.png')"/>
+          </q-avatar>
+          <span class="col-12">
+          ClassicThreat</span>
+        </q-toolbar-title>
+        <q-card-section class="col-12">
+
+          <span class="text-h6 q-pb-lg"> ClassicThreat is a tool meant to help tanks in Classic WoW analyze their performance. <br/> <br/> This application seeks to build on top of the extensive reporting capabilities of Warcraft Logs in an effort to improve tank performance. <br/><br/></span>
+          <q-separator horizontal inset=".5" class="q-mb-md"/>
+
           Contact me on Discord: <span class="text-primary text-weight-bold text-h6">coandca#1313</span>
           <br/>
           or send gold to Aemin - Skeram US (pls)
@@ -17,6 +31,7 @@
           <br/><br/>
           For urgent bugs, feel free to message me on Discord.
           <br/><br/>
+          <q-separator horizontal inset=".5" class="q-mb-md"/>
           <span class="text-primary text-h4">Future planned features:<br/></span><br/>
             - Split TPS across individual mobs in the boss encounters (e.g. Lucifron TPS, Flamewaker 1 TPS, Flamewaker 2 TPS) <br/>
             - More set bonuses/modifiers of various kinds, more spell ranks <br/>

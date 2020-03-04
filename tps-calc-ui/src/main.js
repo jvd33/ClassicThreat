@@ -15,8 +15,7 @@ import ThreatResult from './components/ThreatResult.vue';
 
 const routes = [
   {
-    path: '/',
-    alias: '/warrior',
+    path: '/warrior',
     component: WarriorCalculateForm,
   },
   {
@@ -32,7 +31,8 @@ const routes = [
     component: CalculationDetails,
   },
   {
-    path: '/about',
+    path: '/',
+    alias: '/about',
     component: About,
   },
   {

@@ -10,7 +10,11 @@
     <q-header elevated class="bg-primary fixed-top" height-hint="98">
       <q-toolbar>
         <q-btn flat @click="drawer = !drawer" round dense material icon="menu" />
-        <q-toolbar-title>ClassicThreat</q-toolbar-title>
+
+        <q-avatar size="75px" class="q-pl-sm q-pr-md">
+          <q-img :src="require('./assets/nef_circ.png')" />
+        </q-avatar>
+        <q-toolbar-title class="q-pl-md">ClassicThreat</q-toolbar-title>
       </q-toolbar>
     </q-header>
 
@@ -86,8 +90,7 @@
 
     <q-page-container>
       <span class="text-primary q-pb-lg col-auto col-sm wrap-auto text-h6 text-italic">
-        Feb 20 Update: Now supports calculating threat of wipes + performance improvements!
-        <a href="https://github.com/jvd33/ClassicThreat/releases/tag/V2.0" class="text-primary">View the Release</a>
+        March 4th Update: Calculation Bug Fixes and UI improvements!
       </span>
       <router-view />
       <q-page-scroller position="bottom-right" :scroll-offset="400" :offset="[30, 60]">

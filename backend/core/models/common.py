@@ -148,7 +148,6 @@ class ThreatEvent(BaseModel):
             raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'energize':
-
             if self.guid in Spell.WisdomGuids: 
                 raw = 0
             elif player_class.casefold() == 'paladin':
@@ -157,7 +156,7 @@ class ThreatEvent(BaseModel):
                 else:
                     raw = mods.get('mana')(self.amount)
 
-            elif self.guid in [2687, 23602, 29131, 12964, 17057, 17099, 16959]:
+            elif self.guid in [2687, 23602, 29131, 12964, 17057, 17099, 16959, 17528]:
                 self.name = 'Resource Gain'
                 self.guid = Spell.RageGain
                 raw = mods.get(Spell.RageGain)(self.amount)
