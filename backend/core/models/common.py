@@ -138,6 +138,7 @@ class ThreatEvent(BaseModel):
 
         elif self.event_type == 'heal':
             if self.guid in [*Spell.HolyLight, *Spell.HolyShock, *Spell.FlashOfLight, *Spell.LayOnHands]:
+                self.name = 'Paladin Healing'
                 raw = mods.get('paladinspellhealing')(self.amount, self.enemies_in_combat)
             elif self.guid != 23394: # Shadow of Ebonroc hotfix
                 self.name = 'Healing Done'
@@ -172,7 +173,11 @@ class ThreatEvent(BaseModel):
         else:
             raw = 0
 
-        if self.event_type != 'energize' or player_class.casefold() == 'paladin':
+        if player_class.casefold() == 'paladin' and self.guid in PALADIN:
+            self.modified_threat, self.base_threat = mods.get(self.class_modifier)(raw, talent_pts), raw
+            return self
+
+        elif self.event_type != 'energize' and player_class.casefold() != 'paladin':
             self.modified_threat, self.base_threat = mods.get(self.class_modifier)(raw, talent_pts), raw
             return self
 
@@ -276,7 +281,6 @@ class ThreatEvent(BaseModel):
             20347: lambda n, __t=__t: __t.SealOfLight2/n,
             20348: lambda n, __t=__t: __t.SealOfLight3/n,
             20349: lambda n, __t=__t: __t.SealOfLight4/n,
-
             20166: lambda n, __t=__t: __t.SealOfWisdom1/n,
             20356: lambda n, __t=__t: __t.SealOfWisdom2/n,
             20357: lambda n, __t=__t: __t.SealOfWisdom3/n,

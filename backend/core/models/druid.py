@@ -92,6 +92,7 @@ class DruidThreatCalculationRequest(BaseModel):
             e.casts_per_minute = e.count / (resp.time/60)
 
         resp.events = sorted(threat_events, key=lambda e: e.percentage_threat, reverse=True)
+        log.events = events
         return DruidThreatResult(
             **dict(resp),
             base_threat=base_threat,
@@ -102,7 +103,7 @@ class DruidThreatCalculationRequest(BaseModel):
             time_with_aggro=time_with_aggro,
             active_time=active_time,
             is_kill=log.is_kill,
-        )
+        ), log
 
         
     def _process_event(self, event: ThreatEvent):

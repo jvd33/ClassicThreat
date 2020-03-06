@@ -9,7 +9,7 @@ from .models.common import WCLDataRequest, FightLog
 from .models.warrior import WarriorThreatResult
 from .models.druid import DruidThreatResult
 from .models.paladin import PaladinThreatResult
-from .tasks import get_log_data
+from .tasks import get_log_data, get_historic_events
 from .constants import WarriorThreatValues, Threat, DruidThreatValues, PaladinThreatValues
 from docs.examples import CALC_RESP_EXAMPLE, THREAT_RESP_EXAMPLE, HEARTBEAT, CALC_RESP_DRUID_EXAMPLE
 from .cache import RedisClient
@@ -148,37 +148,19 @@ async def calculate_paladin(req: WCLDataRequest, background_tasks: BackgroundTas
     finally:
         await session.close()
 
+
 @api_router.get('/events/{report_id}/{player_name}',
                 tags=['v1'],
-                dependencies=[Depends(get_http_session)], 
-
                 )
-async def get_event_timeline(report_id, player_name, player_class, session=Depends(get_http_session), boss: List[str]=Query(None)):
+async def get_event_timeline(report_id, player_name, boss: List[str]=Query(None)):
     try:
-        events = None
-        r = RedisClient()
-        try:
-            events = await r.get_events(report_id, player_name, bosses=boss)
-        except ConnectionRefusedError:
-            pass
-        if not events:
-            async with session:
-                req = WCLDataRequest(
-                    url=f'https://classic.warcraftlogs.com/reports/{report_id}',
-                    player_name=player_name,
-                    talent_pts=5,
-                    bosses=boss or [],
-                )
-                _, events = await get_log_data(req, session=session, player_class=player_class.casefold())
-
-        return JSONResponse(content={k: e.dict() for k, e in events.items()}, status_code=200)
+        events = await get_historic_events(report_id, player_name, bosses=boss)
+        return JSONResponse(content=events, status_code=200)
 
     except ClientResponseError as cexc:
         return JSONResponse(content={'detail': f'Error from Warcraft Logs: {cexc.message}', 'code': cexc.status}, status_code=cexc.status)
     except HTTPException as hexc:
         raise hexc
-    finally:
-        await session.close()
 
     
 @api_router.get('/threat_values', 

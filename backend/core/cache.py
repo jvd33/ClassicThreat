@@ -99,7 +99,7 @@ class RedisClient:
         # DB 6 = Paladin ranks
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
         last_updated = await __redis.get('last_updated', encoding='utf-8')
-        if last_updated and (datetime.datetime.now() - datetime.datetime.fromtimestamp(int(last_updated))).total_seconds() <= 60: 
+        if last_updated and (datetime.datetime.now() - datetime.datetime.fromtimestamp(int(last_updated))).total_seconds() <= 300: 
             __redis.close()
             return 
         bosses = [
@@ -114,6 +114,7 @@ class RedisClient:
             keys = await self._get_rank_keys(b, db=data_db)
             vals = await self._get_tps_values(keys, db=data_db)
             ranks = {k: v for k, v in sorted(vals.items(), key=lambda v: v[1], reverse=True)}
+
             raw_vals = [v for k, v in ranks.items()]
             ret = {
                 'ranks': ujson.dumps(ranks),
@@ -167,8 +168,17 @@ class RedisClient:
                 'boss_id': data.get('boss_id'),
             }
         __redis.close()
+        dedupe = []
         ranks = {k: v for k, v in sorted(ranks.items(), key=lambda r: r[1].get('tps', 0), reverse=True)}
-        return ranks  
+        final = {}
+        for key, rank in ranks.items():
+            player, realm, boss = rank.get('player'), rank.get('realm'), rank.get('boss')
+            player_key = f'{player}:{realm}:{boss}'
+            if player_key not in dedupe:
+                dedupe.append(player_key)
+                final[key] = rank
+            
+        return final
 
     async def get_by_key(self, key, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
@@ -176,17 +186,16 @@ class RedisClient:
         __redis.close()
         return data
 
-    async def save_events(self, report_id, player_name, all_events):
+    async def save_events(self, report_id, player_name, log):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=4))
-        for k, v in all_events.items():
-            key = f'{report_id}:{player_name}:{k}'
-            cache_result = v.dict()
-            cache_result['dps_threat'] = ujson.dumps([d.dict() for d in v.dps_threat])
-            cache_result['events'] = ujson.dumps([d.dict() for d in v.events])
-            cache_result['gear'] = ujson.dumps([dict(d) for d in v.gear])
-            cache_result['is_kill'] = ujson.dumps(v.is_kill)
-            cache_result['aggro_windows'] = ujson.dumps(v.aggro_windows)
-            await __redis.hmset_dict(key, cache_result)
+        key = f'{report_id}:{player_name}:{log.boss_id}'
+        cache_result = log.dict()
+        cache_result['dps_threat'] = ujson.dumps([d.dict() for d in log.dps_threat])
+        cache_result['events'] = ujson.dumps([d.dict() for d in log.events])
+        cache_result['gear'] = ujson.dumps([dict(d) for d in log.gear])
+        cache_result['is_kill'] = ujson.dumps(log.is_kill)
+        cache_result['aggro_windows'] = ujson.dumps(log.aggro_windows)
+        await __redis.hmset_dict(key, cache_result)
         __redis.close()
 
     async def get_events(self, report_id, player_name, bosses=None):
@@ -208,6 +217,7 @@ class RedisClient:
             r['gear'] = [i for i in ujson.loads(r['gear'])]
             r['is_kill'] = ujson.loads(r.get('is_kill', True))
             r['aggro_windows'] = ujson.loads(r.get('aggro_windows', '{}'))
+            
             d.append(r)
         __redis.close()
         

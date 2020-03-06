@@ -133,6 +133,9 @@ export default {
         case 'Holy Shield': return 'app:holyshield';
         case 'Essence of the Red': return 'app:ba';
         case 'Hammer of Wrath': return 'app:hammerofwrath';
+        case 'Goblin Sapper Charge': return 'app:sapper';
+        case 'Paladin Healing': return 'app:holylight';
+
         default: return 'app:defaultability';
       };
     },

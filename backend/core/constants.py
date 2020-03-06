@@ -78,12 +78,12 @@ class Spell:
     HolyShock = [25903, 25913, 25914]
     LayOnHands = [633, 2800, 10310]        
     SealOfLight = [20165, 20347, 20348, 20349]
-    SealOfWisdom = [20166, 20356, 20357]
+    SealOfWisdom = [20166, 20356, 20357, 20350, 20168, 20351]
     SealOfRighteousness = [20154, 21084, 20287, 20288, 20290, 20291, 20292, 20293, 20289]
-    JudgementOfWisdom = [20354, 20186, 20355]
+    JudgementOfWisdom = [20354, 20186, 20355, 20353, 20268, 20352]
     JudgementOfRighteousness = [20283, 20187, 20280, 20281, 20282, 20284, 20285, 20286]
     JudgementOfLight = [20344, 20185, 20345, 20346]
-    FlashOfLight = [19750, 19939, 19940, 19941, 19942, 19943]
+    FlashOfLight = [19750, 19939, 19940, 19941, 19942, 19943, 19993]
     Consecration = [26573, 20924, 20922, 20116, 20923]
     RetributionAura = [7294, 10301, 10300, 10298, 10299]
     Cleanse = 4987
@@ -142,6 +142,8 @@ class Spell:
     BlessingOfKings = 20217
     GreaterBlessingOfKings = 25898
     WisdomGuids = [25894, 25290, 19742, 19850, 19852, 19853, 19854, 25918]
+    HolyWrath2 = 10318
+    HolyWrath1 = 2812
 
 class WarriorThreatValues:
     DefensiveStance = {'threat': {'threat_type': 'Modifier', 'val': 1.3}, 'guid': Spell.DefensiveStance}
@@ -227,6 +229,7 @@ class DruidThreatValues:
 class PaladinThreatValues:
     GiftOfArthas = {'threat': {'threat_type': 'Flat', 'val': 90}, 'guid': Spell.GiftOfArthas}
     ManaGain = {'threat': {'threat_type': 'Flat', 'val': .5}, 'guid': None}
+
     RighteousFury = {'threat': {'threat_type': 'Modifier', 'val': 1.6}, 'guid': None}
     ImpRf0 = {'threat': {'threat_type': 'Modifier', 'val': 1.6}, 'guid': None}
     ImpRf1 = {'threat': {'threat_type': 'Modifier', 'val': 1.7}, 'guid': None}
@@ -355,5 +358,6 @@ PALADIN = [
     *GBLESSINGS, *BLESSINGS, *Spell.HolyLight, *Spell.FlashOfLight, *Spell.LayOnHands, Spell.Cleanse,
     *Spell.SealOfLight, *Spell.HolyShock, Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3, 
     *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom, *Spell.JudgementOfRighteousness,
-    *Spell.JudgementOfLight, *Spell.JudgementOfWisdom, *Spell.RetributionAura, *Spell.Consecration, *SEALS
+    *Spell.JudgementOfLight, *Spell.JudgementOfWisdom, *Spell.RetributionAura, *Spell.Consecration, *SEALS, 
+    Spell.HolyWrath1, Spell.HolyWrath2
 ]

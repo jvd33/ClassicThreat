@@ -20,24 +20,42 @@ from .utils import flatten
 
 logger = logging.getLogger()
 
-def __warr_recalc_opts(logs, req):
+async def __warr_recalc_opts(logs, req):
     for log in logs:
         log['defiance_points'] = req.talent_pts
         log['t1_set'] = req.t1_set
         log['friendlies_in_combat'] = req.friendlies_in_combat
-        yield WarriorThreatCalculationRequest.from_event_log(FightLog(**log))
+        resp, log = WarriorThreatCalculationRequest.from_event_log(FightLog(**log))
+        try:
+            redis = RedisClient()
+            await redis.save_events(req.report_id, req.player_name, log)
+        except Exception as exc:
+            logger.error(f'Failed to write to cache {exc}')
+        yield resp
 
-def __druid_recalc_opts(logs, req):
+async def __druid_recalc_opts(logs, req):
     for log in logs:
         log['feral_instinct_points'] = req.talent_pts
         log['friendlies_in_combat'] = req.friendlies_in_combat
-        yield DruidThreatCalculationRequest.from_event_log(FightLog(**log))
+        resp, log = DruidThreatCalculationRequest.from_event_log(FightLog(**log))
+        try:
+            redis = RedisClient()
+            await redis.save_events(req.report_id, req.player_name, log)
+        except Exception as exc:
+            logger.error(f'Failed to write to cache {exc}')
+        yield resp
 
-def __paladin_recalc_opts(logs, req):
+async def __paladin_recalc_opts(logs, req):
     for log in logs:
         log['imp_rf_points'] = req.talent_pts
         log['friendlies_in_combat'] = req.friendlies_in_combat
-        yield PaladinThreatCalculationRequest.from_event_log(FightLog(**log))
+        resp, log = PaladinThreatCalculationRequest.from_event_log(FightLog(**log))
+        try:
+            redis = RedisClient()
+            await redis.save_events(req.report_id, req.player_name, log)
+        except Exception as exc:
+            logger.error(f'Failed to write to cache {exc}')
+        yield resp
 
 def get_class_opts(player_class):
     return {
@@ -65,10 +83,9 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
             logs = list(cached_data.get('matches').values())
             result = recalc_fn(logs, req=req)
             cache_resp.update(**{
-                str(r.boss_id): r.dict() for r in result
+                str(r.boss_id): r.dict() async for r in result
             })
             await getattr(redis, save)(report_id, req.player_name, cache_resp)
-        missing = cached_data.get('missing', [])
     except Exception as exc:
         logger.error(f'Failed to read historic records from cache {exc}')
     
@@ -134,7 +151,14 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
 
     events = await get_events(player_name, player_cls, realm, reqs, req.talent_pts, req.friendlies_in_combat, session, req.t1_set)
 
-    r = [calc_model.from_event_log(log) for boss, log in events.items()]
+    logs = [log for boss, log in events.items()]
+    try:
+        redis = RedisClient()
+        for log in logs:
+            await redis.save_events(req.report_id, req.player_name, log)
+    except Exception as exc:
+        logger.error(f'Failed to write to cache {exc}')
+    r = [calc_model.from_event_log(log)[0] for log in logs]
     r = {
         a.boss_id: a.dict() for a in r
     }
@@ -269,13 +293,37 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
         for k, v in sorted(all_events.items(), key=lambda x: x[1].get('start_time'))
     }
 
-    try:
-        redis = RedisClient()
-        await redis.save_events(report_id, player_name, all_events)
-    except Exception as exc:
-        logger.error(f'Failed to write to cache {exc}')
-
     return all_events
+
+async def get_historic_events(report_id, player_name, bosses=None):
+    events = []
+    r = RedisClient()
+    try:
+        events = await r.get_events(report_id, player_name, bosses=bosses)
+    except ConnectionRefusedError:
+        pass
+    if events:
+        player_class = events[0].get('player_class')
+        if not player_class:
+            raise HTTPException(status_code=404,
+                                detail=f'Not found: No event log found for {player_name}, report ID {report_id}')
+    ret = []
+    for event in events:
+        ret.append({
+            'aggro_windows': event['aggro_windows'],
+            'boss_id': event['boss_id'],
+            'boss_name': event['boss_name'],
+            'events': [e.dict() for e in event['events']],
+            'is_kill': event['is_kill'],
+            'player_class': event['player_class'],
+            'player_name': event['player_name'],
+            'realm': event['realm'],
+            'report_id': event['report_id'],
+            'total_time': float(event['total_time']) / 1000.0
+        })
+
+    return ret
+
 
 async def dummy_process_paladin_state(data, player_id):
     windows = {

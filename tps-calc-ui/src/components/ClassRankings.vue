@@ -71,7 +71,7 @@
         Fetching Rankings...
       </span>
     </q-inner-loading>
-    <span class="text-primary text-h6 col-12 col-12-sm">Rankings update once every minute!</span>
+    <span class="text-primary text-h6 col-12 col-12-sm">Rankings update once every 5 minutes!</span>
   </q-page>
 </template>
 
