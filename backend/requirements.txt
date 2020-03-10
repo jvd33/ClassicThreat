@@ -6,6 +6,7 @@ aniso8601==7.0.0
 async-exit-stack==1.0.1
 async-generator==1.10
 async-timeout==3.0.1
+attrs==19.3.0
 brotlipy==0.7.0
 cchardet==2.1.5
 cffi==1.13.2
@@ -34,6 +35,7 @@ scipy==1.4.1
 six==1.13.0
 starlette==0.12.9
 tzlocal==2.0.0
+ujson==1.35
 urllib3==1.25.7
 uvicorn==0.11.1
 uvloop==0.14.0
