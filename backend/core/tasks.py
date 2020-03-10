@@ -87,6 +87,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
             })
             await getattr(redis, save)(report_id, req.player_name, cache_resp)
     except Exception as exc:
+        raise exc
         logger.error(f'Failed to read historic records from cache {exc}')
     
     wcl = WCLService(session=session)
@@ -157,6 +158,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
         for log in logs:
             await redis.save_events(req.report_id, req.player_name, log)
     except Exception as exc:
+        raise exc
         logger.error(f'Failed to write to cache {exc}')
     r = [calc_model.from_event_log(log)[0] for log in logs]
     r = {

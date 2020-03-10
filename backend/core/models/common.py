@@ -157,7 +157,7 @@ class ThreatEvent(BaseModel):
                 else:
                     raw = mods.get('mana')(self.amount)
 
-            elif self.guid in [2687, 23602, 29131, 12964, 17057, 17099, 16959, 17528]:
+            elif self.guid in [2687, 23602, 29131, 12964, 17057, 17099, 16959, 17528, 101]:
                 self.name = 'Resource Gain'
                 self.guid = Spell.RageGain
                 raw = mods.get(Spell.RageGain)(self.amount)

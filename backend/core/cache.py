@@ -3,6 +3,7 @@ import aioredis
 import datetime
 import ujson
 import os
+import lz4.frame
 
 from scipy.stats import percentileofscore
 
@@ -24,9 +25,9 @@ class RedisClient:
             key = f'{report_id}:{character}:{boss_name}'
             resp = dict(v)
             resp['t1_set'] = str(v.get('t1_set'))
-            resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
-            resp['events'] = ujson.dumps(v.get('events'))
-            resp['gear'] = ujson.dumps(v.get('gear'))
+            resp['dps_threat'] = lz4.frame.compress(ujson.dumps(v.get('dps_threat')).encode())
+            resp['events'] = lz4.frame.compress(ujson.dumps(v.get('events')).encode())
+            resp['gear'] = lz4.frame.compress(ujson.dumps(v.get('gear')).encode())
             resp['is_kill'] = ujson.dumps(v.get('is_kill'))
 
             await __redis.delete(key)
@@ -47,9 +48,9 @@ class RedisClient:
             key = f'{report_id}:{character}:{boss_name}'
             resp = dict(v)
             resp['is_kill'] = ujson.dumps(v.get('is_kill'))
-            resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
-            resp['gear'] = ujson.dumps(v.get('gear'))
-            resp['events'] = ujson.dumps(v.get('events'))
+            resp['dps_threat'] = lz4.frame.compress(ujson.dumps(v.get('dps_threat')).encode())
+            resp['events'] = lz4.frame.compress(ujson.dumps(v.get('events')).encode())
+            resp['gear'] = lz4.frame.compress(ujson.dumps(v.get('gear')).encode())
             await __redis.delete(key)
             r = await __redis.hmset_dict(key, resp)
             d.append(r)
@@ -67,9 +68,9 @@ class RedisClient:
             boss_name = v.get('boss_name')
             key = f'{report_id}:{character}:{boss_name}'
             resp = dict(v)
-            resp['dps_threat'] = ujson.dumps(v.get('dps_threat'))
-            resp['gear'] = ujson.dumps(v.get('gear'))
-            resp['events'] = ujson.dumps(v.get('events'))
+            resp['dps_threat'] = lz4.frame.compress(ujson.dumps(v.get('dps_threat')).encode())
+            resp['events'] = lz4.frame.compress(ujson.dumps(v.get('events')).encode())
+            resp['gear'] = lz4.frame.compress(ujson.dumps(v.get('gear')).encode())
             resp['is_kill'] = ujson.dumps(v.get('is_kill'))
 
             await __redis.delete(key)
@@ -132,10 +133,9 @@ class RedisClient:
 
     async def _get_tps_values(self, keys, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
-        cached_data = [{k: await __redis.hgetall(k, encoding='utf-8')} for k in keys]
-        resp = {k: float(v.get('modified_tps')) for d in cached_data for k,v in d.items() if float(v.get('modified_tps', '0.0')) != 0.0}
+        cached_data = {k: await __redis.hget(k, 'modified_tps', encoding='utf-8') for k in keys}
         __redis.close()
-        return resp
+        return cached_data
 
 
     async def get_encounter_percentile(self, boss_name, tps, db=2):
@@ -145,6 +145,7 @@ class RedisClient:
             return 0
         raw = ujson.loads(data.get('raw_vals'))
         __redis.close()
+        raw = [float(x) for x in raw]
         return percentileofscore(raw, tps)  
         
     async def get_encounter_rankings(self, boss_name, db=2):
@@ -162,12 +163,12 @@ class RedisClient:
                 'player': data.get('player_name'),
                 'boss': data.get('boss_name'),
                 'realm': data.get('realm'),
-                'tps': threat,
-                'total_threat': data.get('modified_threat') or data.get('total_threat_defiance') or data.get('total_threat_feral_instinct') or data.get('total_threat_imp_rf'),
+                'tps': float(threat),
+                'total_threat': float(data.get('modified_threat')),
                 'report': key.split(':')[0],
-                'boss_id': data.get('boss_id'),
+                'boss_id': int(data.get('boss_id')),
             }
-        __redis.close()
+                    
         dedupe = []
         ranks = {k: v for k, v in sorted(ranks.items(), key=lambda r: r[1].get('tps', 0), reverse=True)}
         final = {}
@@ -182,7 +183,9 @@ class RedisClient:
 
     async def get_by_key(self, key, db=0):
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=db))
-        data = await __redis.hgetall(key, encoding='utf-8')
+        fields = ['player_name', 'boss_name', 'realm', 'modified_threat', 'boss_id']
+        data = await __redis.hmget(key, *fields, encoding='utf-8')
+        data = {field: value for field, value in zip(fields, data)}
         __redis.close()
         return data
 
@@ -190,11 +193,11 @@ class RedisClient:
         __redis = await aioredis.Redis(await aioredis.create_connection((self.redis_host, 6379), db=4))
         key = f'{report_id}:{player_name}:{log.boss_id}'
         cache_result = log.dict()
-        cache_result['dps_threat'] = ujson.dumps([d.dict() for d in log.dps_threat])
-        cache_result['events'] = ujson.dumps([d.dict() for d in log.events])
-        cache_result['gear'] = ujson.dumps([dict(d) for d in log.gear])
+        cache_result['dps_threat'] = lz4.frame.compress(ujson.dumps([d.dict() for d in log.dps_threat]).encode())
+        cache_result['events'] = lz4.frame.compress(ujson.dumps([d.dict() for d in log.events]).encode())
+        cache_result['gear'] = lz4.frame.compress(ujson.dumps([dict(d) for d in log.gear]).encode())
         cache_result['is_kill'] = ujson.dumps(log.is_kill)
-        cache_result['aggro_windows'] = ujson.dumps(log.aggro_windows)
+        cache_result['aggro_windows'] = lz4.frame.compress(ujson.dumps(log.aggro_windows).encode())
         await __redis.hmset_dict(key, cache_result)
         __redis.close()
 
@@ -208,16 +211,16 @@ class RedisClient:
             keys = [f'{report_id}:{player_name}:{boss}' for boss in bosses]
 
         for key in keys:
-            r = await __redis.hgetall(key, encoding='utf-8')
+            r = await __redis.hgetall(key)
             if not r:
                 continue
-
-            r['dps_threat'] = [FuryDPSThreatResult(int(r['total_time']), **f) for f in ujson.loads(r['dps_threat'])]
-            r['events'] = [ThreatEvent(**e) for e in ujson.loads(r['events'])]
-            r['gear'] = [i for i in ujson.loads(r['gear'])]
+            r = {k.decode('utf-8'): v for k, v in r.items()}
+            r['dps_threat'] = [FuryDPSThreatResult(int(r['total_time']), **f) for f in ujson.loads(lz4.frame.decompress(r['dps_threat']))]
+            r['events'] = [ThreatEvent(**e) for e in ujson.loads(lz4.frame.decompress(r['events']))]
+            r['gear'] = [i for i in ujson.loads(lz4.frame.decompress(r['gear']))]
             r['is_kill'] = ujson.loads(r.get('is_kill', True))
-            r['aggro_windows'] = ujson.loads(r.get('aggro_windows', '{}'))
-            
+            r['aggro_windows'] = ujson.loads(lz4.frame.decompress(r['aggro_windows']))
+            r = {k: v.decode() if isinstance(v, bytes) else v for k, v in r.items()}
             d.append(r)
         __redis.close()
         
