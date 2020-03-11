@@ -297,30 +297,54 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
     return all_events
 
 async def get_historic_events(report_id, player_name, bosses=None):
-    events = []
     r = RedisClient()
     try:
-        events = await r.get_events(report_id, player_name, bosses=bosses)
+        encounters = await r.get_events(report_id, player_name, bosses=bosses)
     except ConnectionRefusedError:
         pass
-    if events:
-        player_class = events[0].get('player_class')
+    if encounters:
+        player_class = encounters[0].get('player_class')
         if not player_class:
             raise HTTPException(status_code=404,
                                 detail=f'Not found: No event log found for {player_name}, report ID {report_id}')
-    ret = []
-    for event in events:
-        ret.append({
-            'aggro_windows': event['aggro_windows'],
-            'boss_id': event['boss_id'],
-            'boss_name': event['boss_name'],
-            'events': [e.dict() for e in event['events']],
-            'is_kill': event['is_kill'],
-            'player_class': event['player_class'],
-            'player_name': event['player_name'],
-            'realm': event['realm'],
-            'report_id': event['report_id'],
-            'total_time': float(event['total_time']) / 1000.0
+    ret = {}
+
+    for encounter in encounters:
+        event_names = set([e.name for e in encounter.get('events') if e.name != '' and e.base_threat > 0])
+        mapping = { name: 0 for name in event_names}
+        mapping.update({'Total': 0})
+        start_time = encounter.get('aggro_windows', {}).get('start_time', 0)
+        series_chunks = {i: mapping.copy() for i in range(0, int(encounter.get('total_time')), 750)}
+        for event in encounter.get('events'):
+            if event.modified_threat < 0:
+                continue
+            timestamp = event.timestamp - start_time
+            key = [x for x in series_chunks.keys() if x <= timestamp <= x + 750]
+            key = key[0] if key else None
+            chunk = series_chunks.get(key, None)
+            if chunk:
+                if chunk.get(event.name, -1) >= 0:
+                    chunk[event.name] += event.modified_threat
+                    chunk['Total'] += event.modified_threat
+                    series_chunks[key] = chunk
+
+        series = [{
+            'name': name, 
+            'data': [(k, v.get(name)) for k, v in series_chunks.items()] 
+        } for name in [*event_names, 'Total']]
+        print(series)
+        # series = [{'name': s.get('name'), 'data': sorted(s.get('data'), key=lambda x: x[0])} for s in series]
+        start_time = encounter.get('aggro_windows', {}).get('start_time', 0)
+        windows = [((w[0] - start_time)/1000.0, (w[1]-start_time)/1000.0) for w in encounter.get('aggro_windows', {}).get('windows')]
+        ret.update({
+            'aggro_windows': windows,
+            'boss_id': encounter.get('boss_id'),
+            'boss_name': encounter['boss_name'],
+            'events': series,
+            'player_class': encounter.get('player_class'),
+            'player_name': encounter.get('player_name'),
+            'report_id': encounter.get('report_id'),
+            'end_time': float(encounter.get('total_time')) / 1000
         })
 
     return ret

@@ -149,12 +149,12 @@ async def calculate_paladin(req: WCLDataRequest, background_tasks: BackgroundTas
         await session.close()
 
 
-@api_router.get('/events/{report_id}/{player_name}',
+@api_router.get('/events/{report_id}/{player_name}/{boss_id}',
                 tags=['v1'],
                 )
-async def get_event_timeline(report_id, player_name, boss: List[str]=Query(None)):
+async def get_event_timeline(report_id, player_name, boss_id: int):
     try:
-        events = await get_historic_events(report_id, player_name, bosses=boss)
+        events = await get_historic_events(report_id, player_name, bosses=[boss_id])
         return JSONResponse(content=events, status_code=200)
 
     except ClientResponseError as cexc:

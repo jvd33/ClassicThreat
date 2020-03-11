@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router'
 import VueGtag from "vue-gtag";
+import VueApexCharts from "vue-apexcharts";
 import App from './App.vue';
 import './quasar';
 import WarriorCalculateForm from './components/WarriorCalculateForm.vue';
@@ -12,6 +13,7 @@ import CalculationDetails from './components/CalculationDetails.vue';
 import ClassRankings from './components/ClassRankings.vue'
 import ThreatBreakdown from './components/ThreatBreakdown.vue'
 import ThreatResult from './components/ThreatResult.vue';
+import TPSGraph from './components/TPSGraph.vue';
 
 const routes = [
   {
@@ -50,6 +52,11 @@ const routes = [
     component: ClassRankings,
     props: {player_class: 'Paladin'},
   },
+  {
+    path: '/graph',
+    component: TPSGraph,
+
+  }
 ];
 
 const router = new VueRouter({
@@ -62,7 +69,9 @@ Vue.use(VueRouter);
 Vue.use(VueGtag, {
   config: { id: "UA-77837329-2" }
 });
+Vue.use(VueApexCharts);
 
+Vue.component("apexchart", VueApexCharts);
 Vue.component('threat-result', ThreatResult);
 Vue.component('dps-threat-result', DPSThreat);
 Vue.component('threat-breakdown', ThreatBreakdown)
