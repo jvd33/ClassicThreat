@@ -52,11 +52,6 @@ const routes = [
     component: ClassRankings,
     props: {player_class: 'Paladin'},
   },
-  {
-    path: '/graph',
-    component: TPSGraph,
-
-  }
 ];
 
 const router = new VueRouter({
@@ -74,6 +69,7 @@ Vue.use(VueApexCharts);
 Vue.component("apexchart", VueApexCharts);
 Vue.component('threat-result', ThreatResult);
 Vue.component('dps-threat-result', DPSThreat);
+Vue.component('tps-graph', TPSGraph);
 Vue.component('threat-breakdown', ThreatBreakdown)
 new Vue({
   router,

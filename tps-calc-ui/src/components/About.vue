@@ -23,7 +23,7 @@
 
           <br/><br/>
           Feature Requests and Bug Reports can be submitted on GitHub:
-          <a class="text-accent text-weight-bold" href="https://github.com/jvd33/ClassicTPSEstimator/issues">
+          <a class="text-accent text-weight-bold" href="https://github.com/jvd33/ClassicThreat">
             https://github.com/jvd33/ClassicThreat
           </a>
           <br/><br/>
@@ -35,7 +35,6 @@
           <span class="text-primary text-h4">Future planned features:<br/></span><br/>
             - Split TPS across individual mobs in the boss encounters (e.g. Lucifron TPS, Flamewaker 1 TPS, Flamewaker 2 TPS) <br/>
             - More set bonuses/modifiers of various kinds, more spell ranks <br/>
-            - TPS Graphing (Coming Soon!)<br/>
             - Comparing against other players previously submitted to ClassicThreat <br/>
             - Non-tank roles
           <span class="text-primary text-h6"><br/>Thanks to:<br/></span>

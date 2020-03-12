@@ -2,6 +2,7 @@ import asyncio
 import ujson
 import aiohttp
 import logging
+import datetime
 
 from urllib.parse import urlparse
 from typing import List
@@ -314,28 +315,29 @@ async def get_historic_events(report_id, player_name, bosses=None):
         mapping = { name: 0 for name in event_names}
         mapping.update({'Total': 0})
         start_time = encounter.get('aggro_windows', {}).get('start_time', 0)
-        series_chunks = {i: mapping.copy() for i in range(0, int(encounter.get('total_time')), 750)}
+        series_chunks = {i: mapping.copy() for i in range(0, int(encounter.get('total_time')), 1000)}
         for event in encounter.get('events'):
             if event.modified_threat < 0:
                 continue
             timestamp = event.timestamp - start_time
-            key = [x for x in series_chunks.keys() if x <= timestamp <= x + 750]
+            key = [x for x in series_chunks.keys() if x <= timestamp <= x + 1000]
             key = key[0] if key else None
             chunk = series_chunks.get(key, None)
             if chunk:
                 if chunk.get(event.name, -1) >= 0:
-                    chunk[event.name] += event.modified_threat
+                    chunk[event.name] += event.modified_threat 
                     chunk['Total'] += event.modified_threat
                     series_chunks[key] = chunk
 
         series = [{
             'name': name, 
-            'data': [(k, v.get(name)) for k, v in series_chunks.items()] 
-        } for name in [*event_names, 'Total']]
-        print(series)
-        # series = [{'name': s.get('name'), 'data': sorted(s.get('data'), key=lambda x: x[0])} for s in series]
+            'data': [(str(datetime.datetime(year=1970, month=1, day=1) + datetime.timedelta(milliseconds=k)), v.get(name)) for k, v in series_chunks.items()] 
+        } for name in event_names]
         start_time = encounter.get('aggro_windows', {}).get('start_time', 0)
-        windows = [((w[0] - start_time)/1000.0, (w[1]-start_time)/1000.0) for w in encounter.get('aggro_windows', {}).get('windows')]
+        windows = [(str(datetime.datetime(year=1970, month=1, day=1) + datetime.timedelta(milliseconds=w[0] - start_time)), 
+                    str(datetime.datetime(year=1970, month=1, day=1) + datetime.timedelta(milliseconds=w[1] - start_time))) 
+                    for w in encounter.get('aggro_windows', {}).get('windows')]
+        series = [s for s in sorted(series, key=lambda k: sum([v[1] for v in k.get('data')]), reverse=True)]
         ret.update({
             'aggro_windows': windows,
             'boss_id': encounter.get('boss_id'),
@@ -344,7 +346,7 @@ async def get_historic_events(report_id, player_name, bosses=None):
             'player_class': encounter.get('player_class'),
             'player_name': encounter.get('player_name'),
             'report_id': encounter.get('report_id'),
-            'end_time': float(encounter.get('total_time')) / 1000
+            'end_time': str(datetime.datetime(year=1970, month=1, day=1) + datetime.timedelta(milliseconds=float(encounter.get('total_time'))))
         })
 
     return ret
