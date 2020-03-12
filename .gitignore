@@ -9,3 +9,4 @@ dist
 scripts.vscode
 *.rdb
 .vscode
+.theia
