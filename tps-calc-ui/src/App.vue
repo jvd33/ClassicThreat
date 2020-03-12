@@ -90,7 +90,7 @@
 
     <q-page-container>
       <span class="text-primary q-pb-lg col-auto col-sm wrap-auto text-h6 text-italic">
-        March 4th Update: Calculation Bug Fixes and UI improvements!
+        March 12th Update: Threat Per Second Graphs!
       </span>
       <router-view />
       <q-page-scroller position="bottom-right" :scroll-offset="400" :offset="[30, 60]">

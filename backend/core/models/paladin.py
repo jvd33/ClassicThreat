@@ -103,6 +103,7 @@ class PaladinThreatCalculationRequest(BaseModel):
             time_with_aggro=time_with_aggro,
             active_time=active_time,
             is_kill=log.is_kill,
+            report_id=log.report_id,
         ), log
 
         
@@ -137,3 +138,4 @@ class PaladinThreatResult(PaladinThreatCalculationRequest):
     active_time: float = 0.0
     time_with_aggro: float = 0.0
     is_kill: bool
+    report_id: str

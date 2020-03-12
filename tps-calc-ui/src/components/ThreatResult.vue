@@ -1,7 +1,7 @@
 <template>
   <q-page>
     <q-list bordered class="rounded-borders border-primary q-mb-lg" v-for="(value, name) in results" :key="name">
-      <q-expansion-item :label="getRowTitle(name, value)"
+      <q-expansion-item :label="getRowTitle(name, value)" @show="loadChild(value)"
         :caption="getCaption(name, value)"
         :icon="value.is_kill ? 'check_circle' : 'cancel'"
         :header-class="value.is_kill ? 'text-green' : 'text-red'">
@@ -58,9 +58,9 @@
               </span>
             </span>
             <q-separator color="primary q-ma-sm" inset></q-separator>
-            <threat-breakdown :events="value.events" :time="active_only ? value.active_time : value.time"/>
-            <q-separator color="primary q-ma-md" inset></q-separator>
-            <dps-threat-result :results="value" :ref_tps="active_only ? (value.modified_threat/value.active_time) : value.modified_tps"/>
+            <threat-breakdown v-if="loaded.includes(value.boss_id)" :events="value.events" :time="active_only ? value.active_time : value.time"/>
+            <tps-graph v-if="loaded.includes(value.boss_id)" :report_id="value.report_id" :boss_id="value.boss_id" :player_name="value.player_name" />
+            <dps-threat-result v-if="loaded.includes(value.boss_id)" :results="value" :ref_tps="active_only ? (value.modified_threat/value.active_time) : value.modified_tps"/>
             <q-btn dense justify-left icon="cloud_download" label="Download JSON" color="primary" @click="downloadJson(value.boss_name, value)" class="q-ma-md col-6 col-6-sm shadow-10"/>
           </q-card-section>
         </q-card>
@@ -71,7 +71,7 @@
 <script>
 export default {
   name: 'ThreatResult',
-  props: ['results', 'player_class'],
+  props: ['results', 'player_class', 'visible'],
   player_class: '',
   methods: {
     getRowTitle(name, val) {
@@ -99,6 +99,10 @@ export default {
         default: return 'app:defaultability';
       }
     },
+    loadChild(val) {
+      this.loaded.push(val.boss_id);
+      this.children_loaded = true;
+    }
   },
   data () {
     return {
@@ -109,6 +113,8 @@ export default {
       pagination: {
         rowsPerPage: 0,
       },
+      children_loaded: false,
+      loaded: [],
       columns: [
         { name: 'name', align: 'center', label: 'Metric', field: row => row.name, sortable: true },
         { name: 'value', align: 'center', label: 'Metric Value', field: row => row.value, sortable: true },

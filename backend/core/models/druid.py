@@ -63,6 +63,7 @@ class DruidThreatCalculationRequest(BaseModel):
             friendlies_in_combat=log.friendlies_in_combat,
             gear=log.gear or [],
             dps_threat=log.dps_threat or [],
+            report_id=log.report_id,
         )
 
         event_times = [e.timestamp for e in log.events] or [0]
@@ -103,6 +104,7 @@ class DruidThreatCalculationRequest(BaseModel):
             time_with_aggro=time_with_aggro,
             active_time=active_time,
             is_kill=log.is_kill,
+            report_id=log.report_id,
         ), log
 
         
@@ -136,3 +138,4 @@ class DruidThreatResult(DruidThreatCalculationRequest):
     active_time: float = 0.0
     time_with_aggro: float = 0.0
     is_kill: bool
+    report_id: str
