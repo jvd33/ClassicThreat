@@ -160,14 +160,18 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
     except Exception as exc:
         logger.error(f'Failed to write to cache {exc}')
         
-    r = [calc_model.from_event_log(log)[0] for log in logs]
+    resps = [calc_model.from_event_log(log) for log in logs]
+    
     r = {
-        a.boss_id: a.dict() for a in r
+        a[0].boss_id: a[0].dict() for a in resps
     }
 
+    logs = [a[1] for a in resps]
     try:
         redis = RedisClient()
         await getattr(redis, save)(report_id, player_name, r)
+        for log in logs:
+            await redis.save_events(req.report_id, req.player_name, log)
     except Exception as exc:
         logger.error(f'Failed to write cache {report_id}:{player_name}, {exc}')
 
@@ -309,7 +313,7 @@ async def get_historic_events(report_id, player_name, bosses=None):
             raise HTTPException(status_code=404,
                                 detail=f'Not found: No event log found for {player_name}, report ID {report_id}')
     ret = {}
-
+    
     for encounter in encounters:
         event_names = set([e.name for e in encounter.get('events') if e.name != '' and e.base_threat > 0])
         mapping = { name: 0 for name in event_names}
