@@ -371,5 +371,5 @@ PALADIN = [
     *Spell.SealOfLight, *Spell.HolyShock, Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3, 
     *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom, *Spell.JudgementOfRighteousness,
     *Spell.JudgementOfLight, *Spell.JudgementOfWisdom, *Spell.RetributionAura, *Spell.Consecration, *SEALS, 
-    Spell.HolyWrath1, Spell.HolyWrath2, *Spell.HolyShock
+    Spell.HolyWrath1, Spell.HolyWrath2, *Spell.HolyShock, *Spell.SealOfCommand
 ]
