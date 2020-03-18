@@ -78,7 +78,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
 
     try:
         redis = RedisClient()
-        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, req.include_wipes, db=data_db) or {}
+        cached_data = {} # await redis.check_cache(report_id, req.player_name, req.bosses, req.include_wipes, db=data_db) or {}
         if cached_data.get('matches'):
             cache_resp = {}
             logs = list(cached_data.get('matches').values())
@@ -201,7 +201,7 @@ async def get_events(player_name, player_class, realm, reqs: List[BossActivityRe
     modifier_fn = {
         'druid': process_shapeshifts,
         'warrior': process_stance_state,
-        'paladin': dummy_process_paladin_state 
+        'paladin': process_paladin_state 
     }.get(player_class.casefold(), None)
     if not modifier_fn:
         raise HTTPException(status_code=400,
@@ -356,7 +356,7 @@ async def get_historic_events(report_id, player_name, bosses=None):
     return ret
 
 
-async def dummy_process_paladin_state(data, player_id):
+async def process_paladin_state(data, player_id):
     windows = {
         Spell.RighteousFury: [],
     }
@@ -387,23 +387,23 @@ async def process_stance_state(data, player_id):
         return windows
     entries = [e for e in events if e.get('ability').get('guid') in stances]
     zerk_specific = [
-        e.get('timestamp') for e in events if e.get('ability').get('guid') in 
+        e.get('timestamp') for e in events if e.get('type') == 'cast' and e.get('ability').get('guid') in 
         [Spell.BerserkerRage, Spell.Intercept, Spell.Pummel, Spell.Recklessness, Spell.Whirlwind]
     ]
     battle_specific = [
-        e.get('timestamp') for e in events if e.get('ability').get('guid') in 
+        e.get('timestamp') for e in events if e.get('type') == 'cast' and e.get('ability').get('guid') in 
         [Spell.Overpower, Spell.Charge, Spell.Retaliation, Spell.MockingBlow, Spell.ThunderClap]
     ]
     defensive_specific = [
-        e.get('timestamp') for e in events if e.get('ability').get('guid') in 
+        e.get('timestamp') for e in events if e.get('type') == 'cast' and e.get('ability').get('guid') in 
         [Spell.ShieldWall, Spell.ShieldBlock, Spell.Revenge5, Spell.Revenge6, Spell.Taunt, Spell.Disarm,]
     ]
     time = data.get('start_time')
     last_stance = None
     for e in entries:
-        if e.get('type') == 'removebuff' and e.get('guid') in stances:
+        if e.get('type') == 'removebuff':
             windows[e.get('ability').get('guid')].append((time, e.get('timestamp')))
-        if e.get('type') == 'applybuff' in stances:
+        if e.get('type') == 'applybuff':
             time = e.get('timestamp')
             last_stance = e.get('ability').get('guid')
     
@@ -433,15 +433,15 @@ async def process_shapeshifts(data, player_id):
     
 
     bear_specific = [
-        e for e in events if e.get('ability').get('guid') in 
+        e for e in events if e.get('type') == 'cast' and e.get('ability').get('guid') in 
         [Spell.Swipe, Spell.Maul, Spell.DemoRoar, Spell.FrenziedRegen,]
     ]
     cat_specific = [
-        e for e in events if e.get('ability').get('guid') in 
+        e for e in events if e.get('type') == 'cast' and e.get('ability').get('guid') in 
         [Spell.Shred, Spell.Rake, *Spell.FerociousBite, Spell.Cower]
     ]
     caster_specific = [
-        e for e in events if e.get('ability').get('guid') in 
+        e for e in events if e.get('type') == 'cast' and e.get('ability').get('guid') in 
         [*Spell.Regrowth, *Spell.Rejuvenation, *Spell.HealingTouch, *Spell.Moonfire, *Spell.Starfire, *Spell.Wrath,]
     ]
 

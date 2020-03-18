@@ -79,7 +79,13 @@ class Spell:
     LayOnHands = [633, 2800, 10310]        
     SealOfLight = [20165, 20347, 20348, 20349]
     SealOfWisdom = [20166, 20356, 20357, 20350, 20168, 20351]
-    SealOfRighteousness = [20154, 21084, 20287, 20288, 20290, 20291, 20292, 20293, 20289]
+    SealOfRighteousness = [
+        20154, 21084, 20287, 20288, 20290, 20291, 20292, 20293, 20289, 
+        25713, 25742, 25740, 25739, 25738, 25737, 25736, 25735
+    ]
+    SealOfCommand = [
+        20920, 20915, 20918, 20919, 20375, 20424, 20947, 20944, 20945, 20946
+    ]
     JudgementOfWisdom = [20354, 20186, 20355, 20353, 20268, 20352]
     JudgementOfRighteousness = [20283, 20187, 20280, 20281, 20282, 20284, 20285, 20286]
     JudgementOfLight = [20344, 20185, 20345, 20346]
@@ -311,6 +317,12 @@ class PaladinThreatValues:
     SealOfRighteousness6 = {'threat': {'threat_type': 'Flat', 'val': 42}, 'guid': 20291}
     SealOfRighteousness7 = {'threat': {'threat_type': 'Flat', 'val': 50}, 'guid': 20292}
     SealOfRighteousness8 = {'threat': {'threat_type': 'Flat', 'val': 58}, 'guid': 20293}
+
+    SealOfCommand1 = {'threat': {'threat_type': 'Flat', 'val': 20}, 'guid': 20375}
+    SealOfCommand2 = {'threat': {'threat_type': 'Flat', 'val': 30}, 'guid': 20915}
+    SealOfCommand3 = {'threat': {'threat_type': 'Flat', 'val': 40}, 'guid': 20918}
+    SealOfCommand4 = {'threat': {'threat_type': 'Flat', 'val': 50}, 'guid': 20919}
+    SealOfCommand5 = {'threat': {'threat_type': 'Flat', 'val': 60}, 'guid': 20920}
     Thunderfury = {'threat': {'threat_type': 'Flat', 'val': 235}, 'guid': Spell.Thunderfury}
 
 
@@ -359,5 +371,5 @@ PALADIN = [
     *Spell.SealOfLight, *Spell.HolyShock, Spell.HolyShield1, Spell.HolyShield2, Spell.HolyShield3, 
     *Spell.SealOfLight, *Spell.SealOfRighteousness, *Spell.SealOfWisdom, *Spell.JudgementOfRighteousness,
     *Spell.JudgementOfLight, *Spell.JudgementOfWisdom, *Spell.RetributionAura, *Spell.Consecration, *SEALS, 
-    Spell.HolyWrath1, Spell.HolyWrath2
+    Spell.HolyWrath1, Spell.HolyWrath2, *Spell.HolyShock
 ]
