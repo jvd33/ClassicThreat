@@ -178,7 +178,7 @@ class RedisClient:
             if player_key not in dedupe:
                 dedupe.append(player_key)
                 final[key] = rank
-            
+        __redis.close()
         return final
 
     async def get_by_key(self, key, db=0):
