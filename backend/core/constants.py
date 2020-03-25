@@ -216,7 +216,7 @@ class DruidThreatValues:
     FeralInstinct5 = {'threat': {'threat_type': 'Modifier', 'val': .15}, 'guid': None}
     Healing = {'threat': {'threat_type': 'Flat', 'val': .5}, 'guid': None}
     DemoRoar = {'threat': {'threat_type': 'Flat', 'val': 39}, 'guid': Spell.DemoRoar}
-
+    ManaGain = {'threat': {'threat_type': 'Flat', 'val': .5}, 'guid': None}
     
 
     @staticmethod

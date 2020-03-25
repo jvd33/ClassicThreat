@@ -96,6 +96,7 @@ class ThreatEvent(BaseModel):
     class_modifier: int = 0
     base_threat: int = 0
     modified_threat: int = 0
+    resource_type: int = None
 
     def calculate_threat(self, player_class, talent_pts=5, t1=False):
         mods = {
@@ -157,12 +158,22 @@ class ThreatEvent(BaseModel):
                 else:
                     raw = mods.get('mana')(self.amount)
 
-            elif self.guid in [2687, 23602, 29131, 12964, 17057, 17099, 16959, 17528, 101]:
-                self.name = 'Resource Gain'
-                self.guid = Spell.RageGain
+            elif self.resource_type in [1, 3]:
+                self.name = 'Rage Gains'
+                if self.resource_type == 3:
+                    self.name = 'Energy Gains'
+                elif self.guid == 23513:
+                    self.name = 'Essence of the Red'
+                else:
+                    self.guid = self.resource_type
                 raw = mods.get(Spell.RageGain)(self.amount)
-            elif self.guid == 23513:
-                raw = mods.get(Spell.RageGain)(self.amount)
+
+            elif self.resource_type == 0:
+                if self.guid == 23513:
+                    self.name = 'Essence of the Red'
+                else:
+                    self.guid = self.resource_type
+                raw = mods.get('mana')(self.amount)
             else:
                 raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
@@ -231,6 +242,7 @@ class ThreatEvent(BaseModel):
             Spell.FaerieFireFeral: __t.FaerieFire,
             Spell.Cower: __t.Cower,
             Spell.HumanoidForm: lambda x, d: x * 1,
+            'mana': lambda x, __t=__t: x * __t.ManaGain,
             'noop': 0
         }
 
@@ -372,7 +384,8 @@ class FightLog(BaseModel):
                 hit_type=event.get('hitType', -1),
                 amount=event.get('amount') or (event.get('resourceChange', 0) - event.get('waste', 0)) or 0,
                 class_modifier=FightLog._get_event_modifier(modifier_event, event, player_class) or 0,
-                enemies_in_combat=1
+                enemies_in_combat=1,
+                resource_type=event.get('resourceChangeType', None)
             )
             f.events.append(e)
         return f
