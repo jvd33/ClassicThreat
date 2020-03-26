@@ -38,14 +38,15 @@ class DruidThreatCalculationRequest(BaseModel):
 
             if event.event_type == 'cast':
                 breakdown.count += 1
-                if event.guid == Spell.SunderArmor:
-                    breakdown.hits += 1
 
             if event.event_type == 'damage':
-                if event.hit_type not in [7, 8]:
+                if event.hit_type not in [7, 8, 14]:
                     breakdown.hits += 1
-
+                
             if event.guid == Spell.GiftOfArthas:
+                breakdown.hits += 1
+
+            if event.guid in [Spell.FaerieFire, Spell.FaerieFireFeral] and event.event_type in ['applydebuff', 'refreshdebuff']:
                 breakdown.hits += 1
 
         return mapper

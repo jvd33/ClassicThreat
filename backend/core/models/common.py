@@ -110,7 +110,6 @@ class ThreatEvent(BaseModel):
         if self.guid == Spell.Execute:
             self.base_threat, self.modified_threat = self.amount, self.amount
             return self
-            
         if self.event_type == 'cast':
             if self.guid in [Spell.BattleShout6, Spell.BattleShout7]:
                 raw = mods.get(self.guid, mods.get('noop'))(self.friendlies_in_combat, self.enemies_in_combat)
@@ -124,7 +123,9 @@ class ThreatEvent(BaseModel):
                 raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'damage':
-            if self.guid in [Spell.Maul, Spell.Swipe]:
+            if self.guid in [Spell.FaerieFire, Spell.FaerieFireFeral]:
+                raw = 0
+            elif self.guid in [Spell.Maul, Spell.Swipe]:
                 raw = mods.get(self.guid, mods.get('noop'))(self.amount)
             elif self.guid in DAMAGE and self.hit_type not in [7, 8]:
                 raw = mods.get(self.guid, mods.get('noop')) + self.amount
@@ -146,7 +147,8 @@ class ThreatEvent(BaseModel):
                 self.guid = -100
                 raw = mods.get('heal')(self.amount, self.enemies_in_combat)
 
-        elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS, Spell.Thunderfury, *Spell.WisdomGuids]:
+        elif self.event_type in ['applydebuff', 'refreshdebuff'] and self.guid not in [Spell.SunderArmor, *FORMS, Spell.Thunderfury, *Spell.WisdomGuids, 
+]:
             raw = mods.get(self.guid, mods.get('noop'))
 
         elif self.event_type == 'energize':
@@ -158,21 +160,19 @@ class ThreatEvent(BaseModel):
                 else:
                     raw = mods.get('mana')(self.amount)
 
+            elif self.guid == 23513:
+                self.name = 'Essence of the Red'
+                if self.resource_type in [1, 3]:
+                    raw = mods.get(Spell.RageGain)(self.amount)
+                elif self.resource_type == 0:
+                    raw = mods.get('mana')(self.amount)
+
             elif self.resource_type in [1, 3]:
-                self.name = 'Rage Gains'
-                if self.resource_type == 3:
-                    self.name = 'Energy Gains'
-                elif self.guid == 23513:
-                    self.name = 'Essence of the Red'
-                else:
-                    self.guid = self.resource_type
+                self.name = 'Resource Gain'
+                self.guid = Spell.RageGain
                 raw = mods.get(Spell.RageGain)(self.amount)
 
             elif self.resource_type == 0:
-                if self.guid == 23513:
-                    self.name = 'Essence of the Red'
-                else:
-                    self.guid = self.resource_type
                 raw = mods.get('mana')(self.amount)
             else:
                 raw = mods.get('heal')(self.amount, self.enemies_in_combat)
@@ -381,7 +381,7 @@ class FightLog(BaseModel):
                 guid=event.get('ability', {}).get('guid', 0),
                 event_type=event.get('type', 0),
                 timestamp=event.get('timestamp', 0),
-                hit_type=event.get('hitType', -1),
+                hit_type=event.get('hitType') or event.get('ability').get('type'),
                 amount=event.get('amount') or (event.get('resourceChange', 0) - event.get('waste', 0)) or 0,
                 class_modifier=FightLog._get_event_modifier(modifier_event, event, player_class) or 0,
                 enemies_in_combat=1,
