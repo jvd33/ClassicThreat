@@ -461,7 +461,8 @@ async def process_shapeshifts(data, player_id):
             last_form = Spell.CatForm
         elif caster_specific:
             last_form = Spell.HumanoidForm
-
+        else:
+            last_form = Spell.HumanoidForm
     windows[last_form].append((time, 0))
 
     return {**windows, 'boss_id': data.get('boss_id')}
