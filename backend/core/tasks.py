@@ -78,7 +78,7 @@ async def get_log_data(req: WCLDataRequest, session, player_class):
 
     try:
         redis = RedisClient()
-        cached_data = {} # await redis.check_cache(report_id, req.player_name, req.bosses, req.include_wipes, db=data_db) or {}
+        cached_data = await redis.check_cache(report_id, req.player_name, req.bosses, req.include_wipes, db=data_db) or {}
         if cached_data.get('matches'):
             cache_resp = {}
             logs = list(cached_data.get('matches').values())
