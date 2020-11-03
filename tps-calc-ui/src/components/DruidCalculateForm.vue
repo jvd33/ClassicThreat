@@ -146,13 +146,24 @@ export default {
               5, 4, 3, 2, 1, 0
           ],
           boss_opts: [
-              'Lucifron', 'Magmadar', 'Gehennas', 'Garr',
-              'Baron Geddon', 'Shazzrah', 'Sulfuron Harbinger', 'Golemagg the Incinerator',
-              'Majordomo Executus', 'Ragnaros', 'Razorgore the Untamed', 'Vaelastrasz the Corrupt',
-              'Broodlord Lashlayer', 'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus',
-              'Nefarian', 'Onyxia'
+            'The Prophet Skeram', 'Silithid Royalty', 'Battleguard Sartura', 'Fankriss the Unyielding',
+            'Princess Huhuran', 'Twin Emperors', 'Ouro', 'C\'Thun',
 
-          ],
+            'Kurinnaxx', 'General Rajaxx', 'Moam', 'Buru the Gorger', 'Ayamiss the Hunter', 'Ossirian the Unscarred',
+
+            'High Priest Venoxis', 'High Priestess Jeklik', 'High Priestess Mar\'li',
+            'Bloodlord Mandokir', 'Edge of Madness', 'High Priest Thekal', ' Gahz\'ranka',
+            'High Priestess Arlokk', 'Jin\'do the Hexxer', 'Hakkar',
+
+            'Razorgore the Untamed', 'Vaelastrasz the Corrupt', 'Broodlord Lashlayer',
+            'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus', 'Nefarian',
+
+            'Lucifron', 'Magmadar', 'Gehennas', 'Garr', 'Shazzrah',
+            'Baron Geddon', 'Golemagg the Incinerator', 'Majordomo Executus',
+            'Sulfuron Harbinger', 'Ragnaros',
+
+            'Onyxia',
+        ],
           raids: [
             {
               name: 'Molten Core',

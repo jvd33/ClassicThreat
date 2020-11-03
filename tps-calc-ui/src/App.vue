@@ -90,7 +90,7 @@
 
     <q-page-container>
       <span class="text-primary q-pb-lg col-auto col-sm wrap-auto text-h6 text-italic">
-        March 12th Update: Threat Per Second Graphs!
+        November 3rd, 2020 Update: Added Missing Raids, Stabilized App Functionality
       </span>
       <router-view />
       <q-page-scroller position="bottom-right" :scroll-offset="400" :offset="[30, 60]">

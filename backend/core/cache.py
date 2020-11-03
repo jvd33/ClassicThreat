@@ -29,7 +29,7 @@ class RedisClient:
             resp['events'] = lz4.frame.compress(ujson.dumps(v.get('events')).encode())
             resp['gear'] = lz4.frame.compress(ujson.dumps(v.get('gear')).encode())
             resp['is_kill'] = ujson.dumps(v.get('is_kill'))
-
+            resp['inserted_at'] = datetime.datetime.now()
             await __redis.delete(key)
             r = await __redis.hmset_dict(key, resp)
             d.append(r)
@@ -51,6 +51,7 @@ class RedisClient:
             resp['dps_threat'] = lz4.frame.compress(ujson.dumps(v.get('dps_threat')).encode())
             resp['events'] = lz4.frame.compress(ujson.dumps(v.get('events')).encode())
             resp['gear'] = lz4.frame.compress(ujson.dumps(v.get('gear')).encode())
+            resp['inserted_at'] = datetime.datetime.now()
             await __redis.delete(key)
             r = await __redis.hmset_dict(key, resp)
             d.append(r)
@@ -72,7 +73,7 @@ class RedisClient:
             resp['events'] = lz4.frame.compress(ujson.dumps(v.get('events')).encode())
             resp['gear'] = lz4.frame.compress(ujson.dumps(v.get('gear')).encode())
             resp['is_kill'] = ujson.dumps(v.get('is_kill'))
-
+            resp['inserted_at'] = datetime.datetime.now()
             await __redis.delete(key)
             r = await __redis.hmset_dict(key, resp)
             d.append(r)
@@ -104,10 +105,23 @@ class RedisClient:
             __redis.close()
             return 
         bosses = [
-            'Lucifron', 'Magmadar', 'Gehennas', 'Garr', 'Shazzrah', 'Baron Geddon', 
-            'Golemagg the Incinerator', 'Majordomo Executus', 'Sulfuron Harbinger', 'Ragnaros', 
-            'Onyxia', 'Razorgore the Untamed', 'Vaelastrasz the Corrupt', 'Broodlord Lashlayer',
-            'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus', 'Nefarian',
+            'The Prophet Skeram', 'Silithid Royalty', 'Battleguard Sartura', 'Fankriss the Unyielding', 
+            'Princess Huhuran', 'Twin Emperors', 'Ouro', 'C\'Thun',
+
+            'Kurinnaxx', 'General Rajaxx', 'Moam', 'Buru the Gorger', 'Ayamiss the Hunter', 'Ossirian the Unscarred',
+
+            'High Priest Venoxis', 'High Priestess Jeklik', 'High Priestess Mar\'li', 
+            'Bloodlord Mandokir', 'Edge of Madness', 'High Priest Thekal', ' Gahz\'ranka', 
+            'High Priestess Arlokk', 'Jin\'do the Hexxer', 'Hakkar',
+
+            'Razorgore the Untamed', 'Vaelastrasz the Corrupt', 'Broodlord Lashlayer', 
+            'Firemaw', 'Ebonroc', 'Flamegor', 'Chromaggus', 'Nefarian', 
+
+            'Lucifron', 'Magmadar', 'Gehennas', 'Garr', 'Shazzrah', 
+            'Baron Geddon', 'Golemagg the Incinerator', 'Majordomo Executus', 
+            'Sulfuron Harbinger', 'Ragnaros', 
+
+            'Onyxia',
         ]
         await __redis.set('last_updated', ujson.dumps(datetime.datetime.now()))
         for b in bosses:
